@@ -65,6 +65,11 @@ async def process_item(
 
     uid = item.non_tensor_batch.get('uid', uuid4().hex)
     gen_uid = item.non_tensor_batch.get('gen_uid', None)
+    # unwrap 1-element arrays (batch-of-1 DataProto convention) to scalars
+    if hasattr(uid, '__len__') and not isinstance(uid, str):
+        uid = uid[0]
+    if gen_uid is not None and hasattr(gen_uid, '__len__') and not isinstance(gen_uid, str):
+        gen_uid = gen_uid[0]
 
     # Select env
     EnvClass = select_env(ability, config, )
