@@ -155,6 +155,7 @@ class CallLLM(LLMClass):  # Call LLM in Verl RL env
             'temperature': sampling_params.get('temperature', 1.0),
             'top_p': sampling_params.get('top_p', 1.0),
             'max_tokens': max_new_tokens,
+            'logprobs': True,
         }
 
         output = await self.server_manager.generate(
@@ -174,7 +175,7 @@ class CallLLM(LLMClass):  # Call LLM in Verl RL env
                 "message": {
                     "content": response_text,
                     "raw_output_ids": output.token_ids,
-                    "response_log_probs": output.log_probs if hasattr(output, 'log_probs') else [0.0] * len(
+                    "response_log_probs": output.log_probs if getattr(output, 'log_probs', None) is not None else [0.0] * len(
                         output.token_ids),
                     "extra_data": {"input_ids": input_ids},
                     "metrics": {}
