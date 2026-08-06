@@ -32,7 +32,8 @@ class FoldAgentLoop(AgentLoopBase):
     async def run(
         self, sampling_params: dict[str, Any], **kwargs
     ) -> Union[AgentLoopOutput, list[AgentLoopOutput]]:
-        item = DataProto.from_dict(non_tensors=kwargs)
+        import numpy as np
+        item = DataProto.from_dict(non_tensors={k: np.array([v], dtype=object) for k, v in kwargs.items()})
 
         llm_client = CallLLM(
             url=self.server_manager,

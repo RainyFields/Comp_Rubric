@@ -73,7 +73,7 @@ async def eval_one(row, config, tokenizer, model_name):
     result = {
         'instance_id': row['extra_info'].get('instance_id', 'unknown'),
         'data_source': row.get('data_source', 'unknown'),
-        'score': output[0].get('reward_score', 0) if output else 0,
+        'score': ((output[0].reward_score or 0) if not isinstance(output[0], dict) else output[0].get('reward_score', 0)) if output else 0,
         'status': 'success' if output else 'failed'
     }
     return result
