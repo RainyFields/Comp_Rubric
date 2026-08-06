@@ -483,13 +483,9 @@ class TaskContext:
     tokenizer: PreTrainedTokenizer | AutoTokenizer | None = None
     llm_client: LLMClass = None
 
-class AgentLoopMetrics(BaseModel):
-    """Agent loop performance metrics."""
+from verl.experimental.agent_loop.agent_loop import AgentLoopMetrics, AgentLoopOutput  # single class identity for pydantic
 
-    generate_sequences: float = 0.0
-    tool_calls: float = 0.0
-
-class AgentLoopOutput(BaseModel):
+class _UnusedLocalAgentLoopOutput(BaseModel):
     """Agent loop output."""
 
     prompt_ids: list[int]
