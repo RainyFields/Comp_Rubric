@@ -45,7 +45,7 @@ class FoldAgentLoop(AgentLoopBase):
             config=self.config,
             global_step=kwargs.get('global_step', 0),
             llm_client=llm_client,
-            is_train=kwargs.get('is_train', True),
+            is_train=kwargs.get('is_train', not kwargs.get('validate', False)),
             tokenizer=self.tokenizer,
         )
         rollout_results = await process_item(item, context)
