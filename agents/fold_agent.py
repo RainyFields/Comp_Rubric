@@ -191,7 +191,7 @@ async def process_item(
                         branch_message = fn_call['arguments'].get('message', 'Empty message')
                         branch_message = f'Branch has finished its task, the returned message is:\n\n{branch_message}'
                 if branch_message is None:
-                    branch_message = f'Branch has finished its task. The last message was:\n\n{clean_response(last_response)}'
+                    branch_message = f'Branch has finished its task. The last message was:\n\n{clean_response(last_response or "")}'
                 observation = branch_message
                 branch_return[agent_name] = observation
                 # print(observation)
