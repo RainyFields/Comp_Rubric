@@ -138,5 +138,15 @@
   "overlong_rate": 0.5116666666666667,
   "score": 0.09333333333333334,
   "valid": true
+ },
+ "norl_base_t1n4_sc": {
+  "avg_branches": 1.55,
+  "avg_main_chars": 101103,
+  "avg_num_turns": null,
+  "n_errors": 0,
+  "n_traj": 600,
+  "overlong_rate": 0.5983333333333334,
+  "score": 0.16833333333333333,
+  "valid": true
  }
 }

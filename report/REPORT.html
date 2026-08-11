@@ -30,7 +30,7 @@ img { max-width: 100%; }
 <tr>
 <td>No-RL Qwen3-8B</td>
 <td>0.167</td>
-<td>0.093†</td>
+<td>0.168</td>
 </tr>
 <tr>
 <td>GRPO step-50</td>
@@ -54,13 +54,12 @@ img { max-width: 100%; }
 </tr>
 </tbody>
 </table>
-<p>† measured once on the earlier partially-exposed path; clean re-measurement in progress — the base-vs-RL gap at this tier (≥0.15) dwarfs any plausible correction.</p>
 <p>Training-time validation curve endpoints (same protocol, in-process): no-RL 0.16 → GRPO 0.293 → FoldGRPO 0.34.</p>
 <p><strong>Findings:</strong></p>
 <ol>
-<li><strong>RL delivers large, significant gains — replicates.</strong> Both arms rise from ~0.09–0.16 (base) to ~0.25–0.29. At the well-powered T=1.0 tier, GRPO beats base by +17.4pts and FoldGRPO by +5.4pts, both ≫ CI. This mirrors the paper's core claim that RL is what unlocks the folding agent (paper: 0.42 → 0.62 at 36B).</li>
+<li><strong>RL delivers large, significant gains — replicates.</strong> Both arms rise from ~0.09–0.16 (base) to ~0.25–0.29. At the well-powered T=1.0 tier (600 samples/arm), GRPO beats base by +9.9pts and FoldGRPO by +11.4pts, both ≫ CI (±3.4 paired). This mirrors the paper's core claim that RL is what unlocks the folding agent (paper: 0.42 → 0.62 at 36B).</li>
 <li><strong>FoldGRPO &gt; GRPO does not reproduce at 8B.</strong> At greedy, the arms are statistically tied (0.25–0.29 band); GRPO's step-50 is nominally best. The paper's +7.7pt FoldGRPO-over-GRPO gap (36B) is absent here; if anything the sign is mixed. Caveats: one base-model scale point, one seed per arm, GRPO effectively trained 98/100 steps (§5).</li>
-<li><strong>All arms are temperature-robust; an apparent FoldGRPO "temperature fragility" was a measurement artifact.</strong> Initial T=1.0 runs for FoldGRPO scored 0.147 (step-100) and 0.09 (step-50); clean re-measurements on isolated infrastructure returned 0.282 and 0.243 — at greedy level. The bad runs had executed adjacent to an infrastructure outage with tool-call failure rates <em>below</em> our 50-error contamination threshold: sub-threshold contamination silently cost 10–15 points. Lesson: for tool-dependent agent evals, contamination screens must be per-trajectory, not per-run. At the powered T=1.0 tier the final arm comparison is FoldGRPO 0.282 vs GRPO 0.267 (+1.5, within CI ±3.4) — consistent with a statistical tie, sign favoring FoldGRPO.</li>
+<li><strong>All arms are temperature-robust; an apparent FoldGRPO "temperature fragility" was a measurement artifact.</strong> Initial T=1.0 runs scored 0.147 (FoldGRPO@100), 0.09 (FoldGRPO@50), and 0.093 (base); clean re-measurements on isolated infrastructure returned 0.282, 0.243, and 0.168 — at greedy level. The bad runs had executed adjacent to an infrastructure outage with tool-call failure rates <em>below</em> our 50-error contamination threshold: sub-threshold contamination silently cost 10–15 points. Lesson: for tool-dependent agent evals, contamination screens must be per-trajectory, not per-run. At the powered T=1.0 tier the final arm comparison is FoldGRPO 0.282 vs GRPO 0.267 (+1.5, within CI ±3.4) — consistent with a statistical tie, sign favoring FoldGRPO.</li>
 </ol>
 <p><img alt="" src="assets/fig1_scores.png" /></p>
 <h2>3. Behavioral signatures (paper Table-2 analogue) — the mechanism replicates</h2>
@@ -112,7 +111,7 @@ img { max-width: 100%; }
 <li><strong>Six version-skew bugs in the released re-implementation</strong> were patched (all committed locally, documented in git): kwargs array shape, agent-loop registration in ray workers, <code>max_tokens</code> duplication, missing rollout logprobs (needed for FoldGRPO's importance ratios), pydantic class identity, validation <code>is_train</code> flag. Plus one eval-path crash fix and a <code>None</code>-guard. The training <em>hyperparameters</em> are the authors' script verbatim.</li>
 <li><strong>GRPO trained 98 effective steps of 100</strong>: an infra outage zeroed rewards for steps 95–96 (exact no-ops — zero advantage ⇒ zero gradient); steps 91–100 were re-run from the step-90 checkpoint after the first attempt's tail (91–100) was fully dead. FoldGRPO's 100 steps were clean.</li>
 <li><strong>Judge substitution</strong> (gpt-oss-120b for GPT-5-nano/4o-mini/4.1) means absolute numbers are not comparable to the paper's Table 1; all cross-arm comparisons use the single fixed judge. 49-call audit on the baseline run: all verdicts parseable, sampled decisions correct.</li>
-<li><strong>Contamination discipline:</strong> any eval overlapping an infra outage was screened by tool-call error count (&gt;50 ⇒ invalid) and re-run; three contaminated results were caught and discarded (both FoldGRPO T-1.0 cells and the no-RL greedy; a fourth, sub-threshold case was exposed by a scheduled cross-check and re-measured, prompting the per-trajectory screening recommendation in §2.3.</li>
+<li><strong>Contamination discipline:</strong> any eval overlapping an infra outage was screened by tool-call error count (&gt;50 ⇒ invalid) and re-run; three contaminated results were caught and discarded (both FoldGRPO T-1.0 cells and the no-RL greedy; two further sub-threshold cases (incl. the no-RL T=1.0 cell, 0.093→0.168) were exposed by scheduled cross-checks and re-measured, prompting the per-trajectory screening recommendation in §2.3.</li>
 <li>Single seed per arm; 150-item test set (greedy CI ≈ ±4pts); one model scale.</li>
 </ul>
 <h2>6. Conclusion</h2>
