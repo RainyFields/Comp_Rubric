@@ -1,0 +1,11 @@
+arm,operating_point,results_json_tag,score,n_graded_samples,ci95_binomial
+No-RL base,greedy_pass@1,norl_base_greedy_sc,0.166667,150,0.059641
+GRPO@50,greedy_pass@1,grpo_50_greedy_sc,0.286667,150,0.072368
+GRPO@100,greedy_pass@1,grpo_100_greedy_sc,0.253333,150,0.069602
+FoldGRPO@50,greedy_pass@1,foldgrpo_50_greedy,0.246667,150,0.068986
+FoldGRPO@100,greedy_pass@1,foldgrpo_100_greedy_sc,0.28,150,0.071855
+No-RL base,t1.0_mean@4,norl_base_t1n4_sc,0.168333,600,0.029939
+GRPO@50,t1.0_mean@4,grpo_50_t1n4_sc,0.268333,600,0.035455
+GRPO@100,t1.0_mean@4,grpo_100_t1n4_sc,0.266667,600,0.035385
+FoldGRPO@50,t1.0_mean@4,foldgrpo_50_t1n4_sc,0.243333,600,0.034335
+FoldGRPO@100,t1.0_mean@4,foldgrpo_100_t1n4_sc,0.281667,600,0.035992

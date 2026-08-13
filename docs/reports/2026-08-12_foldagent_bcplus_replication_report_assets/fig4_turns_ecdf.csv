@@ -1,0 +1,751 @@
+arm,results_json_tag,traj_index,n_main_thread_tool_calls,n_branch_calls,n_return_calls,score
+No-RL base,norl_base_greedy_sc,0,9,4,0,0.0
+No-RL base,norl_base_greedy_sc,1,9,1,1,0.0
+No-RL base,norl_base_greedy_sc,2,3,1,0,0.0
+No-RL base,norl_base_greedy_sc,3,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,4,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,5,17,4,0,0.0
+No-RL base,norl_base_greedy_sc,6,9,2,0,0.0
+No-RL base,norl_base_greedy_sc,7,4,1,1,1.0
+No-RL base,norl_base_greedy_sc,8,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,9,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,10,7,0,0,0.0
+No-RL base,norl_base_greedy_sc,11,10,1,0,0.0
+No-RL base,norl_base_greedy_sc,12,6,0,0,0.0
+No-RL base,norl_base_greedy_sc,13,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,14,8,1,0,0.0
+No-RL base,norl_base_greedy_sc,15,13,1,1,1.0
+No-RL base,norl_base_greedy_sc,16,7,0,0,0.0
+No-RL base,norl_base_greedy_sc,17,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,18,12,6,0,0.0
+No-RL base,norl_base_greedy_sc,19,7,1,1,0.0
+No-RL base,norl_base_greedy_sc,20,8,2,0,0.0
+No-RL base,norl_base_greedy_sc,21,14,1,0,0.0
+No-RL base,norl_base_greedy_sc,22,12,2,0,1.0
+No-RL base,norl_base_greedy_sc,23,5,1,1,0.0
+No-RL base,norl_base_greedy_sc,24,8,3,0,0.0
+No-RL base,norl_base_greedy_sc,25,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,26,5,3,0,0.0
+No-RL base,norl_base_greedy_sc,27,9,4,0,1.0
+No-RL base,norl_base_greedy_sc,28,4,0,0,0.0
+No-RL base,norl_base_greedy_sc,29,8,0,0,0.0
+No-RL base,norl_base_greedy_sc,30,6,4,0,0.0
+No-RL base,norl_base_greedy_sc,31,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,32,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,33,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,34,9,0,0,0.0
+No-RL base,norl_base_greedy_sc,35,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,36,9,1,1,1.0
+No-RL base,norl_base_greedy_sc,37,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,38,8,4,0,0.0
+No-RL base,norl_base_greedy_sc,39,5,2,0,0.0
+No-RL base,norl_base_greedy_sc,40,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,41,5,2,0,0.0
+No-RL base,norl_base_greedy_sc,42,7,3,0,0.0
+No-RL base,norl_base_greedy_sc,43,5,1,0,0.0
+No-RL base,norl_base_greedy_sc,44,9,1,0,0.0
+No-RL base,norl_base_greedy_sc,45,8,1,0,0.0
+No-RL base,norl_base_greedy_sc,46,9,1,0,0.0
+No-RL base,norl_base_greedy_sc,47,5,2,0,1.0
+No-RL base,norl_base_greedy_sc,48,6,0,0,0.0
+No-RL base,norl_base_greedy_sc,49,5,2,0,0.0
+No-RL base,norl_base_greedy_sc,50,7,2,0,0.0
+No-RL base,norl_base_greedy_sc,51,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,52,6,5,0,0.0
+No-RL base,norl_base_greedy_sc,53,11,1,0,0.0
+No-RL base,norl_base_greedy_sc,54,8,0,0,0.0
+No-RL base,norl_base_greedy_sc,55,9,3,0,0.0
+No-RL base,norl_base_greedy_sc,56,8,1,0,0.0
+No-RL base,norl_base_greedy_sc,57,7,0,0,0.0
+No-RL base,norl_base_greedy_sc,58,6,1,1,0.0
+No-RL base,norl_base_greedy_sc,59,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,60,5,1,1,1.0
+No-RL base,norl_base_greedy_sc,61,9,1,0,0.0
+No-RL base,norl_base_greedy_sc,62,7,2,1,0.0
+No-RL base,norl_base_greedy_sc,63,4,1,0,0.0
+No-RL base,norl_base_greedy_sc,64,6,1,1,1.0
+No-RL base,norl_base_greedy_sc,65,63,0,61,0.0
+No-RL base,norl_base_greedy_sc,66,6,4,0,0.0
+No-RL base,norl_base_greedy_sc,67,8,1,0,0.0
+No-RL base,norl_base_greedy_sc,68,5,2,1,0.0
+No-RL base,norl_base_greedy_sc,69,5,4,0,0.0
+No-RL base,norl_base_greedy_sc,70,15,1,1,0.0
+No-RL base,norl_base_greedy_sc,71,10,1,1,1.0
+No-RL base,norl_base_greedy_sc,72,5,2,1,1.0
+No-RL base,norl_base_greedy_sc,73,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,74,9,4,1,1.0
+No-RL base,norl_base_greedy_sc,75,10,2,0,0.0
+No-RL base,norl_base_greedy_sc,76,5,2,0,1.0
+No-RL base,norl_base_greedy_sc,77,5,4,0,0.0
+No-RL base,norl_base_greedy_sc,78,10,1,0,0.0
+No-RL base,norl_base_greedy_sc,79,8,0,0,0.0
+No-RL base,norl_base_greedy_sc,80,5,1,0,0.0
+No-RL base,norl_base_greedy_sc,81,9,1,0,0.0
+No-RL base,norl_base_greedy_sc,82,5,1,1,1.0
+No-RL base,norl_base_greedy_sc,83,7,1,1,1.0
+No-RL base,norl_base_greedy_sc,84,8,1,0,0.0
+No-RL base,norl_base_greedy_sc,85,11,0,0,0.0
+No-RL base,norl_base_greedy_sc,86,7,1,0,0.0
+No-RL base,norl_base_greedy_sc,87,19,1,0,0.0
+No-RL base,norl_base_greedy_sc,88,5,2,1,1.0
+No-RL base,norl_base_greedy_sc,89,4,0,0,0.0
+No-RL base,norl_base_greedy_sc,90,11,1,0,0.0
+No-RL base,norl_base_greedy_sc,91,4,1,1,1.0
+No-RL base,norl_base_greedy_sc,92,5,1,0,0.0
+No-RL base,norl_base_greedy_sc,93,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,94,8,0,0,0.0
+No-RL base,norl_base_greedy_sc,95,5,1,1,1.0
+No-RL base,norl_base_greedy_sc,96,12,2,0,0.0
+No-RL base,norl_base_greedy_sc,97,12,9,0,0.0
+No-RL base,norl_base_greedy_sc,98,8,4,0,0.0
+No-RL base,norl_base_greedy_sc,99,6,0,0,0.0
+No-RL base,norl_base_greedy_sc,100,6,0,0,0.0
+No-RL base,norl_base_greedy_sc,101,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,102,10,2,1,1.0
+No-RL base,norl_base_greedy_sc,103,6,2,1,1.0
+No-RL base,norl_base_greedy_sc,104,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,105,15,1,0,0.0
+No-RL base,norl_base_greedy_sc,106,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,107,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,108,9,1,0,0.0
+No-RL base,norl_base_greedy_sc,109,8,4,0,1.0
+No-RL base,norl_base_greedy_sc,110,7,0,0,0.0
+No-RL base,norl_base_greedy_sc,111,6,4,0,0.0
+No-RL base,norl_base_greedy_sc,112,4,0,0,0.0
+No-RL base,norl_base_greedy_sc,113,5,1,0,0.0
+No-RL base,norl_base_greedy_sc,114,3,1,0,1.0
+No-RL base,norl_base_greedy_sc,115,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,116,7,1,0,0.0
+No-RL base,norl_base_greedy_sc,117,4,0,0,0.0
+No-RL base,norl_base_greedy_sc,118,6,1,1,1.0
+No-RL base,norl_base_greedy_sc,119,20,1,0,0.0
+No-RL base,norl_base_greedy_sc,120,8,1,0,0.0
+No-RL base,norl_base_greedy_sc,121,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,122,12,2,2,0.0
+No-RL base,norl_base_greedy_sc,123,5,2,0,0.0
+No-RL base,norl_base_greedy_sc,124,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,125,7,2,1,0.0
+No-RL base,norl_base_greedy_sc,126,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,127,6,2,1,0.0
+No-RL base,norl_base_greedy_sc,128,9,2,2,1.0
+No-RL base,norl_base_greedy_sc,129,9,2,2,1.0
+No-RL base,norl_base_greedy_sc,130,6,2,1,1.0
+No-RL base,norl_base_greedy_sc,131,4,1,1,0.0
+No-RL base,norl_base_greedy_sc,132,13,0,0,0.0
+No-RL base,norl_base_greedy_sc,133,7,1,0,0.0
+No-RL base,norl_base_greedy_sc,134,6,1,0,0.0
+No-RL base,norl_base_greedy_sc,135,5,4,0,0.0
+No-RL base,norl_base_greedy_sc,136,5,1,0,0.0
+No-RL base,norl_base_greedy_sc,137,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,138,11,1,0,0.0
+No-RL base,norl_base_greedy_sc,139,4,0,0,0.0
+No-RL base,norl_base_greedy_sc,140,14,1,0,0.0
+No-RL base,norl_base_greedy_sc,141,5,2,0,0.0
+No-RL base,norl_base_greedy_sc,142,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,143,5,2,1,0.0
+No-RL base,norl_base_greedy_sc,144,19,1,0,0.0
+No-RL base,norl_base_greedy_sc,145,5,2,0,0.0
+No-RL base,norl_base_greedy_sc,146,5,0,0,0.0
+No-RL base,norl_base_greedy_sc,147,7,0,0,0.0
+No-RL base,norl_base_greedy_sc,148,4,0,0,0.0
+No-RL base,norl_base_greedy_sc,149,7,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,0,4,0,0,0.0
+GRPO@50,grpo_50_greedy_sc,1,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,2,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,3,6,3,0,1.0
+GRPO@50,grpo_50_greedy_sc,4,15,10,0,0.0
+GRPO@50,grpo_50_greedy_sc,5,8,4,1,0.0
+GRPO@50,grpo_50_greedy_sc,6,6,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,7,6,2,1,1.0
+GRPO@50,grpo_50_greedy_sc,8,9,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,9,6,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,10,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,11,2,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,12,8,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,13,5,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,14,6,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,15,9,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,16,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,17,6,5,0,1.0
+GRPO@50,grpo_50_greedy_sc,18,5,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,19,6,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,20,6,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,21,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,22,11,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,23,9,3,2,1.0
+GRPO@50,grpo_50_greedy_sc,24,7,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,25,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,26,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,27,7,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,28,6,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,29,13,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,30,15,5,4,0.0
+GRPO@50,grpo_50_greedy_sc,31,6,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,32,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,33,7,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,34,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,35,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,36,13,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,37,8,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,38,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,39,10,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,40,9,2,0,1.0
+GRPO@50,grpo_50_greedy_sc,41,8,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,42,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,43,7,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,44,9,4,2,0.0
+GRPO@50,grpo_50_greedy_sc,45,8,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,46,5,2,0,0.0
+GRPO@50,grpo_50_greedy_sc,47,9,5,1,1.0
+GRPO@50,grpo_50_greedy_sc,48,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,49,7,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,50,6,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,51,6,3,0,1.0
+GRPO@50,grpo_50_greedy_sc,52,6,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,53,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,54,7,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,55,5,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,56,7,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,57,8,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,58,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,59,12,3,1,1.0
+GRPO@50,grpo_50_greedy_sc,60,12,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,61,8,3,0,1.0
+GRPO@50,grpo_50_greedy_sc,62,6,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,63,9,4,2,0.0
+GRPO@50,grpo_50_greedy_sc,64,12,2,1,1.0
+GRPO@50,grpo_50_greedy_sc,65,6,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,66,6,2,1,1.0
+GRPO@50,grpo_50_greedy_sc,67,11,3,1,1.0
+GRPO@50,grpo_50_greedy_sc,68,9,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,69,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,70,7,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,71,9,3,1,1.0
+GRPO@50,grpo_50_greedy_sc,72,7,3,1,1.0
+GRPO@50,grpo_50_greedy_sc,73,8,4,1,0.0
+GRPO@50,grpo_50_greedy_sc,74,8,4,1,1.0
+GRPO@50,grpo_50_greedy_sc,75,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,76,7,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,77,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,78,7,2,0,0.0
+GRPO@50,grpo_50_greedy_sc,79,7,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,80,10,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,81,9,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,82,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,83,8,3,2,1.0
+GRPO@50,grpo_50_greedy_sc,84,7,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,85,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,86,6,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,87,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,88,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,89,7,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,90,6,2,1,1.0
+GRPO@50,grpo_50_greedy_sc,91,8,2,1,1.0
+GRPO@50,grpo_50_greedy_sc,92,9,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,93,3,0,1,0.0
+GRPO@50,grpo_50_greedy_sc,94,8,3,1,1.0
+GRPO@50,grpo_50_greedy_sc,95,7,3,1,1.0
+GRPO@50,grpo_50_greedy_sc,96,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,97,9,5,1,0.0
+GRPO@50,grpo_50_greedy_sc,98,7,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,99,6,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,100,5,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,101,7,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,102,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,103,7,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,104,7,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,105,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,106,7,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,107,6,3,0,1.0
+GRPO@50,grpo_50_greedy_sc,108,7,6,0,0.0
+GRPO@50,grpo_50_greedy_sc,109,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,110,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,111,7,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,112,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,113,9,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,114,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,115,3,2,0,0.0
+GRPO@50,grpo_50_greedy_sc,116,8,2,0,0.0
+GRPO@50,grpo_50_greedy_sc,117,10,1,0,0.0
+GRPO@50,grpo_50_greedy_sc,118,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,119,6,3,0,0.0
+GRPO@50,grpo_50_greedy_sc,120,3,2,0,0.0
+GRPO@50,grpo_50_greedy_sc,121,10,2,0,0.0
+GRPO@50,grpo_50_greedy_sc,122,11,4,2,0.0
+GRPO@50,grpo_50_greedy_sc,123,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,124,8,7,0,0.0
+GRPO@50,grpo_50_greedy_sc,125,9,4,2,0.0
+GRPO@50,grpo_50_greedy_sc,126,8,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,127,6,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,128,4,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,129,4,2,0,1.0
+GRPO@50,grpo_50_greedy_sc,130,5,3,0,1.0
+GRPO@50,grpo_50_greedy_sc,131,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,132,5,1,1,1.0
+GRPO@50,grpo_50_greedy_sc,133,7,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,134,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,135,6,5,0,0.0
+GRPO@50,grpo_50_greedy_sc,136,5,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,137,6,2,1,1.0
+GRPO@50,grpo_50_greedy_sc,138,6,2,2,0.0
+GRPO@50,grpo_50_greedy_sc,139,6,4,0,0.0
+GRPO@50,grpo_50_greedy_sc,140,6,4,1,1.0
+GRPO@50,grpo_50_greedy_sc,141,12,6,0,0.0
+GRPO@50,grpo_50_greedy_sc,142,10,3,1,0.0
+GRPO@50,grpo_50_greedy_sc,143,4,1,1,0.0
+GRPO@50,grpo_50_greedy_sc,144,9,6,0,0.0
+GRPO@50,grpo_50_greedy_sc,145,7,6,0,0.0
+GRPO@50,grpo_50_greedy_sc,146,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,147,6,2,1,0.0
+GRPO@50,grpo_50_greedy_sc,148,7,2,2,1.0
+GRPO@50,grpo_50_greedy_sc,149,6,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,0,9,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,1,10,2,2,0.0
+GRPO@100,grpo_100_greedy_sc,2,6,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,3,7,4,0,1.0
+GRPO@100,grpo_100_greedy_sc,4,11,7,0,0.0
+GRPO@100,grpo_100_greedy_sc,5,8,5,0,1.0
+GRPO@100,grpo_100_greedy_sc,6,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,7,10,6,0,1.0
+GRPO@100,grpo_100_greedy_sc,8,12,9,0,0.0
+GRPO@100,grpo_100_greedy_sc,9,8,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,10,10,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,11,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,12,6,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,13,7,4,1,1.0
+GRPO@100,grpo_100_greedy_sc,14,10,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,15,8,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,16,8,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,17,10,7,0,0.0
+GRPO@100,grpo_100_greedy_sc,18,6,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,19,4,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,20,10,3,2,0.0
+GRPO@100,grpo_100_greedy_sc,21,6,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,22,5,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,23,10,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,24,9,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,25,7,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,26,6,1,1,0.0
+GRPO@100,grpo_100_greedy_sc,27,14,6,0,0.0
+GRPO@100,grpo_100_greedy_sc,28,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,29,8,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,30,8,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,31,6,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,32,9,5,1,0.0
+GRPO@100,grpo_100_greedy_sc,33,9,7,0,0.0
+GRPO@100,grpo_100_greedy_sc,34,5,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,35,8,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,36,5,1,1,1.0
+GRPO@100,grpo_100_greedy_sc,37,9,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,38,10,4,0,0.0
+GRPO@100,grpo_100_greedy_sc,39,8,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,40,6,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,41,9,5,1,0.0
+GRPO@100,grpo_100_greedy_sc,42,6,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,43,7,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,44,7,2,2,0.0
+GRPO@100,grpo_100_greedy_sc,45,12,6,1,0.0
+GRPO@100,grpo_100_greedy_sc,46,7,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,47,7,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,48,5,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,49,6,4,0,0.0
+GRPO@100,grpo_100_greedy_sc,50,9,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,51,7,4,0,1.0
+GRPO@100,grpo_100_greedy_sc,52,15,4,1,0.0
+GRPO@100,grpo_100_greedy_sc,53,8,4,2,0.0
+GRPO@100,grpo_100_greedy_sc,54,5,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,55,10,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,56,4,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,57,10,6,1,0.0
+GRPO@100,grpo_100_greedy_sc,58,7,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,59,5,2,0,1.0
+GRPO@100,grpo_100_greedy_sc,60,6,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,61,8,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,62,5,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,63,19,14,0,0.0
+GRPO@100,grpo_100_greedy_sc,64,10,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,65,7,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,66,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,67,5,3,0,1.0
+GRPO@100,grpo_100_greedy_sc,68,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,69,7,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,70,5,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,71,15,11,0,0.0
+GRPO@100,grpo_100_greedy_sc,72,7,4,1,1.0
+GRPO@100,grpo_100_greedy_sc,73,6,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,74,16,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,75,8,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,76,7,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,77,6,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,78,8,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,79,12,6,1,1.0
+GRPO@100,grpo_100_greedy_sc,80,5,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,81,10,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,82,7,1,1,1.0
+GRPO@100,grpo_100_greedy_sc,83,7,3,1,1.0
+GRPO@100,grpo_100_greedy_sc,84,7,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,85,7,4,0,0.0
+GRPO@100,grpo_100_greedy_sc,86,8,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,87,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,88,5,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,89,6,4,0,0.0
+GRPO@100,grpo_100_greedy_sc,90,8,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,91,5,2,0,1.0
+GRPO@100,grpo_100_greedy_sc,92,8,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,93,5,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,94,6,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,95,6,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,96,7,4,0,0.0
+GRPO@100,grpo_100_greedy_sc,97,10,5,1,0.0
+GRPO@100,grpo_100_greedy_sc,98,5,3,0,1.0
+GRPO@100,grpo_100_greedy_sc,99,4,2,0,1.0
+GRPO@100,grpo_100_greedy_sc,100,4,1,1,1.0
+GRPO@100,grpo_100_greedy_sc,101,11,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,102,6,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,103,6,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,104,4,2,0,1.0
+GRPO@100,grpo_100_greedy_sc,105,4,1,0,1.0
+GRPO@100,grpo_100_greedy_sc,106,7,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,107,9,4,1,0.0
+GRPO@100,grpo_100_greedy_sc,108,8,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,109,5,2,0,1.0
+GRPO@100,grpo_100_greedy_sc,110,7,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,111,9,1,1,0.0
+GRPO@100,grpo_100_greedy_sc,112,6,0,0,0.0
+GRPO@100,grpo_100_greedy_sc,113,15,12,0,0.0
+GRPO@100,grpo_100_greedy_sc,114,7,1,0,0.0
+GRPO@100,grpo_100_greedy_sc,115,13,10,0,0.0
+GRPO@100,grpo_100_greedy_sc,116,6,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,117,11,8,0,0.0
+GRPO@100,grpo_100_greedy_sc,118,7,3,2,1.0
+GRPO@100,grpo_100_greedy_sc,119,5,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,120,7,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,121,11,7,0,0.0
+GRPO@100,grpo_100_greedy_sc,122,7,2,0,0.0
+GRPO@100,grpo_100_greedy_sc,123,5,1,1,1.0
+GRPO@100,grpo_100_greedy_sc,124,8,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,125,7,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,126,14,11,0,0.0
+GRPO@100,grpo_100_greedy_sc,127,5,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,128,7,5,0,1.0
+GRPO@100,grpo_100_greedy_sc,129,8,3,2,1.0
+GRPO@100,grpo_100_greedy_sc,130,6,2,1,1.0
+GRPO@100,grpo_100_greedy_sc,131,6,3,0,0.0
+GRPO@100,grpo_100_greedy_sc,132,7,2,2,1.0
+GRPO@100,grpo_100_greedy_sc,133,6,3,1,0.0
+GRPO@100,grpo_100_greedy_sc,134,6,1,1,0.0
+GRPO@100,grpo_100_greedy_sc,135,7,4,1,0.0
+GRPO@100,grpo_100_greedy_sc,136,5,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,137,10,1,1,1.0
+GRPO@100,grpo_100_greedy_sc,138,10,7,0,0.0
+GRPO@100,grpo_100_greedy_sc,139,10,4,0,0.0
+GRPO@100,grpo_100_greedy_sc,140,7,1,1,1.0
+GRPO@100,grpo_100_greedy_sc,141,5,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,142,7,3,1,0.0
+GRPO@100,grpo_100_greedy_sc,143,8,2,2,0.0
+GRPO@100,grpo_100_greedy_sc,144,7,5,0,0.0
+GRPO@100,grpo_100_greedy_sc,145,9,3,2,0.0
+GRPO@100,grpo_100_greedy_sc,146,5,2,1,0.0
+GRPO@100,grpo_100_greedy_sc,147,9,4,2,0.0
+GRPO@100,grpo_100_greedy_sc,148,8,5,0,1.0
+GRPO@100,grpo_100_greedy_sc,149,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,0,5,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,1,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,2,8,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,3,6,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,4,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,5,8,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,6,7,3,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,7,7,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,8,7,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,9,8,3,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,10,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,11,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,12,9,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,13,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,14,10,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,15,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,16,9,7,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,17,8,5,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,18,4,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,19,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,20,12,9,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,21,7,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,22,4,2,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,23,6,2,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,24,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,25,5,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,26,7,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,27,7,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,28,6,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,29,6,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,30,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,31,10,0,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,32,5,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,33,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,34,5,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,35,3,1,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,36,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,37,10,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,38,8,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,39,9,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,40,7,2,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,41,7,4,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,42,5,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,43,8,3,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,44,6,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,45,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,46,7,3,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,47,5,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,48,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,49,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,50,7,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,51,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,52,15,4,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,53,94,2,89,0.0
+FoldGRPO@50,foldgrpo_50_greedy,54,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,55,9,4,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,56,8,2,2,1.0
+FoldGRPO@50,foldgrpo_50_greedy,57,11,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,58,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,59,9,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,60,6,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,61,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,62,7,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,63,8,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,64,6,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,65,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,66,7,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,67,7,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,68,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,69,7,3,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,70,8,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,71,5,0,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,72,6,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,73,8,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,74,9,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,75,8,3,2,1.0
+FoldGRPO@50,foldgrpo_50_greedy,76,6,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,77,5,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,78,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,79,5,3,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,80,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,81,8,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,82,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,83,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,84,8,4,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,85,7,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,86,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,87,7,4,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,88,6,2,2,1.0
+FoldGRPO@50,foldgrpo_50_greedy,89,8,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,90,7,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,91,4,2,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,92,9,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,93,7,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,94,10,2,2,1.0
+FoldGRPO@50,foldgrpo_50_greedy,95,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,96,9,2,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,97,7,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,98,10,3,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,99,6,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,100,38,1,0,1.0
+FoldGRPO@50,foldgrpo_50_greedy,101,6,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,102,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,103,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,104,6,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,105,8,2,2,1.0
+FoldGRPO@50,foldgrpo_50_greedy,106,12,3,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,107,7,0,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,108,4,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,109,6,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,110,6,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,111,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,112,8,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,113,9,4,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,114,5,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,115,7,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,116,8,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,117,10,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,118,9,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,119,7,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,120,4,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,121,6,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,122,11,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,123,4,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,124,5,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,125,6,1,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,126,5,3,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,127,6,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,128,7,2,2,1.0
+FoldGRPO@50,foldgrpo_50_greedy,129,6,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,130,3,0,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,131,5,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,132,9,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,133,7,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,134,5,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,135,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,136,8,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,137,4,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,138,7,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,139,14,3,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,140,7,1,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,141,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,142,6,2,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,143,7,1,1,0.0
+FoldGRPO@50,foldgrpo_50_greedy,144,8,2,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,145,10,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,146,7,2,2,0.0
+FoldGRPO@50,foldgrpo_50_greedy,147,5,0,0,0.0
+FoldGRPO@50,foldgrpo_50_greedy,148,6,2,1,1.0
+FoldGRPO@50,foldgrpo_50_greedy,149,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,0,16,6,5,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,1,8,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,2,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,3,7,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,4,14,11,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,5,8,4,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,6,8,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,7,7,2,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,8,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,9,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,10,7,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,11,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,12,7,4,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,13,8,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,14,8,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,15,8,4,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,16,6,1,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,17,7,3,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,18,7,1,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,19,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,20,8,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,21,7,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,22,8,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,23,7,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,24,10,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,25,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,26,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,27,10,7,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,28,9,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,29,12,1,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,30,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,31,10,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,32,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,33,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,34,10,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,35,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,36,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,37,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,38,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,39,9,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,40,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,41,12,4,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,42,6,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,43,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,44,12,4,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,45,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,46,7,3,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,47,22,11,8,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,48,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,49,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,50,6,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,51,6,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,52,15,11,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,53,8,4,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,54,8,3,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,55,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,56,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,57,8,3,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,58,7,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,59,6,3,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,60,6,2,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,61,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,62,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,63,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,64,9,2,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,65,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,66,5,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,67,11,3,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,68,7,3,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,69,8,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,70,8,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,71,9,6,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,72,10,4,3,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,73,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,74,7,4,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,75,9,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,76,5,1,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,77,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,78,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,79,13,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,80,6,3,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,81,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,82,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,83,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,84,8,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,85,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,86,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,87,11,4,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,88,8,2,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,89,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,90,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,91,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,92,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,93,5,2,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,94,7,2,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,95,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,96,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,97,15,7,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,98,6,3,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,99,7,2,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,100,5,1,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,101,9,6,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,102,6,1,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,103,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,104,7,1,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,105,7,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,106,10,4,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,107,7,3,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,108,8,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,109,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,110,5,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,111,8,3,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,112,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,113,8,4,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,114,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,115,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,116,10,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,117,7,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,118,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,119,7,1,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,120,6,3,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,121,7,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,122,10,4,3,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,123,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,124,8,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,125,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,126,15,5,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,127,5,1,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,128,8,3,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,129,7,2,2,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,130,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,131,6,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,132,5,2,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,133,9,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,134,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,135,9,2,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,136,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,137,9,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,138,8,3,1,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,139,11,6,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,140,5,2,0,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,141,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,142,6,2,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,143,5,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,144,8,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,145,9,3,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,146,7,2,2,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,147,7,2,0,0.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,148,8,3,1,1.0
+FoldGRPO@100,foldgrpo_100_greedy_sc,149,5,2,0,0.0

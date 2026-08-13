@@ -1,0 +1,13 @@
+setting,paper,ours
+base model,Seed-OSS-36B,Qwen3-8B
+judge (reward + scope penalty + eval grading),GPT-5-nano / gpt-4o-mini / gpt-4.1,"gpt-oss-120b (local vLLM behind API shim, all three roles)"
+rollout batch size,32,32
+group size (rollouts per prompt),8,8
+PPO mini-batch size,128,128
+learning rate,1e-6,1e-6
+training steps,50,100 (checkpoints at 50 and 100 both evaluated)
+"context (response length, tokens)",32768,32768
+max branches (sessions),10,10
+prompt length (tokens),-,8192
+hardware,-,1 node x 8 GPUs (train); separate infra worker for judge/search
+validation,-,"150-item BC-Plus test split, greedy, every 10 steps"

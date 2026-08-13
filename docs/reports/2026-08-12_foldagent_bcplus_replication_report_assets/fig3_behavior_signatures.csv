@@ -1,0 +1,4 @@
+arm,results_json_tag,overlong_rate,avg_branches_per_traj,avg_main_thread_chars,avg_num_turns
+No-RL base,norl_base_greedy_sc,0.6,1.31,101506,16.64
+GRPO@100,grpo_100_greedy_sc,0.24666666666666667,3.19,79866,16.166666666666668
+FoldGRPO@100,foldgrpo_100_greedy_sc,0.04,2.71,50364,15.92
