@@ -1,0 +1,51 @@
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{Task and data.} We use the authors' released \bcplus{} split: 680 training and 150
+test instances (50 each easy/medium/hard), with search over the Tevatron \bcplus{} corpus
+($\sim$100k documents) using the authors' precomputed Qwen3-Embedding-8B embeddings. The agent's
+tools are \texttt{search}, \texttt{open\_page}, and---for the folding agent---\texttt{branch}
+and \texttt{return}.
+
+\paragraph{Arms.} All three arms start from \qwen{} and share data, seeds, and infrastructure.
+\foldgrpo{} runs the authors' training script verbatim; the \grpo{} arm differs by exactly two
+flags (outcome-only advantage estimation and no process rewards); the no-RL arm is the base
+model under the identical agent scaffold. \Cref{tab:config} lists our configuration against the
+paper's.
+
+\paragraph{Judge.} The pipeline calls an LLM judge in three roles: the binary outcome reward
+during training, \foldgrpo{}'s out-of-scope process penalty, and final answer grading. We serve
+\judgemodel{} locally behind an API shim that presents the model aliases the codebase requests,
+and use it for all three roles in all arms; judge calls are logged for audit. A 49-call manual
+audit found all verdicts parseable and sampled decisions correct. Absolute scores are therefore
+not comparable to the paper's; all cross-arm comparisons use this single fixed judge.
+
+\paragraph{Evaluation protocol.} All reported scores are measured through the training stack's
+validation path (token-level continuation serving) for every arm, at two operating points:
+greedy decoding (pass@1, $n{=}150$, binomial 95\% CI $\approx \pm 4$ points) and temperature
+1.0 with four samples per item (mean@4, 600 graded samples, CI $\approx \pm 2.4$ points).
+\Cref{sec:serving} explains why chat-templated serving is invalid for these checkpoints.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+Setting & Paper & Ours \\
+\midrule
+Base model & \seedoss{} & \qwen{} \\
+Judge (all roles) & GPT-5-nano / gpt-4o-mini / gpt-4.1 & \judgemodel{} (local vLLM) \\
+Rollout batch size & 32 & 32 \\
+Group size & 8 & 8 \\
+PPO mini-batch size & 128 & 128 \\
+Learning rate & $10^{-6}$ & $10^{-6}$ \\
+Training steps & 50 & 100 (steps 50 and 100 both evaluated) \\
+Context (response tokens) & 32{,}768 & 32{,}768 \\
+Max branches & 10 & 10 \\
+Hardware & --- & $1 \times 8$ GPUs per arm; separate judge/search node \\
+\bottomrule
+\end{tabular}
+\caption{Configuration versus the paper. Training hyperparameters follow the authors' released
+script verbatim; only the base model, the judge, and the step count differ.}
+\label{tab:config}
+\end{table}

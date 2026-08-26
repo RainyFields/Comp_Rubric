@@ -1,0 +1,13 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+At 8B scale, with the authors' released re-implementation and an open judge, context folding's
+mechanism and its emergence under reinforcement learning replicate clearly: both RL arms gain
+roughly +10 points over the base model, and \foldgrpo{} learns context management that \grpo{}
+does not (a six-fold lower context-blowout rate and a 37\% shorter main thread). The
+\foldgrpo{}-over-\grpo{} scoring advantage reported at 36B does not replicate: the arms are
+statistically tied at both decoding regimes, with the sign mildly favoring \foldgrpo{} under
+sampling. Beyond the replication verdict, we contribute the serving-path sensitivity result,
+the per-trajectory contamination-screening recommendation, and a working patch set for the
+public code. We release scripts, per-run logs, trajectory dumps, and judge audit logs for
+independent verification.

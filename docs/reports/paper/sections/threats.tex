@@ -1,0 +1,23 @@
+\section{Deviations and Threats to Validity}
+\label{sec:threats}
+
+\paragraph{Code patches.} The released re-implementation required eight fixes to run: six
+version-skew bugs on the training path (including rollout log-probabilities that \foldgrpo{}'s
+importance ratios require but that the rollout server did not return) and two evaluation-path
+fixes. All are committed with documentation; training hyperparameters are the authors' script
+verbatim.
+
+\paragraph{Effective steps.} \grpo{} trained 98 effective steps of 100
+(\cref{sec:results}); \foldgrpo{} trained 100.
+
+\paragraph{Judge substitution.} \judgemodel{} replaces the paper's proprietary judges in all
+three roles, so absolute numbers are not comparable to the paper's; within-study comparisons
+use one fixed judge, audited manually on 49 calls.
+
+\paragraph{Statistical power.} One seed per arm; the greedy tier has $n{=}150$ (CI
+$\approx \pm 4$ points); one base-model scale (8B). The paper's 36B margin may be real at scale;
+our result shows only that it does not manifest at 8B under a matched protocol.
+
+\paragraph{Scope.} We replicate the \bcplus{} (deep research) track only; the paper's software
+engineering track is not reproducible from the released code, which omits the corresponding
+training environment.

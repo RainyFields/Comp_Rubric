@@ -1,0 +1,48 @@
+\section{Behavioral Analysis: The Mechanism Replicates}
+\label{sec:behavior}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+Arm & Blowout rate $\downarrow$ & Branches/traj.\ & Main thread (chars) & Turns \\
+\midrule
+No-RL base & 0.60 & 1.31 & 101{,}506 & 16.6 \\
+\grpo{} step-100 & 0.247 & 3.19 & 79{,}866 & 16.2 \\
+\foldgrpo{} step-100 & \textbf{0.04} & 2.71 & \textbf{50{,}364} & 15.9 \\
+\bottomrule
+\end{tabular}
+\caption{Behavioral signatures over all 150 greedy validation trajectories per arm. Blowout
+rate is the fraction of trajectories that exhaust the 32k context; branches are
+\texttt{branch} calls counted in the dumped outputs; main-thread length is in characters.}
+\label{tab:behavior}
+\end{table}
+
+The paper's central mechanism claim is that \foldgrpo{}'s process rewards teach the agent to
+keep its working context small by offloading token-heavy work into branches. This reproduces
+cleanly (\cref{tab:behavior}, \cref{fig:behavior}): relative to \grpo{}, \foldgrpo{} cuts the
+context-blowout rate by a factor of six (0.04 vs.\ 0.25; the no-RL base sits at 0.60) and holds
+a 37\% shorter main thread at comparable branching and turn counts---active folding rather than
+less work. Expressed as the paper's finish-rate metric, the ordering and rough magnitudes match:
+$\approx$0.96 (\foldgrpo{}) vs.\ 0.75 (\grpo{}) vs.\ 0.40 (base), against the paper's 0.935
+vs.\ 0.738 at 36B. Branching grows with RL in both arms (from $\approx$1 to $\approx$3 branches
+per trajectory) and rises further under sampling, matching the paper's training dynamics.
+\Cref{fig:ecdf} shows the distribution of main-thread tool calls; branch-interior calls are
+folded away and hence not visible, so these counts are a stated undercount.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig3_behavior_signatures.pdf}
+\caption{Behavioral signatures by arm under greedy decoding (150 trajectories per arm):
+context-blowout rate, branches per trajectory, and main-thread length.}
+\label{fig:behavior}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/fig4_turns_ecdf.pdf}
+\caption{Empirical CDF of main-thread tool calls per trajectory (greedy, $n{=}150$ per arm),
+computed from the dumped outputs. Folded branch-interior calls are not visible to this count.}
+\label{fig:ecdf}
+\end{figure}

@@ -1,0 +1,64 @@
+\section{Methodological Findings}
+\label{sec:method-findings}
+
+\subsection{Serving-Path Sensitivity of Folded-Context Policies}
+\label{sec:serving}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Checkpoint & Chat-templated serving & Training-style serving \\
+\midrule
+No-RL base & 0.147 & 0.160--0.167 \\
+\foldgrpo{} step-50 & 0.027 & 0.247 \\
+\foldgrpo{} step-100 & 0.093 & 0.267 \\
+\bottomrule
+\end{tabular}
+\caption{The same checkpoints scored through a standard OpenAI-style chat endpoint versus the
+training stack's token-level validation path. The RL'd policies collapse under chat
+re-templating; the base model is unaffected.}
+\label{tab:serving}
+\end{table}
+
+Our first evaluation attempt served checkpoints behind a standard \texttt{/chat/completions}
+endpoint and produced catastrophically low scores for the RL'd models while leaving the base
+model unaffected (\cref{tab:serving}). The cause is that per-turn chat re-templating drops
+prior-turn reasoning content that token-level continuation preserves; the RL'd policies come to
+depend on it. Outputs remain locally coherent, but trajectories shorten from $\approx$17 to
+$\approx$4 turns. The practical implication is that deployment serving must match training
+serving for context-folding agents---a caveat absent from the paper. All scores in
+\cref{sec:results} therefore use the training-style path for every arm.
+
+\subsection{Per-Trajectory Contamination Screening}
+\label{sec:contamination}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Cell & Contaminated & Clean re-measurement \\
+\midrule
+\foldgrpo{} step-100, $T{=}1.0$ & 0.147 & 0.282 \\
+\foldgrpo{} step-50, $T{=}1.0$ & 0.090 & 0.243 \\
+No-RL base, greedy & 0.000 & 0.167 \\
+No-RL base, $T{=}1.0$ & 0.093 & 0.168 \\
+\bottomrule
+\end{tabular}
+\caption{Evaluation cells that overlapped infrastructure outages of the shared search/judge
+node, before and after re-measurement on isolated infrastructure.}
+\label{tab:contamination}
+\end{table}
+
+Four evaluation cells overlapped outages of the shared search/judge node
+(\cref{tab:contamination}). Two failed an aggregate screen (more than 50 tool-call errors per
+run) and were discarded immediately; two passed it with \emph{sub-threshold} contamination and
+silently lost 10--15 points. The latter pair briefly supported a plausible but false
+conclusion---that \foldgrpo{}'s process rewards make the policy fragile to sampling
+temperature---which scheduled cross-check runs on self-contained workers overturned: all arms
+are temperature-robust. We conclude that contamination screening for tool-dependent agent
+evaluations must operate per trajectory (e.g., discarding trajectories containing failed tool
+calls) rather than per run, because aggregate error counts can pass while enough trajectories
+are silently degraded to move headline numbers by several points.

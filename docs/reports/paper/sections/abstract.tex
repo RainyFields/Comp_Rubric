@@ -1,0 +1,20 @@
+\begin{abstract}
+Context-folding \citep{sun2025contextfolding} equips a long-horizon LLM agent with
+\emph{branch} and \emph{return} actions that collapse completed sub-trajectories into short
+summaries, and trains this behavior end-to-end with \foldgrpo{}, a \grpo{} variant with dense
+process rewards over dynamically folded contexts. We replicate the \bcplus{} track of the paper
+using the authors' open-source re-implementation, substituting \qwen{} for the original
+\seedoss{} and a locally served \judgemodel{} for all judge roles. Across three arms trained on
+identical data and hyperparameters---no-RL, \grpo{}, and \foldgrpo{}---we find that the
+\emph{mechanism} replicates clearly: reinforcement learning lifts pass@1 from 0.167 to the
+0.25--0.29 band in both RL arms, and \foldgrpo{} learns markedly better context management than
+\grpo{} (context-blowout rate 0.04 vs.\ 0.25; 37\% shorter main thread at equal branching).
+However, the paper's \emph{scoring} advantage of \foldgrpo{} over \grpo{} (+7.7 points at 36B)
+does not reproduce at 8B: the two arms are statistically tied at both greedy and sampled
+decoding. We further contribute two methodological findings: folded-context RL policies
+collapse under standard chat-templated serving and must be evaluated with training-style
+token-level serving, and contamination screening for tool-dependent agent evaluations must be
+performed per trajectory rather than per run---a sub-threshold infrastructure outage silently
+cost 10--15 points on two cells and briefly fabricated a spurious ``temperature fragility''
+finding before scheduled cross-checks overturned it.
+\end{abstract}

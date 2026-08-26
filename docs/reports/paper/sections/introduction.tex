@@ -1,0 +1,32 @@
+\section{Introduction}
+\label{sec:intro}
+
+Long-horizon agentic tasks strain the context window: a ReAct-style agent
+\citep{yao2023react} accumulates every action--observation pair, degrading both efficiency and
+accuracy as trajectories grow. \citet{sun2025contextfolding} propose \emph{context folding}: the
+agent may branch into a sub-trajectory for a localized subtask and, upon return, the
+intermediate steps are removed from its working context, leaving a concise summary. To make the
+behavior learnable, they introduce \foldgrpo{}, which augments \grpo{}
+\citep{shao2024deepseekmath} with (i) advantage computation over dynamically folded contexts and
+(ii) dense token-level process rewards (an unfolded-token penalty, an out-of-scope penalty, and
+a failure penalty). On \bcplus{} \citep{chen2025browsecompplus}, a retrieval-grounded variant of
+BrowseComp \citep{wei2025browsecomp}, the paper reports 0.620 pass@1 for the folding agent
+trained with \foldgrpo{} at 36B scale, against 0.567 for a matched \grpo{} baseline.
+
+We ask whether these results survive two substitutions that any independent group without
+frontier-scale resources would make: a smaller open base model (\qwen{};
+\citealp{yang2025qwen3}) and an open judge (\judgemodel{}; \citealp{openai2025gptoss}) in place
+of proprietary graders. We replicate the \bcplus{} track with the authors' released
+re-implementation, holding data, hyperparameters, and infrastructure identical across three
+arms. Our pre-registered criteria were (1) the directional ordering
+$\foldgrpo{} > \grpo{} > \text{no-RL}$ with honest confidence intervals, (2) the paper's
+behavioral signatures (context compression, finish rate, branching), and (3) a
+temperature-1.0, $n{=}4$ tier (600 graded samples per arm) to supplement the underpowered
+150-item greedy tier.
+
+\paragraph{Contributions.} (i) The first independent replication of context folding, at a
+smaller scale: the mechanism and its RL-driven emergence reproduce; the \foldgrpo{}-over-\grpo{}
+scoring margin does not. (ii) A serving-path sensitivity result: folded-context RL policies
+break under chat-templated serving. (iii) An evaluation-integrity result on per-trajectory
+contamination screening. (iv) A working patch set (eight fixes) for the public
+re-implementation.
