@@ -298,11 +298,41 @@ class AgentContext:
         self.prompt_ids_len = len(sum(self.chat_ids[:prompt_turn], []))
 
     def get_turn_context(self, i):
+        """Token ids for turn ``i`` of ``self.chat``.
+
+        Prompt turns (``i < prompt_turn``: system + task prompt) are sliced from the full
+        template render so any template-level preamble (tool docs, default system text) is
+        kept exactly once. Every later text-only turn is rendered standalone by
+        ``render_single_turn``: a prefix diff of ``chat[:i+1]`` vs ``chat[:i]`` is not safe
+        with templates that rewrite earlier turns depending on the last message. Qwen3, for
+        example, strips every assistant ``<think>`` block before the latest plain user query,
+        so the diff came out shifted by the previous think block and the observation (or a
+        branch/summary prompt) lost its header, its first tokens, or all of it.
+        """
+        if i >= self.prompt_turn:
+            return self.render_single_turn(self.chat[i])
         tokens = self.tokenizer.apply_chat_template(self.chat[:i + 1], add_generation_prompt=False, tokenize=True)
         prev = self.tokenizer.apply_chat_template(self.chat[:i], add_generation_prompt=False,
                                                   tokenize=True) if i > 0 else []
         turn_tokens = tokens[len(prev):]
         return turn_tokens
+
+    def render_single_turn(self, turn):
+        """Render one message on its own, independent of the rest of the conversation.
+
+        The turn is rendered behind a fixed anchor (the chat's system message, if any, plus a
+        plain user query) whose own tokens are sliced off. The anchor keeps templates from
+        injecting a default system prompt, and the plain user query in it makes an assistant
+        turn render *after* a query boundary, so its ``<think>`` block is kept (Qwen3 strips
+        reasoning only from assistant turns at or before the latest query). A re-tokenized
+        assistant turn therefore matches what the policy saw when it generated it.
+        """
+        anchor = self.chat[:1] if self.chat and self.chat[0].get('role') == 'system' else []
+        anchor = anchor + [{'role': 'user', 'content': 'anchor'}]
+        tokens = self.tokenizer.apply_chat_template(anchor + [turn], add_generation_prompt=False, tokenize=True)
+        prev = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True)
+        assert tokens[:len(prev)] == prev, 'chat template does not render turns as a pure append'
+        return tokens[len(prev):]
 
     def get_generation_prompt(self):
         if self.generation_prompt is None:
@@ -441,7 +471,7 @@ class Agent(AgentContext):
                 break
             if observation_prompt:
                 observation += '\n' + observation_prompt
-            self.append({'role': 'user', 'content': observation, })
+            self.append({'role': 'user', 'content': wrap_tool_response(observation), })
 
         if last_response is None and summary_prompt is not None:
             if len(self.context()) - init_len > self.config.response_length - 1024:  # summary
@@ -508,6 +538,27 @@ class _UnusedLocalAgentLoopOutput(BaseModel):
     """Auxiliary performance metrics"""
     extra_fields: dict[str, Any] = {}
     """Extra fields for dynamic addition."""
+
+
+TOOL_RESPONSE_OPEN = "<tool_response>"
+TOOL_RESPONSE_CLOSE = "</tool_response>"
+
+
+def wrap_tool_response(observation) -> str:
+    """Mark an environment/tool observation as a tool response for the chat template.
+
+    Qwen3's chat template treats a user message as a *new query* unless it starts with
+    ``<tool_response>`` and ends with ``</tool_response>``. A new query boundary makes the
+    template strip every earlier assistant ``<think>...</think>`` block, so rendering
+    ``chat[:i]`` and ``chat[:i+1]`` no longer share a prefix and the per-turn token diff in
+    ``AgentContext.get_turn_context`` drops the start of the observation (or all of it).
+    Wrapping observations keeps the query boundary at the last genuine instruction, so prior
+    reasoning is preserved across tool turns and the diff stays aligned.
+
+    Only environment/tool results must be wrapped. Genuine instructions (task prompt, branch
+    task prompt, summary prompt) are appended unwrapped so they remain new-query boundaries.
+    """
+    return f"{TOOL_RESPONSE_OPEN}\n{observation}\n{TOOL_RESPONSE_CLOSE}"
 
 
 async def run_action(env, response):

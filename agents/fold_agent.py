@@ -9,7 +9,7 @@ from uuid import uuid4
 from typing import Any, Union
 
 from verl import DataProto
-from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_action, AgentLoopOutput, AgentLoopMetrics
+from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_action, wrap_tool_response, AgentLoopOutput, AgentLoopMetrics
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
 
@@ -209,7 +209,8 @@ async def process_item(
         if process_reward:
             observation = truncate_text(observation, max_lines=100, merge_repeat=True, merge_num=4)
         # print(observation)
-        agent['main'].append({'role': 'user', 'content': observation})
+        # Environment/tool result: wrap so the chat template keeps prior <think> blocks (see wrap_tool_response)
+        agent['main'].append({'role': 'user', 'content': wrap_tool_response(observation)})
         session_message.append({'role': 'user', 'content': observation})
 
     env.stats['session_time'] = time.time() - session_start_time
