@@ -1,0 +1,22 @@
+date_pdt	sid	name	spec	note
+2026-09-09 14:11	f5d96664ab033a29	fold-val-norl-base-fix-h100	fold_val_norl_fix_h100.json	no-RL Qwen3-8B greedy+t1n4 val-only with think-stripping fix (b94b34f), TAGSUF=_fix -> FAILED exit 45 (judge cp)
+2026-09-09 17:26	08c0257a785bc5f7	fold-val-norl-base-fix-h100	fold_val_norl_fix_h100.json	resubmit after exit 45 (cp omitted original/ dir); same assets, fixed entrypoint -> DONE 18:24 PDT: greedy 0.207, t1n4 0.170 (old 0.167 / 0.168); obs 100% intact; ~40 min wall
+2026-09-10 12:20	2901f3ffa76b1241	fold-infra-fix-a100	fold-infra-fix-a100.json	retrain with fix b94b34f; markers_fix on HDFS; ckpt_fix/<arm>; W&B *_fix -> FAILED 14:29 (search server health timeout 2h)
+2026-09-10 12:21	e3fa4b477321a2c4	fold-train-foldgrpo-fix-h100	fold-train-foldgrpo-fix-h100.json	retrain with fix b94b34f; markers_fix on HDFS; ckpt_fix/<arm>; W&B *_fix -> job_stopped 16:10 PDT by unknown actor while idle-waiting (no platform kill event)
+2026-09-10 12:22	f637a82bf1633a43	fold-train-grpo-fix-h100	fold-train-grpo-fix-h100.json	retrain with fix b94b34f; markers_fix on HDFS; ckpt_fix/<arm>; W&B *_fix -> job_stopped 16:10 PDT by unknown actor while idle-waiting (no platform kill event)
+2026-09-10 14:35	3dd0eba43c898ec0	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit: 2901f3ff search server never healthy in 2h (silent); now explicit dataset dl + HDFS hf seed + unbuffered logs
+2026-09-10 14:52	fc78287521fcfec7	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #3: 3dd0eba4 failed on wrong embeddings filename (corpus_embeddings -> corpus_embeddings.pkl); hf seed on HDFS -> STOPPED by me 16:4x (health check loopback bug; server itself fine)
+2026-09-10 16:23	d13ad1a640b9b181	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #4: #3 server was healthy on its IPv6 addr but health check probed 127.0.0.1 (fails on dc61 pods); probe via advertised IP now -> stopped killed ~20:05 PDT (unknown actor)
+2026-09-10 16:35	ed81a06ae2477596	fold-train-foldgrpo-fix-h100	fold-train-foldgrpo-fix-h100.json	resubmit after job_stopped 16:10; launched only once INFRA_READY (infra #4)
+2026-09-10 16:36	078762e6527e2b8d	fold-train-grpo-fix-h100	fold-train-grpo-fix-h100.json	resubmit after job_stopped 16:10; launched only once INFRA_READY (infra #4)
+2026-09-10 20:17	534e5b27c084edfb	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #5: infra #4 d13ad1a6 stopped/killed ~20:05 PDT after ~3.5h (arms training, step ~12)
+2026-09-11 00:21	8821ce258ee8cca8	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #6: infra #5 534e5b27 stopped/killed ~22:1x PDT (off-grid)
+2026-09-11 00:36	b189f349f64746f6	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #7: #6 8821ce25 landed on n214-181-028 where openai_harmony could not download the tiktoken vocab (judge died) -> READY 00:47 on n214 -> killed 11:12Z grid (mlx)
+2026-09-11 00:46	8b5c72633a6a5b1c	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #8: TIKTOKEN_ENCODINGS_BASE fix (vocab staged on HDFS); #7 b189f349 got old tarball on n214 again -> STOPPED by me 00:50 (#7 came READY on n214 after all; #8 would have wiped the marker during its bootstrap)
+2026-09-11 04:15	a7be8bb0fe6975cf	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #9 after #7 b189f349 stopped/killed -> READY 04:32 -> killed ~08:1x PDT grid
+2026-09-11 05:22	dbd804fa5d77f9fd	fold-val-grpo-fix-step20-h100	fold_val_grpo_fix_step20_h100.json	re-eval of contaminated step-20 val (greedy) -> DONE 05:4x: greedy 0.287
+2026-09-11 08:22	6840600cee08e6bf	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #10 after #9 a7be8bb0 killed (grid) -> READY 08:39 (dc61) -> killed ~12:1x PDT grid
+2026-09-11 09:02	6864457324a30cfb	fold-val-foldgrpo-fix-step20-h100	fold_val_foldgrpo_fix_step20_h100.json	re-eval of contaminated step-20 val (greedy), auto-submitted after ckpt upload -> DONE 09:3x: greedy 0.247
+2026-09-11 12:15	7e1d6afba0498a67	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #11 after #10 6840600c killed (grid) -> READY 12:32 -> killed ~16:1x PDT grid
+2026-09-11 16:15	2c928463815bc356	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #12 after #11 7e1d6afb killed (grid) -> READY 16:32 -> killed ~20:1x PDT grid
+2026-09-11 20:15	78cec81a89ec9c9e	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #13 after #12 2c928463 killed (grid)
