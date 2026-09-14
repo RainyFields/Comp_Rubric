@@ -1,0 +1,21 @@
+arm,operating_point,checkpoint_step,effective_trained_steps,score,n_graded,ci95_binomial,source,source_path_under_fold_replication
+foldgrpo,greedy_pass@1,0,0,0.2067,150,0.064804,no-RL base (val-only job),results/valonly_norl_base_greedy_fix_sc/dump/0.jsonl
+foldgrpo,greedy_pass@1,10,10,0.2267,150,0.067005,in-training,val_dump_fix/foldgrpo/10.jsonl
+foldgrpo,greedy_pass@1,20,20,0.2467,150,0.068989,val-only re-eval from uploaded checkpoint,results/valonly_foldgrpo_20_greedy_fix_sc/dump/0.jsonl
+foldgrpo,greedy_pass@1,30,30,0.3333,150,0.075439,in-training,val_dump_fix/foldgrpo/30.jsonl
+foldgrpo,greedy_pass@1,40,40,0.3533,150,0.076495,in-training,val_dump_fix/foldgrpo/40.jsonl
+foldgrpo,greedy_pass@1,50,46,0.3067,150,0.073795,val-only re-eval from uploaded checkpoint,results/valonly_foldgrpo_50_greedy_fix_sc/dump/0.jsonl
+foldgrpo,t1.0_mean@4,0,0,0.17,600,0.030057,val-only job,results/valonly_norl_base_t1n4_fix_sc
+foldgrpo,t1.0_mean@4,40,40,0.32,600,0.037326,val-only job,results/valonly_foldgrpo_40_t1n4_fix_sc
+foldgrpo,t1.0_mean@4,50,46,0.335,600,0.037767,val-only job,results/valonly_foldgrpo_50_t1n4_fix_sc
+grpo,greedy_pass@1,0,0,0.2067,150,0.064804,no-RL base (val-only job),results/valonly_norl_base_greedy_fix_sc/dump/0.jsonl
+grpo,greedy_pass@1,10,10,0.26,150,0.070196,in-training,val_dump_fix/grpo/10.jsonl
+grpo,greedy_pass@1,20,20,0.2867,150,0.07237,val-only re-eval from uploaded checkpoint,results/valonly_grpo_20_greedy_fix_sc/dump/0.jsonl
+grpo,greedy_pass@1,30,30,0.2467,150,0.068989,in-training,val_dump_fix/grpo/30.jsonl
+grpo,greedy_pass@1,40,40,0.3067,150,0.073795,in-training,val_dump_fix/grpo/40.jsonl
+grpo,greedy_pass@1,50,50,0.3,150,0.073336,in-training,val_dump_fix/grpo/50.jsonl
+grpo,greedy_pass@1,60,59,0.32,150,0.074652,val-only re-eval from uploaded checkpoint,results/valonly_grpo_60_greedy_fix_sc/dump/0.jsonl
+grpo,t1.0_mean@4,0,0,0.17,600,0.030057,val-only job,results/valonly_norl_base_t1n4_fix_sc
+grpo,t1.0_mean@4,40,40,0.308333,600,0.036952,val-only job,results/valonly_grpo_40_t1n4_fix_sc
+grpo,t1.0_mean@4,50,50,0.323333,600,0.037428,val-only job,results/valonly_grpo_50_t1n4_fix_sc
+grpo,t1.0_mean@4,60,59,0.341667,600,0.037949,val-only job,results/valonly_grpo_60_t1n4_fix_sc

@@ -1,0 +1,7 @@
+model,effective_steps,greedy_pass@1,t1.0_mean@4,t1.0_best@4
+No-RL base,0,0.2067,0.17,0.2983
+GRPO ckpt 40,40,0.3067,0.3083,0.4112
+GRPO ckpt 50,50,0.3,0.3233,0.4426
+GRPO ckpt 60 (final clean),59,0.32,0.3417,0.4393
+FoldGRPO ckpt 40,40,0.3533,0.32,0.4601
+FoldGRPO ckpt 50 (final clean),46,0.3067,0.335,0.4656

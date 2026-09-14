@@ -1,0 +1,9 @@
+setting,paper,this campaign
+base model,Seed-OSS-36B,Qwen3-8B (thinking mode on)
+"judge (reward, scope penalty, eval grading)",GPT-5-nano / gpt-4o-mini / gpt-4.1,gpt-oss-120b via vLLM behind `infra/judge_shim.py` (all roles)
+rollout batch / group size / PPO mini-batch,32 / 8 / 128,32 / 8 / 128 (authors' script verbatim)
+learning rate; response length; max branches,1e-6; 32768; 10,1e-6; 32768; 10
+training steps,50,100 planned; **effective 46 (FoldGRPO) / 59 (GRPO)** (§6)
+observation rendering (this campaign's change),template renders history verbatim (Seed-OSS),post-prompt turns rendered standalone + `<tool_response>` wrapping (commit b94b34f)
+compute,-,one 8×H100 Merlin batch job per arm + one 8×A100 infra job (search index + judge)
+validation,-,"150-item BC-Plus test split, greedy, every 10 steps; final evals via self-contained val-only jobs (greedy + T=1.0 n=4)"

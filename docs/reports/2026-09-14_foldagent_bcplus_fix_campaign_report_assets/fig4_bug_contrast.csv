@@ -1,0 +1,7 @@
+code,model,dump_source,greedy_pass@1,empty_think_turn_pct,obs_intact_pct,obs_missing,main_thread_turns_per_traj,branch_calls_per_traj,finish_pct,main_thread_chars
+unpatched (2026-08),No-RL base,norl_base_greedy_sc,0.1667,82.2,0.0,913,6.91,1.31,40.0,101505
+fixed (2026-09),No-RL base,results/valonly_norl_base_greedy_fix_sc/dump/0.jsonl,0.2067,50.6,96.5,0,4.46,1.59,89.3,38461
+unpatched (2026-08),GRPO@100,grpo_100_greedy_sc,0.2533,79.4,0.0,854,6.51,3.19,76.0,79866
+fixed (2026-09),GRPO@59,results/valonly_grpo_60_greedy_fix_sc/dump/0.jsonl,0.32,57.9,97.1,0,5.64,2.47,87.3,48053
+unpatched (2026-08),FoldGRPO@100,foldgrpo_100_greedy_sc,0.28,78.6,0.0,801,6.29,2.71,96.0,50363
+fixed (2026-09),FoldGRPO@46,results/valonly_foldgrpo_50_greedy_fix_sc/dump/0.jsonl,0.3067,79.9,99.3,0,5.88,4.39,96.7,21087
