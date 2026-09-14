@@ -20,3 +20,8 @@ date_pdt	sid	name	spec	note
 2026-09-11 12:15	7e1d6afba0498a67	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #11 after #10 6840600c killed (grid) -> READY 12:32 -> killed ~16:1x PDT grid
 2026-09-11 16:15	2c928463815bc356	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #12 after #11 7e1d6afb killed (grid) -> READY 16:32 -> killed ~20:1x PDT grid
 2026-09-11 20:15	78cec81a89ec9c9e	fold-infra-fix-a100	fold-infra-fix-a100.json	resubmit #13 after #12 2c928463 killed (grid)
+2026-09-14 03:56	3bd54b4b3aa5016d	fold_val_foldgrpo_fix_step40_h100	fold_val_foldgrpo_fix_step40_h100.json	final evals after arms DONE (fold real steps=46, grpo=59; infra died 00:10 PDT 09-12, never resubmitted): modes=t1n4
+2026-09-14 03:56	22a24cba6f2560be	fold_val_foldgrpo_fix_step50_h100	fold_val_foldgrpo_fix_step50_h100.json	final evals after arms DONE (fold real steps=46, grpo=59; infra died 00:10 PDT 09-12, never resubmitted): modes=greedy t1n4
+2026-09-14 03:57	e8e6e66b13551b4e	fold_val_grpo_fix_step40_h100	fold_val_grpo_fix_step40_h100.json	final evals after arms DONE (fold real steps=46, grpo=59; infra died 00:10 PDT 09-12, never resubmitted): modes=t1n4
+2026-09-14 03:58	efdeafae8eb851e9	fold_val_grpo_fix_step50_h100	fold_val_grpo_fix_step50_h100.json	final evals after arms DONE (fold real steps=46, grpo=59; infra died 00:10 PDT 09-12, never resubmitted): modes=t1n4
+2026-09-14 03:58	f2e0ca180401c906	fold_val_grpo_fix_step60_h100	fold_val_grpo_fix_step60_h100.json	final evals after arms DONE (fold real steps=46, grpo=59; infra died 00:10 PDT 09-12, never resubmitted): modes=greedy t1n4

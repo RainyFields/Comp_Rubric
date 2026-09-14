@@ -127,6 +127,40 @@ def parse_train_log(path):
     return out
 
 
+def read_val_metrics(path):
+    d = {}
+    for line in open(path):
+        m = re.match(r"'([^']+)':\s*([-\d.e]+)", line.strip())
+        if m:
+            d[m.group(1)] = float(m.group(2))
+    return d
+
+
+def t1n4_rows(root, arm):
+    """T=1.0, n=4 val-only results (600 trajectories): mean@4, best@4, worst@4 + dump behaviour stats."""
+    out = {}
+    cands = [(0, f"{root}/results/valonly_norl_base_t1n4_fix_sc")]
+    cands += [(int(p.split(f"valonly_{arm}_")[1].split("_")[0]), p)
+              for p in glob.glob(f"{root}/results/valonly_{arm}_*_t1n4_fix_sc")]
+    for step, d in cands:
+        mp, dp = f"{d}/val_metrics.txt", f"{d}/dump/0.jsonl"
+        if not os.path.exists(mp):
+            continue
+        m = read_val_metrics(mp)
+        n = m.get("val/num_unique_gen_uids", 600)
+        acc = m.get("val/avg_score", float("nan"))
+        row = {"step": step, "mean@4": round(acc, 4), "ci95": round(1.96 * math.sqrt(acc * (1 - acc) / n), 3),
+               "best@4": round(m.get("val-aux/unknown/reward_score/best@4/mean", float("nan")), 4),
+               "worst@4": round(m.get("val-aux/unknown/reward_score/worst@4/mean", float("nan")), 4),
+               "overlong_pct": round(100 * m.get("val/overlong_rate", float("nan")), 1),
+               "turns(log)": round(m.get("val/avg_num_turns", float("nan")), 2)}
+        if os.path.exists(dp):
+            a = analyze_dump(dp)
+            row.update({k: a[k] for k in ("empty_think_turn_pct", "obs_intact_pct", "branch_per_traj", "search_per_traj", "finish_pct")})
+        out[step] = row
+    return [out[k] for k in sorted(out)]
+
+
 def md_table(rows, cols):
     lines = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for r in rows:
@@ -173,6 +207,10 @@ def main():
         vrows = [vrows[k] for k in sorted(vrows)]
         write_csv(f"{a.out}/val_{arm}.csv", vrows)
         md.append(f"## {arm} — greedy validation dumps (150 items)\n\n" + md_table(vrows, val_cols))
+        trows4 = t1n4_rows(a.root, arm)
+        if trows4:
+            write_csv(f"{a.out}/t1n4_{arm}.csv", trows4)
+            md.append(f"## {arm} — T=1.0 n=4 val-only evals (600 trajectories)\n\n" + md_table(trows4, list(trows4[0].keys())))
         logp = f"{a.root}/{a.log_dir}/{arm}/train_{arm}.log"
         if os.path.exists(logp):
             trows = parse_train_log(logp)
