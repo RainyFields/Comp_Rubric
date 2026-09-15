@@ -1,0 +1,33 @@
+\section{Effective Budgets and Threats to Validity}
+\label{sec:budget}
+
+\paragraph{Why the campaign was truncated.} The shared queue reclaims low-utilization pods on
+a fixed 4-hour grid. The search-and-judge node was reclaimed ten times during training, each
+time costing about 20 minutes until a resubmitted node was ready; the training pods, being
+busy, survived. Steps whose rollouts fell inside such a gap received zero or near-zero reward
+and were zero-gradient no-ops (one \foldgrpo{} step, five \grpo{} steps). Both step-20
+validations ran inside a gap and were re-run from the uploaded checkpoints. After the tenth
+reclamation, on September 12, the node was deliberately not resubmitted and both arms ran to
+step 100 without a reward server.
+
+\paragraph{Recovering the reward-bearing budget.} The trainer logs the actor's gradient norm at
+every step. For \foldgrpo{}, every step from 47 to 100 has a maximum trajectory score of zero,
+hence zero advantages and a logged gradient norm of exactly zero (the recipe has no KL or
+entropy term), so checkpoints 50 through 100 are the post-step-46 policy and checkpoint 50 is
+the final one. For \grpo{}, step 60 was likewise a zero-gradient no-op, but 17 of steps 61--97
+carried a handful of trajectories scored 1 by an exact-match shortcut in the reward code that
+runs before any judge call: a memorized answer that matches the label is rewarded without a
+search. Gradient norms of 0.03--0.07 were applied to no-search trajectories on those steps, so
+checkpoints 70--100 are discarded and checkpoint 60, the post-step-59 policy, is the final one.
+About 30\% of the campaign's GPU time therefore produced no learning.
+
+\paragraph{Judge substitution and statistical power.} \judgemodel{} replaces the paper's
+judges in all roles; absolute numbers are not comparable to the paper's. One seed per arm;
+the greedy tier has $n{=}150$ and cannot resolve differences below about 7 points; the
+temperature-1.0 tier resolves about 3.5 points for a paired difference.
+
+\paragraph{Measurement boundaries.} Behavioral counts are computed on the main thread only;
+branch-internal turns are folded away in the dumps. The unpatched-versus-fixed accuracy
+contrast in \cref{fig:contrast} compares 100-step policies with 46- and 59-step policies and is
+descriptive only. The chat-templated serving comparison of the earlier report has not been
+repeated on the fixed checkpoints.

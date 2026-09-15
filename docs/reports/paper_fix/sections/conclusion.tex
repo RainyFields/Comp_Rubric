@@ -1,0 +1,15 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+A template-diff tokenization bug, specific to the Qwen3 chat template, had removed the header
+and leading tokens of every tool observation in our earlier 8B replication of context folding.
+Fixing it restores 95--99\% of observations, halves the base model's empty-reasoning rate,
+and leaves base accuracy unchanged. Retrained on intact contexts, \foldgrpo{} and \grpo{} both
+gain 16--17 points at temperature 1.0 and remain statistically tied at matched budgets, so the
+paper's scoring margin again fails to appear at 8B, while the folding mechanism is again
+learned. Two behavioral claims are revised: empty reasoning under RL is a reward effect at this
+scale, and \foldgrpo{}'s context blow-out advantage does not survive intact observations. The
+comparison is bounded by a budget of 46 and 59 reward-bearing steps, recovered from per-step
+gradient norms after a shared-queue reclamation ended reward delivery; the checkpoints and
+job specifications allow both arms to be resumed to the planned budget. Scripts, per-step logs,
+trajectory dumps, judge audit logs, and per-figure data accompany this report.

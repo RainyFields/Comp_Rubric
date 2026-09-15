@@ -1,0 +1,22 @@
+\begin{abstract}
+Our earlier replication of context folding \citep{sun2025contextfolding} at 8B scale reported
+that \foldgrpo{} and \grpo{} tie on \bcplus{} while the folding mechanism itself emerges. All of
+those numbers were produced by an agent whose tool observations were corrupted. The released
+re-implementation tokenizes each observation as the difference between two chat-template
+renders, and the \qwen{} template removes earlier assistant \think{} blocks whenever a user
+turn is appended; the slice is therefore misaligned by the length of the preceding think
+block. Every observation lost its role header and its first tokens, 13--16\% were dropped
+entirely, and about 80\% of think blocks in the trained policies were empty. The paper's own
+model, \seedoss{}, renders history verbatim and is not affected. We fix the bug by rendering
+every post-prompt turn standalone and wrapping observations in \toolresp{} tags, which makes
+95--99\% of observations intact. On the no-RL base the fix halves the empty-think rate (82\% to
+51\%) but leaves accuracy unchanged within its confidence interval. Retraining both arms on
+the fixed code, the two arms are again statistically tied: at a matched 40 steps, temperature-1.0
+mean@4 is 0.320 (\foldgrpo{}) versus 0.308 (\grpo{}), and at the last uncontaminated
+checkpoints 0.335 (46 steps) versus 0.342 (59 steps), each 16--17 points above the base. Two
+behavioral claims are revised: with intact observations the empty-think rate still rises under
+RL in both arms, so the behavior is a reward effect at 8B rather than a format artifact, and
+\foldgrpo{}'s lower context blow-out rate does not survive the fix. The campaign was truncated
+at 46 and 59 of 100 planned steps because the reward-serving node was reclaimed by a shared
+queue, a limitation we quantify from per-step gradient norms.
+\end{abstract}

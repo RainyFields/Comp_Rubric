@@ -1,0 +1,49 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{newtxtext,newtxmath}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage[round]{natbib}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+% Recurring-name macros (house style; terminology ledger)
+\newcommand{\foldgrpo}{FoldGRPO}
+\newcommand{\grpo}{GRPO}
+\newcommand{\bcplus}{BrowseComp-Plus}
+\newcommand{\qwen}{Qwen3-8B}
+\newcommand{\seedoss}{Seed-OSS-36B}
+\newcommand{\judgemodel}{gpt-oss-120b}
+\newcommand{\foldagent}{FoldAgent}
+\newcommand{\think}{\texttt{<think>}}
+\newcommand{\toolresp}{\texttt{<tool\_response>}}
+
+\title{Corrupted Observations in an 8B Context-Folding Agent:\\
+Fixing a Qwen3 Chat-Template Bug Leaves \foldgrpo{} and \grpo{} Tied}
+\author{Xiaoxuan Lei\\ \small with Claude Code (Anthropic)}
+\date{September 14, 2026}
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/setup}
+\input{sections/results}
+\input{sections/behavior}
+\input{sections/discussion}
+\input{sections/threats}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

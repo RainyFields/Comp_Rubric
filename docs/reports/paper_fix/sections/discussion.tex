@@ -1,0 +1,47 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The central result is unchanged in direction and cleaner in evidence: on intact contexts, RL on
+\bcplus{} lifts an 8B agent by 16--17 points at temperature 1.0 within 46--59 reward-bearing
+steps, the folding mechanism is learned, and \foldgrpo{} and \grpo{} remain statistically
+indistinguishable. Read together with the earlier study, two independently trained pairs of
+arms, one on corrupted and one on intact observations, now agree that the paper's
+\foldgrpo{}-over-\grpo{} margin does not manifest at 8B under a matched protocol. This
+independently confirms the earlier verdict rather than extending it; the paper's 36B result
+may hold at that scale, and our design does not test it.
+
+The behavioral findings qualify two claims of the earlier report. Empty reasoning under RL is
+a reward effect at 8B and not a format artifact: the bug explained the base model's empty-think
+rate, which the fix halved, but the trained policies re-learned the behavior on intact
+contexts within 10--20 steps. A plausible reading is that, for a binary outcome reward on
+multi-hop browsing, visible reasoning consumes response budget without changing which tool
+call comes next, so trajectories that skip it are shorter, finish more often, and are rewarded
+more often. \foldgrpo{}'s process penalties on unfolded tokens would strengthen that pressure,
+which is consistent with its higher rate. A rival explanation, that the judge or the branch
+summaries reward brevity directly, is not excluded by our data. The second qualification is
+that \foldgrpo{}'s context-management advantage does not survive intact observations. The
+mechanism still emerges, but the earlier six-fold reduction in blow-out rate was measured on
+trajectories whose observations had been shortened by the bug, and on full observations
+\foldgrpo{}'s branch-heavy trajectories overflow the 32k budget more often than \grpo{}'s.
+
+The methodological lesson is about evaluation validity for agent RL rather than about folding.
+Template-diff tokenization is a natural implementation for any chat template, and it fails
+silently for any template that is not prefix-stable; the Qwen3 family is one such case. The
+corrupted policies produced plausible scores and coherent text, and the defect was found only
+by checking whether each observation in a dump carried its role header. We recommend that
+agent-RL codebases assert exact token equality between the sliced turn and a direct encode of
+the same message, as our tests now do, and that validation dumps be audited for observation
+integrity before any cross-arm comparison is reported. The earlier report's finding that folded
+policies collapse under chat-templated serving was itself a symptom of this bug, since
+re-templating on the server restored the headers that training had never shown the policy.
+
+The main boundary of the present comparison is its budget. \foldgrpo{} received 46 and \grpo{}
+59 reward-bearing updates of 100 planned, so the arms are compared at a matched 40 steps and
+at their last uncontaminated checkpoints rather than at convergence. The step-40 comparison
+is the cleaner test and shows no difference; the mild sample-efficiency hint at the final
+checkpoints (equal temperature-1.0 score with 13 fewer updates) would need the resumed runs to
+confirm. The single seed per arm, the 8B scale, and the substituted judge bound the claim in
+the same way as before. The discriminating next experiment is a resumption of both arms from
+their last clean checkpoints to 100 reward-bearing steps, with the reward server co-located in
+each training job so that queue reclamation cannot interrupt reward delivery; if the tie
+persists at convergence, the 36B margin becomes the natural next test.

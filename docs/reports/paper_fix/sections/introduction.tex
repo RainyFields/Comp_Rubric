@@ -1,0 +1,42 @@
+\section{Introduction}
+\label{sec:intro}
+
+Long-horizon agents that browse, read, and reason accumulate every action--observation pair in
+their context, and their accuracy degrades as trajectories grow \citep{yao2023react}.
+Context folding \citep{sun2025contextfolding} lets the agent \emph{branch} into a
+sub-trajectory for a localized subtask and \emph{return} with a short summary, removing the
+intermediate steps from the working context. The behavior is trained end-to-end with
+\foldgrpo{}, a variant of \grpo{} \citep{shao2024deepseekmath} that computes advantages over
+folded contexts and adds dense process penalties. On \bcplus{}
+\citep{chen2025browsecompplus}, the paper reports 0.620 pass@1 for \foldgrpo{} against 0.567
+for a matched \grpo{} baseline at 36B scale.
+
+We previously replicated the \bcplus{} track with the authors' re-implementation, substituting
+\qwen{} \citep{yang2025qwen3} for \seedoss{} and a locally served \judgemodel{}
+\citep{openai2025gptoss} for the proprietary judges. The mechanism replicated, the scoring
+margin did not. While auditing the validation trajectories of that study we found that none of
+the agent's tool observations had been tokenized correctly. The defect is specific to the
+interaction between the re-implementation's turn tokenization and the \qwen{} chat template,
+so it is a property of our substitution rather than of the paper's setup, but it affects every
+number we had reported. Whether a bug that removes the header and the first tokens of every
+observation changes the conclusions of a replication is not obvious. The trained policies had
+visibly adapted to it, emptying their reasoning blocks so that observations would survive, and
+an adaptation of that kind could either mask or manufacture a difference between the two
+training objectives.
+
+This paper answers that question. We characterize the bug and its mechanism, verify that the
+authors' model is immune, fix the tokenization, and repeat the base-model evaluation and the
+full \foldgrpo{}-versus-\grpo{} training comparison on the fixed code. The comparison uses the
+same data, hyperparameters, judge, and infrastructure for both arms, with a pre-registered
+temperature-1.0, four-sample evaluation tier as the decisive test. The retraining campaign was
+cut short by the shared queue reclaiming the reward-serving node, so we also show how the
+number of reward-bearing updates in each checkpoint can be recovered from per-step gradient
+norms, and we compare the arms at matched budgets.
+
+The contributions are: (i) a diagnosis of a template-diff tokenization bug that silently
+corrupts observations for Qwen3-style templates, with a tested fix; (ii) a re-measured base
+contrast showing that the fix changes behavior but not base accuracy; (iii) a repeated
+\foldgrpo{}-versus-\grpo{} comparison on intact contexts, which again finds a statistical tie;
+and (iv) a revision of two behavioral claims from the earlier report, namely that empty
+reasoning under RL is a reward effect rather than a format artifact and that \foldgrpo{}'s
+context blow-out advantage was partly a product of the bug.

@@ -1,0 +1,91 @@
+\section{The Bug, the Fix, and the Experimental Setup}
+\label{sec:setup}
+
+\subsection{Template-diff tokenization under \qwen{}}
+\label{sec:bug}
+
+The re-implementation stores an agent trajectory as a growing list of chat messages and
+tokenizes each new user-role turn, including every tool observation, as the suffix of the
+template render of the list with the turn appended, after removing the render of the list
+without it. This is exact when the template is prefix-stable, that is, when appending a
+message only appends tokens. The \qwen{} template is not prefix-stable. It keeps
+\think{}\ldots\texttt{</think>} content only for assistant messages that follow the last plain
+user message, so appending an observation deletes every earlier think block from the render.
+The render with the observation is then \emph{shorter} than the render without it by the
+length of the preceding think block, and the suffix slice starts that many tokens too late.
+
+The consequences are deterministic. The observation always loses its
+\texttt{<|im\_start|>user} header and its first $L$ tokens, where $L$ is the length of the
+preceding think block. When $L$ exceeds the observation length, the observation vanishes and
+the policy sees only the tail of its own prior text. Branch prompts are user-role messages and
+are sliced the same way. Applying the parser of \cref{sec:behavior} to the greedy validation
+dumps of the earlier study confirms this: none of 913 base-model observations carried a
+header, 13--16\% of tool calls in the trained arms received no observation, and 79--82\% of
+think blocks were empty across all three arms (\cref{fig:contrast}, grey bars). The policies
+still received the tail of most observations, which is why the earlier accuracies were
+plausible rather than zero.
+
+\seedoss{}, the paper's model, renders a separate \texttt{reasoning\_content} field and never
+parses or strips think tags from the message content, and its template has no
+last-user-message logic. The identical code produces an intact user turn for it. The bug is
+therefore a property of the Qwen3 template family and of our base-model substitution, not of
+the published method.
+
+\paragraph{Fix.} We render every post-prompt turn standalone: the turn is templated behind a
+fixed system message and a dummy user message whose token prefix is known and removed, so the
+slice no longer depends on history. Tool observations are wrapped in
+\toolresp{}\ldots\texttt{</tool\_response>}, the form the \qwen{} template expects for tool
+output; with that wrapper the template keeps think blocks in both renders, so server-side
+re-templating of a trajectory now agrees with the training tokenization. Eleven tests against
+the real \qwen{} tokenizer check header presence, exact token equality with a direct encode,
+and think preservation over multi-turn histories.
+
+\subsection{Task, arms, and infrastructure}
+
+We use the authors' released \bcplus{} split (680 training and 150 test instances, 50 each
+easy, medium, and hard) with search over the Tevatron \bcplus{} corpus using their precomputed
+Qwen3-Embedding-8B index. The tools are \texttt{search}, \texttt{open\_page},
+\texttt{finish}, and, for the folding agent, \texttt{branch} and \texttt{return}. Both RL arms
+start from \qwen{} with thinking mode on. \foldgrpo{} runs the authors' training script
+verbatim; \grpo{} differs by exactly two flags (outcome-only advantages, no process rewards).
+\Cref{tab:config} lists the configuration against the paper's.
+
+All judge roles (training outcome reward, \foldgrpo{}'s out-of-scope penalty, and final
+grading) are served by \judgemodel{} behind an API shim, so absolute scores are not comparable
+to the paper's; every cross-arm comparison uses this one fixed judge. Training ran as one
+8$\times$H100 batch job per arm on a shared queue, with a separate 8$\times$A100 node serving
+the search index and the judge. The shim re-resolves that node's address on every request, so a
+replaced node is picked up without restarting training. Checkpoints were saved every 10 steps
+and final evaluations ran as self-contained jobs that host search, judge, and rollout on one
+node.
+
+\paragraph{Evaluation protocol.} All scores are measured through the training stack's
+validation path at two operating points: greedy decoding (pass@1, $n{=}150$, binomial 95\% CI
+about $\pm 7.5$ points at $p \approx 0.3$) and temperature 1.0 with four samples per item
+(mean@4, 600 graded trajectories, nominal CI about $\pm 3.7$ points; the four samples per item
+are clustered, so the paired CI for an arm difference is about $\pm 3.5$ points). The
+temperature-1.0 tier was pre-registered as decisive. Every 10 training steps the trainer also
+runs the greedy validation in-process; validations that fell inside an infrastructure gap
+(\cref{sec:budget}) were re-run from the uploaded checkpoint.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{4.2cm}p{3.6cm}p{6.6cm}}
+\toprule
+Setting & Paper & This campaign \\
+\midrule
+Base model & \seedoss{} & \qwen{}, thinking mode on \\
+Judge (all roles) & GPT-5-nano / gpt-4o-mini / gpt-4.1 & \judgemodel{} (local vLLM) \\
+Rollout batch / group / PPO mini-batch & 32 / 8 / 128 & 32 / 8 / 128 \\
+Learning rate; response tokens; max branches & $10^{-6}$; 32{,}768; 10 & $10^{-6}$; 32{,}768; 10 \\
+Observation rendering & template renders history verbatim & standalone turn render, \toolresp{} wrapping (\cref{sec:bug}) \\
+Training steps & 50 & 100 planned; 46 (\foldgrpo{}) and 59 (\grpo{}) reward-bearing (\cref{sec:budget}) \\
+Compute & --- & $8\times$H100 per arm; $8\times$A100 search + judge node \\
+\bottomrule
+\end{tabular}
+\caption{Configuration versus the paper. Training hyperparameters follow the authors' released
+script verbatim; the base model, the judge, the observation rendering, and the realized step
+budget differ.}
+\label{tab:config}
+\end{table}
