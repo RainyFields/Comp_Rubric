@@ -101,6 +101,10 @@ knobs from the tally: 0.9 rollbacks per rollout (the step before a summary is dr
 observation left less than q_sum + 2048 tokens of room) → consider `COMPACTION_THRESHOLD=8192`; summaries sit near
 the 2048-token cap → consider `SUMMARY_MAX_TOKENS=3072`.
 
+Shakeout2 (2 steps, per-rollout lines + dumps): finish rate 37.5 % → 47.3 % between step 1 and 2, reward
+0.109 → 0.129, 777–809 samples per step of which 540–640 masked, 46–51 min per step; both jobs finished and the
+infra node was released at 16:04 PDT.
+
 Known metric caveat: the logged `reward/overlong_rate` (0.90–0.96 here) over-counts masked rollouts for
 multi-segment arms (the per-rollout lines give 0.63); `overlong_masked` (samples) is exact. Use the
 `[COMPACTION]` lines or `trainer.rollout_data_dir` dumps (`FOLD_ROLLOUT_DUMP=1`) for rollout-level rates.
