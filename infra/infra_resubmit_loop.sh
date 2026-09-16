@@ -17,10 +17,13 @@ try: d=json.load(sys.stdin)["data"]; print(d.get("runtime_context",{}).get("tria
 except Exception: print("unknown")'; }
 search_ok() { IP=$(cat $M/INFRA_READY 2>/dev/null) || return 1; case "$IP" in *:*) IPX="[$IP]";; *) IPX=$IP;; esac
   curl -sf -m 8 "http://$IPX:8000/search" -H 'Content-Type: application/json' -d '{"query":"t","k":1}' >/dev/null 2>&1; }
-last_submit=$(date +%s); n=0
+last_submit=$(date +%s); n=0; T_START=$(date +%s)
+# only honour a DONE/FAILED marker written after this loop started (a stale one from a shakeout of the same arm
+# would otherwise stop the infra before the training worker gets to clear it — seen 2026-09-16)
+fresh() { [ -f "$1" ] && [ "$(stat -c %Y "$1" 2>/dev/null || echo 0)" -ge "$T_START" ]; }
 log "start arm=$ARM arm_sid=$ARM_SID infra_sid=$INFRA_SID spec=$SPEC"
 while true; do
-  if [ -f $M/TRAIN_${ARM}_DONE ] || [ -f $M/TRAIN_${ARM}_FAILED ]; then
+  if fresh $M/TRAIN_${ARM}_DONE || fresh $M/TRAIN_${ARM}_FAILED; then
     log "arm marker present ($(ls $M | grep TRAIN_${ARM}_ | tr '\n' ' ')); stopping infra $INFRA_SID and exiting"
     merlin-cli --control-plane $CP job-v2 runs stop --json "{\"sid\":\"$INFRA_SID\"}" >/dev/null 2>&1; exit 0
   fi
