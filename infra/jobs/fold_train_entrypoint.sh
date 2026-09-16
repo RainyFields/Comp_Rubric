@@ -1,5 +1,5 @@
 #!/bin/bash
-# Batch-job entrypoint: one RL arm (FOLD_ARM=foldgrpo|grpo) with the chat-template fix (repo commit in tarball).
+# Batch-job entrypoint: one RL arm (FOLD_ARM=foldgrpo|grpo|compactionrl|compactiongrpo) with the chat-template fix (repo commit in tarball).
 # Waits for the shared infra pod via $MARK/INFRA_READY on HDFS, restores the latest complete HDFS checkpoint
 # (verl resume_mode=auto), mirrors the train log to HDFS every 5 min, uploads checkpoints via worker_train.sh.
 set -uo pipefail
@@ -20,7 +20,7 @@ restore_venv fold_train || exit 43
 restore_repo || exit 44
 gpu_preflight || { log "preflight failed, exit 42"; exit 42; }
 [ -f /mnt/hdfs/mlsys/users/xiaoxuan/arco-job-assets/wandb.key ] && export WANDB_API_KEY=$(cat /mnt/hdfs/mlsys/users/xiaoxuan/arco-job-assets/wandb.key)
-export WANDB_RUN_ID=fold_fix_${ARM}_2026-09-10 WANDB_RESUME=allow
+export WANDB_RUN_ID=${FOLD_WANDB_RUN_ID:-fold_fix_${ARM}_2026-09-10} WANDB_RESUME=allow   # new arms set FOLD_WANDB_RUN_ID in the spec
 
 # --- resume: newest verified HDFS checkpoint -> /tmp (resume_mode=auto reads latest_checkpointed_iteration.txt) ---
 latest=$(ls -d "$HDFS_CKPT"/global_step_* 2>/dev/null | sort -V | while read d; do [ -f "$d/.upload_done" ] && echo "$d"; done | tail -1)

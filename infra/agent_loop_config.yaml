@@ -1,2 +1,4 @@
 - name: fold_agent
   _target_: scripts.train_fold.FoldAgentLoop
+- name: compaction_agent
+  _target_: scripts.train_fold.CompactionAgentLoop

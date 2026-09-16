@@ -465,4 +465,9 @@ class AlgoConfig(BaseConfig):
     mask_overlong: bool = True
     # Whether to fix bad positive advantages
     fix_bad_positive_adv: bool = False
+    # CompactionRL (arXiv:2607.05378) options for adv_estimator=compaction_gae:
+    # length-adaptive GAE lambda_i = 1 - 1/(alpha * l_i) (paper: alpha=1.5); None = constant `lam`
+    compaction_lam_alpha: Optional[float] = None
+    # masked whitening of the position-corrected advantages (verl GAE convention)
+    compaction_whiten: bool = True
 

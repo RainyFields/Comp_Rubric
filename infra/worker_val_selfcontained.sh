@@ -109,6 +109,13 @@ VAL_FLAGS="actor_rollout_ref.rollout.val_kwargs.do_sample=False actor_rollout_re
 [ "$MODE" = t1n4 ] && VAL_FLAGS="actor_rollout_ref.rollout.val_kwargs.do_sample=True actor_rollout_ref.rollout.val_kwargs.temperature=1.0 actor_rollout_ref.rollout.val_kwargs.top_p=1.0 actor_rollout_ref.rollout.val_kwargs.n=4"
 ARMFLAGS=""
 [ "$ARM" = grpo ] && ARMFLAGS="algorithm.adv_estimator=grpo ++actor_rollout_ref.rollout.plugin.process_reward=none"
+# CompactionRL arms: same rollout at eval (compaction enabled, VAL_MAX_COMPACTIONS=3 = paper's x4 setting; 0 = single window);
+# the critic-free estimator is selected so val-only jobs never instantiate a critic.
+case "$ARM" in compactionrl|compactiongrpo)
+  ARMFLAGS="algorithm.adv_estimator=compaction_grpo actor_rollout_ref.rollout.agent.default_agent_loop=compaction_agent \
+++actor_rollout_ref.rollout.plugin.workflow=search ++actor_rollout_ref.rollout.plugin.process_reward=none \
+++actor_rollout_ref.rollout.plugin.val_max_compactions=${VAL_MAX_COMPACTIONS:-3}" ;;
+esac
 
 cd "$CHECKOUT"
 sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" \

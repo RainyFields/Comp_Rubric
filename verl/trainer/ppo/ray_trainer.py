@@ -258,6 +258,33 @@ def compute_advantage(
         )
         data.batch["advantages"] = advantages
         data.batch["returns"] = returns
+    elif adv_estimator == AdvantageEstimator.COMPACTION_GAE:
+        # CompactionRL (arXiv:2607.05378): local GAE per compaction segment + cross-trajectory position correction
+        advantages, returns = core_algos.compute_compaction_gae_advantage_return(
+            token_level_rewards=data.batch["token_level_rewards"],
+            values=data.batch["values"],
+            response_mask=data.batch["response_mask"],
+            gamma=gamma,
+            lam=lam,
+            tokens_after=torch.as_tensor(data.non_tensor_batch["tokens_after"].astype(np.int64)),
+            lam_alpha=config.get("compaction_lam_alpha", None),
+            whiten=config.get("compaction_whiten", True),
+        )
+        data.batch["advantages"] = advantages
+        data.batch["returns"] = returns
+    elif adv_estimator == AdvantageEstimator.COMPACTION_GRPO:
+        advantages, returns = core_algos.compute_compaction_grpo_advantage(
+            token_level_rewards=data.batch["token_level_rewards"],
+            response_mask=data.batch["response_mask"],
+            index=data.non_tensor_batch["uid"],
+            gen_uid=data.non_tensor_batch["gen_uid"],
+            tokens_after=torch.as_tensor(data.non_tensor_batch["tokens_after"].astype(np.int64)),
+            gamma=gamma,
+            lam=lam,
+            norm_adv_by_std_in_grpo=norm_adv_by_std_in_grpo,
+        )
+        data.batch["advantages"] = advantages
+        data.batch["returns"] = returns
     else:
         # handle all other adv estimator type other than GAE and GRPO
         adv_estimator_fn = core_algos.get_adv_estimator_fn(adv_estimator)

@@ -1,5 +1,5 @@
 {
-  "name": "fold-val-foldgrpo-fix-step50-h100",
+  "name": "fold-train-compactiongrpo-h100",
   "namespace": "/user/xiaoxuan.lei",
   "job_type": "train",
   "attachments": [
@@ -22,21 +22,19 @@
   ],
   "job_config": {
     "job_template_config": {
-      "entrypoint_full_script": "cp /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_val_entrypoint.sh /tmp/fold_entry.sh && bash /tmp/fold_entry.sh",
+      "entrypoint_full_script": "cp /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_train_entrypoint.sh /tmp/fold_entry.sh && bash /tmp/fold_entry.sh",
       "image_meta": {
         "image_source": "url",
         "image_url": "aliyun-va-hub.byted.org/arnold/modelchef-gpu:1.0.0.38"
       },
       "env_map": {
-        "FOLD_ARM": "foldgrpo",
-        "FOLD_STEP": "50",
-        "FOLD_MODES": "greedy t1n4",
-        "FOLD_TAGSUF": "_fix",
-        "FOLD_CKPT_ROOT": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix",
-        "MERLIN_JOB_INSTANCE_TYPE": "Evaluation",
+        "FOLD_ARM": "compactiongrpo",
+        "FOLD_STEPS": "100",
+        "MERLIN_JOB_INSTANCE_TYPE": "Train",
         "HAS_TT_DATA": "False",
         "ML_FRAMEWORK": "pytorch",
-        "STORAGE_TYPE": "HDFS"
+        "STORAGE_TYPE": "HDFS",
+        "FOLD_WANDB_RUN_ID": "fold_compactiongrpo_2026-09"
       },
       "git_repo": {
         "repo_name": ""

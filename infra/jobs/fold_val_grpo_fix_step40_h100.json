@@ -32,7 +32,11 @@
         "FOLD_STEP": "40",
         "FOLD_MODES": "t1n4",
         "FOLD_TAGSUF": "_fix",
-        "FOLD_CKPT_ROOT": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix"
+        "FOLD_CKPT_ROOT": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix",
+        "MERLIN_JOB_INSTANCE_TYPE": "Evaluation",
+        "HAS_TT_DATA": "False",
+        "ML_FRAMEWORK": "pytorch",
+        "STORAGE_TYPE": "HDFS"
       },
       "git_repo": {
         "repo_name": ""

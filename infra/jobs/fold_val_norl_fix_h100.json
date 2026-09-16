@@ -12,7 +12,9 @@
             "mnt": "/mnt/hdfs/mlsys",
             "access_mode": "RW",
             "extra": "",
-            "roles": ["worker"]
+            "roles": [
+              "worker"
+            ]
           }
         ]
       }
@@ -29,15 +31,23 @@
         "FOLD_ARM": "norl",
         "FOLD_STEP": "base",
         "FOLD_MODES": "greedy t1n4",
-        "FOLD_TAGSUF": "_fix"
+        "FOLD_TAGSUF": "_fix",
+        "MERLIN_JOB_INSTANCE_TYPE": "Evaluation",
+        "HAS_TT_DATA": "False",
+        "ML_FRAMEWORK": "pytorch",
+        "STORAGE_TYPE": "HDFS"
       },
-      "git_repo": { "repo_name": "" }
+      "git_repo": {
+        "repo_name": ""
+      }
     }
   },
   "resource_config": {
     "resource_backend": "arnold",
     "arnold_resource_config": {
-      "cluster_ids": [4],
+      "cluster_ids": [
+        4
+      ],
       "cluster_select_mode": "single",
       "group_id": 765,
       "roles": [

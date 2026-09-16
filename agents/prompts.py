@@ -933,3 +933,29 @@ SUMMARY_PROMPT_SEARCH = '''Your operational context is full. Generate a concise 
 Now generate the summary, and put your summary inside tag
 <summary>
 </summary>'''
+
+# ---------------------------------------------------------------------------------------------
+# CompactionRL (Li et al., arXiv:2607.05378) prompts for the search workflow.
+# q_sum: fixed summarisation instruction sampled from the trainable policy when the remaining
+# context budget falls below the compaction threshold. The content list follows the paper
+# (original goal, completed actions, important observations, unresolved errors, current state,
+# plausible next steps). u_resume: fixed template that carries the summary into the new context;
+# the k most recent (assistant, observation) steps are appended verbatim after it.
+# ---------------------------------------------------------------------------------------------
+COMPACTION_SUMMARY_PROMPT = '''Your context window is almost full. Before continuing, write a compact summary of everything from this session that is necessary to keep working on the task. The summary will replace the history above; the last few steps will be kept verbatim after it.
+
+Preserve, concretely and with sources (docids / urls) where relevant:
+1. The original goal: the user's question, verbatim, and any answer-format requirements.
+2. Completed actions: which searches and page opens you have already done, and what each established.
+3. Important observations: verified facts, candidate answers with the evidence for and against each, and open leads.
+4. Unresolved errors or dead ends: queries and pages that did not help, so they are not repeated.
+5. Current state: what you believe the answer is so far and how confident you are.
+6. Plausible next steps: the exact searches, pages, or checks you were about to do.
+
+Write only the summary, inside <summary></summary> tags.'''
+
+COMPACTION_RESUME_TEMPLATE = '''Your context window was compacted. The summary below, which you wrote, replaces the earlier history of this session; the most recent steps follow it verbatim. Continue working on the original task from this state. Use the tools as before and call finish when you have the answer.
+
+<summary>
+{summary}
+</summary>'''

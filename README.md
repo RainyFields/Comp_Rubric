@@ -191,3 +191,9 @@ Add `--instance_ids id1,id2` or `--limit N` for a subset.
 ## Acknowledgements
 
 This implementation is based on [verl](https://github.com/volcengine/verl).
+
+## Baseline arms (replication study)
+
+This fork carries several RL baselines trained under one protocol on BrowseComp-Plus: GRPO, FoldGRPO,
+and CompactionRL (Li et al., arXiv:2607.05378; `agents/compaction_agent.py`, `scripts/train_bc_compaction*.sh`).
+See `docs/baselines/README.md` for the arm table, the paper-to-code mapping, knobs, and how to add an arm.

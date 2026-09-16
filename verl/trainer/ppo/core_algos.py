@@ -107,6 +107,8 @@ class AdvantageEstimator(str, Enum):
     RLOO_VECTORIZED = "rloo_vectorized"
     GRPO_VECTORIZED = "grpo_vectorized"
     FOLDGRPO = "foldgrpo"
+    COMPACTION_GAE = "compaction_gae"
+    COMPACTION_GRPO = "compaction_grpo"
 
 
 ADV_ESTIMATOR_REGISTRY: dict[str, Any] = {}
@@ -438,6 +440,123 @@ def compute_foldgrpo_advantage(
         else:
             scores = scores.unsqueeze(dim=1).tile([1, response_length]) * response_mask
 
+    return scores, scores
+
+
+def compaction_position_discount(gamma, lam, tokens_after: torch.Tensor) -> torch.Tensor:
+    """CompactionRL trajectory-position correction (arXiv:2607.05378, Eq. 14): (gamma*lam)^{N_>s}.
+
+    ``tokens_after[i]`` is the number of optimised tokens generated after sample ``i`` in the same
+    rollout (later compaction segments). ``lam`` may be a scalar or a per-sample tensor.
+    """
+    lam_t = lam if torch.is_tensor(lam) else torch.full_like(tokens_after, float(lam), dtype=torch.float32)
+    return (float(gamma) * lam_t.float()) ** tokens_after.float()
+
+
+@register_adv_est(AdvantageEstimator.COMPACTION_GAE)
+def compute_compaction_gae_advantage_return(
+    token_level_rewards: torch.Tensor,
+    values: torch.Tensor,
+    response_mask: torch.Tensor,
+    gamma: float,
+    lam: float,
+    tokens_after: torch.Tensor,
+    lam_alpha: Optional[float] = None,
+    whiten: bool = True,
+    config: Optional[AlgoConfig] = None,
+):
+    """Cross-trajectory GAE for compacted rollouts (CompactionRL, arXiv:2607.05378, Eqs. 13-15).
+
+    Per sample (= one compaction segment) the local GAE is computed exactly as in
+    :func:`compute_gae_advantage_return`, optionally with the paper's length-adaptive
+    ``lambda_i = 1 - 1/(lam_alpha * l_i)`` (``l_i`` = optimised tokens of the sample; VAPO style).
+    The policy advantage is then multiplied by ``(gamma*lambda_i)^{tokens_after_i}`` so that the
+    shared terminal reward is discounted by its true distance to the end of the concatenated
+    rollout; the critic's return target keeps the *local* GAE (returns = A_loc + V).
+
+    Args:
+        token_level_rewards, values, response_mask: `(bs, response_length)`
+        gamma: discount; lam: GAE lambda (ignored when ``lam_alpha`` is set)
+        tokens_after: `(bs,)` optimised tokens generated after each sample in its rollout
+        lam_alpha: paper's alpha for the length-adaptive lambda (1.5); None = constant ``lam``
+        whiten: masked whitening of the corrected advantages (verl convention)
+    Returns:
+        advantages, returns: `(bs, response_length)`
+    """
+    with torch.no_grad():
+        bs, gen_len = token_level_rewards.shape
+        resp_len = response_mask.sum(dim=-1).clamp(min=1).float()
+        if lam_alpha is not None and lam_alpha > 0:
+            lam_vec = 1.0 - 1.0 / (float(lam_alpha) * resp_len)
+        else:
+            lam_vec = torch.full((bs,), float(lam), dtype=torch.float32, device=token_level_rewards.device)
+        lam_vec = lam_vec.to(token_level_rewards.dtype)
+        nextvalues = torch.zeros(bs, dtype=token_level_rewards.dtype, device=token_level_rewards.device)
+        lastgaelam = torch.zeros_like(nextvalues)
+        advantages_reversed = []
+        for t in reversed(range(gen_len)):
+            m = response_mask[:, t]
+            delta = token_level_rewards[:, t] + gamma * nextvalues - values[:, t]
+            lastgaelam_ = delta + gamma * lam_vec * lastgaelam
+            nextvalues = values[:, t] * m + (1 - m) * nextvalues          # skip observation tokens
+            lastgaelam = lastgaelam_ * m + (1 - m) * lastgaelam
+            advantages_reversed.append(lastgaelam)
+        adv_local = torch.stack(advantages_reversed[::-1], dim=1)
+        returns = adv_local + values
+        tokens_after = torch.as_tensor(tokens_after, device=adv_local.device)
+        disc = compaction_position_discount(gamma, lam_vec, tokens_after).to(adv_local.dtype)
+        advantages = adv_local * disc.unsqueeze(-1)
+        if whiten:
+            advantages = verl_F.masked_whiten(advantages, response_mask)
+        advantages = advantages * response_mask
+    return advantages, returns
+
+
+@register_adv_est(AdvantageEstimator.COMPACTION_GRPO)
+def compute_compaction_grpo_advantage(
+    token_level_rewards: torch.Tensor,
+    response_mask: torch.Tensor,
+    index: np.ndarray,
+    gen_uid: np.ndarray,
+    tokens_after: torch.Tensor,
+    gamma: float = 1.0,
+    lam: float = 1.0,
+    epsilon: float = 1e-6,
+    norm_adv_by_std_in_grpo: bool = True,
+    config: Optional[AlgoConfig] = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Protocol-matched (critic-free) variant of CompactionRL's advantage for the FoldAgent arms.
+
+    Rewards are group-normalised at the *rollout* level (one entry per ``gen_uid`` inside each
+    prompt group ``index``, as FoldGRPO does), the normalised rollout advantage is broadcast to
+    every segment of that rollout, and the paper's position correction ``(gamma*lam)^{N_>s}`` is
+    applied (identity for gamma = lam = 1). Segment-count bias in the loss is handled by
+    token-mean loss aggregation, as in the paper.
+    """
+    response_length = token_level_rewards.shape[-1]
+    scores = token_level_rewards.sum(dim=-1)
+    id2score, id2gen, id2mean, id2std = defaultdict(list), defaultdict(list), {}, {}
+    with torch.no_grad():
+        bsz = scores.shape[0]
+        for i in range(bsz):
+            if gen_uid[i] in id2gen[index[i]]:
+                continue
+            id2gen[index[i]].append(gen_uid[i])
+            id2score[index[i]].append(scores[i])
+        for idx in id2score:
+            if len(id2score[idx]) == 1:
+                id2mean[idx], id2std[idx] = torch.tensor(0.0), torch.tensor(1.0)
+            else:
+                st = torch.stack(id2score[idx])
+                id2mean[idx], id2std[idx] = torch.mean(st), torch.std(st)
+        for i in range(bsz):
+            if norm_adv_by_std_in_grpo:
+                scores[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + epsilon)
+            else:
+                scores[i] = scores[i] - id2mean[index[i]]
+        tokens_after = torch.as_tensor(tokens_after, device=scores.device)
+        scores = scores * compaction_position_discount(gamma, lam, tokens_after).to(scores.dtype)
+        scores = scores.unsqueeze(-1).tile([1, response_length]) * response_mask
     return scores, scores
 
 

@@ -5,6 +5,7 @@
 # Arms differ by exactly two flags (locked decision):
 #   foldgrpo: algorithm.adv_estimator=foldgrpo  process_reward='[flat,scope]'  (script defaults)
 #   grpo:     algorithm.adv_estimator=grpo      process_reward=none
+#   compactionrl / compactiongrpo: scripts/train_bc_compaction{rl,grpo}.sh (CompactionRL baseline, docs/baselines/)
 set -uo pipefail
 
 ARM=${ARM:?foldgrpo|grpo}; STEPS=${STEPS:?}
@@ -15,7 +16,14 @@ MARK=${MARK:-$SRC/infra/markers}                                            # ba
 HDFS_CKPT=${HDFS_CKPT:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt/$ARM}
 KEEP_LOCAL=${KEEP_LOCAL:-2}                                                 # verified-uploaded ckpts to keep on /tmp
 LOCAL_CKPT=/tmp/fold_ckpt/$ARM
-RUN_NAME=$([ "$ARM" = foldgrpo ] && echo foldgrpo_qwen3-8b_bcplus || echo grpo_qwen3-8b_bcplus_baseline)${RUN_SUFFIX:-}
+case "$ARM" in
+  foldgrpo)       RUN_NAME=foldgrpo_qwen3-8b_bcplus ;;
+  grpo)           RUN_NAME=grpo_qwen3-8b_bcplus_baseline ;;
+  compactionrl)   RUN_NAME=compactionrl_qwen3-8b_bcplus ;;        # CompactionRL, PPO + critic (paper-faithful)
+  compactiongrpo) RUN_NAME=compactiongrpo_qwen3-8b_bcplus ;;      # CompactionRL rollout + group-relative advantage
+  *) echo "unknown ARM=$ARM (foldgrpo|grpo|compactionrl|compactiongrpo)" >&2; exit 2 ;;
+esac
+RUN_NAME=${RUN_NAME}${RUN_SUFFIX:-}
 
 log() { echo "[train:$ARM $(date +%H:%M:%S)] $*"; }
 fail() { log "FAILED: $*"; touch "$MARK/TRAIN_${ARM}_FAILED"; sleep 60; exit 1; }
@@ -114,16 +122,19 @@ UPLOADER_PID=$!
 
 # --- arm-specific flags ---
 EXTRA=""
-if [ "$ARM" = grpo ]; then
-  EXTRA="algorithm.adv_estimator=grpo ++actor_rollout_ref.rollout.plugin.process_reward=none"
-fi
+TRAIN_SCRIPT=scripts/train_bc_qwen3_8b.sh
+case "$ARM" in
+  grpo)           EXTRA="algorithm.adv_estimator=grpo ++actor_rollout_ref.rollout.plugin.process_reward=none" ;;
+  compactionrl)   TRAIN_SCRIPT=scripts/train_bc_compactionrl.sh ;;      # flags live in the script
+  compactiongrpo) TRAIN_SCRIPT=scripts/train_bc_compactiongrpo.sh ;;
+esac
 
 cd "$CHECKOUT"
 mkdir -p logs
 export PYTHONPATH=$CHECKOUT${PYTHONPATH:+:$PYTHONPATH}   # ray AgentLoopWorkers must import scripts.train_fold
 sed -e "s#trainer.total_training_steps=100#trainer.total_training_steps=${STEPS}#" \
     -e "s#trainer.experiment_name=test_run#trainer.experiment_name=${RUN_NAME}#" \
-    scripts/train_bc_qwen3_8b.sh > logs/launch_${ARM}.sh
+    "$TRAIN_SCRIPT" > logs/launch_${ARM}.sh
 # append overrides: ckpt dir + custom agent loop registration (workers load it) + arm flags
 [ -n "${VAL_DUMP_DIR:-}" ] && EXTRA="$EXTRA trainer.validation_data_dir=${VAL_DUMP_DIR}"   # optional: per-val trajectory dumps
 sed -i "s#trainer.project_name=context_folding#trainer.project_name=context_folding trainer.default_local_dir=${LOCAL_CKPT} actor_rollout_ref.rollout.agent.agent_loop_config_path=${SRC}/infra/agent_loop_config.yaml ${EXTRA}#" logs/launch_${ARM}.sh
