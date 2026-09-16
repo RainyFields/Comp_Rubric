@@ -137,6 +137,7 @@ sed -e "s#trainer.total_training_steps=100#trainer.total_training_steps=${STEPS}
     "$TRAIN_SCRIPT" > logs/launch_${ARM}.sh
 # append overrides: ckpt dir + custom agent loop registration (workers load it) + arm flags
 [ -n "${VAL_DUMP_DIR:-}" ] && EXTRA="$EXTRA trainer.validation_data_dir=${VAL_DUMP_DIR}"   # optional: per-val trajectory dumps
+[ -n "${ROLLOUT_DUMP_DIR:-}" ] && EXTRA="$EXTRA trainer.rollout_data_dir=${ROLLOUT_DUMP_DIR}"   # optional: per-step training-rollout dumps (shakeouts)
 sed -i "s#trainer.project_name=context_folding#trainer.project_name=context_folding trainer.default_local_dir=${LOCAL_CKPT} actor_rollout_ref.rollout.agent.agent_loop_config_path=${SRC}/infra/agent_loop_config.yaml ${EXTRA}#" logs/launch_${ARM}.sh
 log "launching: STEPS=$STEPS EXTRA='$EXTRA'"
 bash logs/launch_${ARM}.sh 2>&1 | tee "logs/train_${ARM}.log"

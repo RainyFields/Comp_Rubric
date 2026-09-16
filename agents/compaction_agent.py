@@ -302,6 +302,9 @@ async def process_item(item: DataProto, context: TaskContext) -> Union[AgentLoop
         "main_len": min(len(rollout["segments"][-1].context()), config.response_length),
         "total_token": len(tokenizer.encode(print_chat(user_prompt + rollout["session_message"]))),
     })
+    print(f"[COMPACTION] uid={uid} gen_uid={gen_uid} stop={rollout['stop_reason']} finished={int(is_finish)} "
+          f"score={score[1]} segments={st['segments']} compactions={st['compactions']} turns={st['turns']} "
+          f"summary_tokens={st['summary_tokens_generated']} rollback={st['rollback_before_summary']} mask_rollout={int(mask_rollout)}")
     extra = {
         "env_stats": copy.deepcopy(env.stats) if hasattr(env, "stats") else {},
         "num_branches": 0, "branch_names": [], "is_finish": is_finish,

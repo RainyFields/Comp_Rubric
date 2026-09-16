@@ -12,6 +12,7 @@ export RUN_SUFFIX=${FOLD_RUN_SUFFIX:-_fix}
 export KEEP_LOCAL=1
 export INFRA_WAIT_ITERS=720   # 6 h: the shared infra pod may still be queued
 export VAL_DUMP_DIR=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/val_dump_fix/$OUT
+[ "${FOLD_ROLLOUT_DUMP:-0}" = 1 ] && export ROLLOUT_DUMP_DIR=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/rollout_dump_fix/$OUT
 HDFS_LOGS=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/train_logs_fix/$OUT
 LOCAL_CKPT=/tmp/fold_ckpt/$ARM
 mkdir -p "$MARK" "$HDFS_CKPT" "$VAL_DUMP_DIR" "$HDFS_LOGS" "$LOCAL_CKPT"
