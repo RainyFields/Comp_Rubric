@@ -78,6 +78,33 @@ Knobs (env vars of the scripts): `MAX_COMPACTIONS`, `VAL_MAX_COMPACTIONS`, `COMP
    adds a critic forward/backward per step; expect step time ≈ 1.5–2× the GRPO arm. `CRITIC_WARMUP=50`
    spends 50 rollout steps on value pre-training before the first policy update.
 
+
+### Shakeout results (2026-09-16, `compactiongrpo`, H100, 3 + 2 steps; JOBS.tsv sids 586875a6…, 619c7466…)
+
+Mechanics pass: every step produced 3.1–3.2 training samples per rollout (≈2.2 policy-written summaries per
+rollout, summaries ≈1.7k tokens), the `compaction_grpo` advantage and token-mean loss ran through every update
+(grad-norm 0.07–0.09, no errors), and reward rose 0.078 → 0.121 → 0.152 over three steps. Step time is
+40–60 min (23 min generation, 14+ min update: the batch carries ≈6× the tokens of the GRPO arm because every
+segment is a full 32k context). Per-rollout tally of step 1 (from the `[COMPACTION]` log lines):
+
+| outcome | rollouts | segments each | trained? (default `mask_unfinished=True`) |
+|---|---|---|---|
+| `finish` called | 96 / 256 (37.5 %) | 1.7 | yes (29 % of them correct) |
+| budget exhausted after 3 compactions | 160 / 256 (62.5 %) | 4.0 | **no** — 640 of 809 samples masked |
+
+**Design decision this raises.** The FoldAgent arms mask unfinished zero-reward rollouts out of the loss
+(`algorithm.mask_overlong`), which drops ≈17 % of GRPO's rollouts but ≈63 % of compaction rollouts and, worse,
+removes the only signal that would teach the policy to finish within its 4× budget. The paper trains on
+budget-exhausted rollouts with reward 0. Recommended for the compaction arms: `plugin.mask_unfinished=False`
+(paper-faithful); keep the default only if strict parity with the other arms' masking is preferred. Two smaller
+knobs from the tally: 0.9 rollbacks per rollout (the step before a summary is dropped from the loss because an
+observation left less than q_sum + 2048 tokens of room) → consider `COMPACTION_THRESHOLD=8192`; summaries sit near
+the 2048-token cap → consider `SUMMARY_MAX_TOKENS=3072`.
+
+Known metric caveat: the logged `reward/overlong_rate` (0.90–0.96 here) over-counts masked rollouts for
+multi-segment arms (the per-rollout lines give 0.63); `overlong_masked` (samples) is exact. Use the
+`[COMPACTION]` lines or `trainer.rollout_data_dir` dumps (`FOLD_ROLLOUT_DUMP=1`) for rollout-level rates.
+
 ## Adding another baseline arm
 
 1. Agent loop: new module under `agents/` returning one `AgentLoopOutput` per training sample; register it in
