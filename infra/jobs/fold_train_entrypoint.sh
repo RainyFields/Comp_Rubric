@@ -5,13 +5,14 @@
 set -uo pipefail
 source /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_common_bootstrap.sh
 ARM=${FOLD_ARM:?}; STEPS=${FOLD_STEPS:-100}
+OUT=${FOLD_OUT_TAG:-$ARM}   # HDFS output subdir (ckpt/val dumps/logs); shakeouts set e.g. <arm>_shakeout to keep the arm dir clean
 export MARK=${FOLD_MARK:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/markers_fix}
-export HDFS_CKPT=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix/$ARM
+export HDFS_CKPT=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix/$OUT
 export RUN_SUFFIX=${FOLD_RUN_SUFFIX:-_fix}
 export KEEP_LOCAL=1
 export INFRA_WAIT_ITERS=720   # 6 h: the shared infra pod may still be queued
-export VAL_DUMP_DIR=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/val_dump_fix/$ARM
-HDFS_LOGS=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/train_logs_fix/$ARM
+export VAL_DUMP_DIR=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/val_dump_fix/$OUT
+HDFS_LOGS=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/train_logs_fix/$OUT
 LOCAL_CKPT=/tmp/fold_ckpt/$ARM
 mkdir -p "$MARK" "$HDFS_CKPT" "$VAL_DUMP_DIR" "$HDFS_LOGS" "$LOCAL_CKPT"
 log "train job arm=$ARM steps=$STEPS node=$(hostname) MARK=$MARK HDFS_CKPT=$HDFS_CKPT"
