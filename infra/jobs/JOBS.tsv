@@ -28,3 +28,4 @@ date_pdt	sid	name	spec	note
 2026-09-16 11:59	fbf46ee9701545d5	fold-infra-fix-h100	fold-infra-fix-h100.json	infra #14 on H100 for the compactiongrpo 3-step shakeout (user: all jobs on H100)
 2026-09-16 12:12	586875a6af365f8d	fold-train-compactiongrpo-shakeout-h100	fold-train-compactiongrpo-shakeout-h100.json	compactiongrpo 3-step shakeout (H100), submitted after infra #14 READY; outputs under *_fix/compactiongrpo_shakeout
 2026-09-16 13:48	619c746674f6ec30	fold-train-compactiongrpo-shakeout2-h100	fold-train-compactiongrpo-shakeout2-h100.json	compactiongrpo 2-step shakeout2 (H100) with per-rollout prints + rollout dumps; alongside shakeout 586875a6; outputs under *_fix/compactiongrpo_shakeout2
+2026-09-16 16:05	fbf46ee9701545d5	fold-infra-fix-h100	stop	infra #14 STOPPED by me after shakeout2 (619c7466) finished 16:00 PDT
