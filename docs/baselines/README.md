@@ -64,8 +64,8 @@ cd infra/jobs && merlin-cli --control-plane i18n-tt job-v2 runs create --from-fi
 # (VAL_MAX_COMPACTIONS=3 -> paper's x4 setting; 0 -> single window)
 ```
 
-Knobs (env vars of the scripts): `MAX_COMPACTIONS`, `VAL_MAX_COMPACTIONS`, `COMPACTION_THRESHOLD`, `TAIL_STEPS`,
-`SUMMARY_MAX_TOKENS`, `TRAIN_SUMMARY`; `compactionrl` only: `CRITIC_LR`, `CRITIC_EPOCHS`, `CRITIC_WARMUP`, `LAM_ALPHA`.
+Knobs (env vars of the scripts): `MAX_COMPACTIONS`, `VAL_MAX_COMPACTIONS`, `COMPACTION_THRESHOLD` (default 8192 since the
+shakeout), `TAIL_STEPS`, `SUMMARY_MAX_TOKENS`, `TRAIN_SUMMARY`, `MASK_UNFINISHED` (default False since the shakeout); `compactionrl` only: `CRITIC_LR`, `CRITIC_EPOCHS`, `CRITIC_WARMUP`, `LAM_ALPHA`.
 
 ### Before launching a real run
 

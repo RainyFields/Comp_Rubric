@@ -15,10 +15,11 @@ TEST_DATA_PATH=data/bc_test.parquet
 # --- CompactionRL rollout knobs (paper defaults where the FoldAgent stack allows; see docs/baselines/README.md) ---
 MAX_COMPACTIONS=${MAX_COMPACTIONS:-3}            # at most three compactions per rollout -> 4x effective budget
 VAL_MAX_COMPACTIONS=${VAL_MAX_COMPACTIONS:-3}    # 0 = single-window (x1) evaluation
-COMPACTION_THRESHOLD=${COMPACTION_THRESHOLD:-6144}   # T_comp: remaining generated-token budget that triggers compaction
+COMPACTION_THRESHOLD=${COMPACTION_THRESHOLD:-8192}   # T_comp: remaining generated-token budget that triggers compaction (shakeout: 6144 rolled back a step before ~every summary)
 TAIL_STEPS=${TAIL_STEPS:-2}                      # k recent (assistant, observation) steps kept verbatim
 SUMMARY_MAX_TOKENS=${SUMMARY_MAX_TOKENS:-2048}
 TRAIN_SUMMARY=${TRAIN_SUMMARY:-True}             # False = "w/o summary training" ablation
+MASK_UNFINISHED=${MASK_UNFINISHED:-False}        # paper: budget-exhausted rollouts train with reward 0 (FoldAgent arms mask them; shakeout: 63% of rollouts)
 
 # --- critic (paper: critic initialised from the policy, lr 3e-6, two critic updates per policy update, value pre-training) ---
 CRITIC_LR=${CRITIC_LR:-3e-6}
@@ -70,6 +71,7 @@ python -m scripts.train_fold \
   +actor_rollout_ref.rollout.plugin.compaction_tail_steps=${TAIL_STEPS} \
   +actor_rollout_ref.rollout.plugin.summary_max_tokens=${SUMMARY_MAX_TOKENS} \
   +actor_rollout_ref.rollout.plugin.train_summary=${TRAIN_SUMMARY} \
+  +actor_rollout_ref.rollout.plugin.mask_unfinished=${MASK_UNFINISHED} \
   critic.model.path=${MODEL_PATH} \
   critic.optim.lr=${CRITIC_LR} \
   critic.ppo_epochs=${CRITIC_EPOCHS} \
