@@ -13,11 +13,11 @@ Outputs: docs/reports/2026-09-17_foldagent_e2e_token_usage_report.{md,html,pdf} 
 import csv, glob, json, math, os, statistics, subprocess, sys
 ROOT = "/home/tiger/xiaoxuan/FoldAgent"
 sys.path.insert(0, ROOT)
-H = "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results"
+H = os.environ.get("E2E_RESULTS_ROOT", "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results")
 RD = f"{ROOT}/docs/reports"
 STEM = "2026-09-17_foldagent_e2e_token_usage_report"
-ASSETS = f"{RD}/{STEM}_assets"
-MD, HTML, PDF = f"{RD}/{STEM}.md", f"{RD}/{STEM}.html", f"{RD}/{STEM}.pdf"
+ASSETS = os.environ.get("E2E_ASSETS_DIR", f"{RD}/{STEM}_assets")
+MD, HTML, PDF = (os.environ.get("E2E_MD", f"{RD}/{STEM}.md"), f"{RD}/{STEM}.html", f"{RD}/{STEM}.pdf")
 FOLD_INFRA_PY = "/home/tiger/xiaoxuan/envs/fold_infra/bin/python"
 
 CELLS = [  # (key, arm, step, wf, label, color)
@@ -177,7 +177,7 @@ def savefig(fig, name):
 
 
 # F1: success vs total e2e tokens (cell means with CIs) + budget curves
-fig, axes = plt.subplots(2, 2, figsize=(11, 8.2))
+fig, axes = plt.subplots(2, 2, figsize=(11, 8.2), constrained_layout=True)
 f1 = []
 for j, mode in enumerate(MODES):
     ax = axes[0, j]
@@ -202,7 +202,7 @@ savefig(fig, "fig1_success_vs_e2e_tokens")
 json.dump(f1, open(f"{ASSETS}/fig1_success_vs_e2e_tokens.json", "w"), indent=1)
 
 # F2: peak active context vs total e2e tokens (per rollout)
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.6))
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), constrained_layout=True)
 f2 = []
 for j, mode in enumerate(MODES):
     ax = axes[j]
@@ -223,7 +223,7 @@ json.dump(f2, open(f"{ASSETS}/fig2_peak_ctx_vs_e2e_tokens.json", "w"), indent=1)
 
 # F3: post-first-fold usage (fold cells only)
 foldcells = [c for c in present if c[3] == 'branch']
-fig, axes = plt.subplots(1, 4, figsize=(14, 4))
+fig, axes = plt.subplots(1, 4, figsize=(14, 4), constrained_layout=True)
 f3 = []
 for k, (mtr, lab) in enumerate([("post_total", "tokens after first fold (k)"), ("post_gen", "generated tokens after first fold (k)"),
                                 ("post_turns", "turns after first fold"), ("post_tool_calls", "tool calls after first fold")]):
@@ -245,7 +245,7 @@ savefig(fig, "fig3_post_first_fold_usage")
 json.dump(f3, open(f"{ASSETS}/fig3_post_first_fold_usage.json", "w"), indent=1)
 
 # F4: paired per-task differences
-fig, axes = plt.subplots(1, 4, figsize=(14, 4))
+fig, axes = plt.subplots(1, 4, figsize=(14, 4), constrained_layout=True)
 f4 = []
 for k, (mtr, lab, sc) in enumerate([("success", "Δ success", 1), ("total_e2e_tokens", "Δ total e2e tokens (k)", 1e3),
                                     ("peak_ctx", "Δ peak active context (k)", 1e3), ("turns", "Δ turns", 1)]):
@@ -268,7 +268,7 @@ savefig(fig, "fig4_paired_task_diffs")
 json.dump(f4, open(f"{ASSETS}/fig4_paired_task_diffs.json", "w"), indent=1)
 
 # F5: token composition per cell (stacked)
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), constrained_layout=True)
 comp_keys = [("prompt_tokens", "task prompt", "#dddddd"), ("gen_tokens", "generated (all threads)", "#0F4D92"), ("obs_tokens", "tool observations", "#8BCF8B"),
              ("comp_in_tokens", "fold prompts + returns", "#B64342"), ("frame_tokens", "template framing", "#999999")]
 f5 = []
