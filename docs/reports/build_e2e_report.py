@@ -94,6 +94,8 @@ rows, cellinfo = [], {}
 for key, arm, step, wf, label, color in CELLS:
     for mode in MODES:
         tag = f"{arm}_{step}_{mode}_e2e_{wf}_sc"
+        if mode == "t1n4" and wf == "branch" and os.path.exists(f"{H}/valonly_{arm}_{step}_{mode}_e2e_{wf}_t4h_sc/VALONLY_{arm}_{step}_{mode}_e2e_{wf}_t4h_sc_DONE"):
+            tag = f"{arm}_{step}_{mode}_e2e_{wf}_t4h_sc"   # re-run with a 4 h session timeout (the 1 h run timed out 10-34 % of rollouts)
         d = f"{H}/valonly_{tag}"
         recs = load_ledgers(f"{d}/ledger") if os.path.isdir(f"{d}/ledger") else []
         vm = {}
@@ -213,11 +215,13 @@ for j, mode in enumerate(MODES):
         ax.scatter(x, y, s=9, alpha=0.35, color=color, marker='o' if wf == 'branch' else 's')
         ax.scatter([x.mean()], [y.mean()], s=140, color=color, edgecolor='k', marker='o' if wf == 'branch' else 's', zorder=5, label=label)
         f2.append(dict(mode=mode, cell=key, tokens_mean=float(x.mean() * 1e3), peak_ctx_mean=float(y.mean() * 1e3)))
-    lim = max(ax.get_xlim()[1], 60)
+    allx = np.array([r['total_e2e_tokens'] for r in rows if r['mode'] == mode]) / 1e3
+    lim = float(np.percentile(allx, 99.5)) * 1.05
+    ax.set_xlim(0, lim); ax.set_ylim(0, 45)
     ax.plot([0, lim], [0, lim], color='k', lw=0.8, ls=':', label='peak = total (no discard)')
     ax.axhline(40, color='grey', lw=0.8, ls='--'); ax.text(lim * 0.98, 41, 'window (8k prompt + 32k)', ha='right', fontsize=8, color='grey')
     ax.set_xlabel("total end-to-end tokens (k)"); ax.set_ylabel("peak active context (k tokens)"); ax.set_title(f"{mode}")
-    if j == 0: ax.legend(fontsize=7.5, loc='upper left')
+    if j == 0: ax.legend(fontsize=7.5, loc='lower right')
 savefig(fig, "fig2_peak_ctx_vs_e2e_tokens")
 json.dump(f2, open(f"{ASSETS}/fig2_peak_ctx_vs_e2e_tokens.json", "w"), indent=1)
 
@@ -263,6 +267,8 @@ for k, (mtr, lab, sc) in enumerate([("success", "Δ success", 1), ("total_e2e_to
             ticks.append(pos); tlabels.append(f"{lab_p.replace(' (same tasks)', '')}\n{mode}"); pos += 1
             f4.append(dict(metric=mtr, pair=lab_p, mode=mode, n=len(common), mean=mu * sc, lo=lo * sc, hi=hi * sc))
     ax.axhline(0, color='k', lw=0.8); ax.set_xticks(ticks); ax.set_xticklabels(tlabels, fontsize=5.5, rotation=90); ax.set_ylabel(lab, fontsize=9)
+    alld = np.concatenate([np.array(a.get_offsets())[:, 1] for a in ax.collections if len(a.get_offsets())]) if ax.collections else np.array([0])
+    if mtr != 'success': lo_, hi_ = np.percentile(alld, [1, 99]); ax.set_ylim(lo_ - 0.05 * (hi_ - lo_), hi_ + 0.05 * (hi_ - lo_))
 fig.suptitle("Task-level paired differences (mean ± 95% bootstrap CI; grey = tasks)", fontsize=11)
 savefig(fig, "fig4_paired_task_diffs")
 json.dump(f4, open(f"{ASSETS}/fig4_paired_task_diffs.json", "w"), indent=1)
@@ -292,15 +298,21 @@ def S(key, mode, cond="all"):
 
 
 def main_table(mode, cond):
-    cols = [("success", "success", 3), ("total_e2e_tokens", "e2e tokens", 0), ("gen_tokens", "generated", 0), ("obs_tokens", "observations", 0),
-            ("comp_in_tokens", "fold in", 0), ("comp_gen_tokens", "fold gen", 0), ("turns", "turns", 1), ("tool_calls", "tool calls", 1),
-            ("branch_calls", "branches", 2), ("forward_passes", "fwd passes", 1), ("cum_prompt_tokens", "cum. input", 0), ("peak_ctx", "peak ctx", 0),
-            ("mean_ctx", "mean ctx", 0), ("overlong", "overlong", 2), ("post_total", "post-fold tokens", 0), ("post_turns", "post-fold turns", 1)]
-    out = ["| cell (train / inference) | n | " + " | ".join(c[1] for c in cols) + " |", "|---|---|" + "|".join("---" for _ in cols) + "|"]
-    for key, arm, step, wf, label, color in present:
-        r = S(key, mode, cond)
-        if not r: continue
-        out.append(f"| {label} | {r['n']} | " + " | ".join(fmt(r[c[0]], c[2]) for c in cols) + " |")
+    tok = [("success", "success", 3), ("total_e2e_tokens", "e2e tokens", 0), ("total_e2e_tokens_median", "e2e median", 0), ("gen_tokens", "generated", 0),
+           ("obs_tokens", "observations", 0), ("comp_in_tokens", "fold in", 0), ("comp_gen_tokens", "fold gen", 0), ("cum_prompt_tokens", "cum. input", 0)]
+    ctx = [("turns", "turns", 1), ("tool_calls", "tool calls", 1), ("branch_calls", "branches", 2), ("forward_passes", "fwd passes", 1),
+           ("peak_ctx", "peak ctx", 0), ("mean_ctx", "mean ctx", 0), ("main_growth", "main growth", 0), ("overlong", "overlong", 2),
+           ("post_total", "post-fold tokens", 0), ("post_turns", "post-fold turns", 1), ("post_tool_calls", "post-fold tool calls", 1)]
+    out = []
+    for cols, title in ((tok, "tokens"), (ctx, "interaction and context")):
+        out.append(f"*{title}:*\n")
+        out.append("| cell (train / inference) | n | " + " | ".join(c[1] for c in cols) + " |")
+        out.append("|---|---|" + "|".join("---" for _ in cols) + "|")
+        for key, arm, step, wf, label, color in present:
+            r = S(key, mode, cond)
+            if not r: continue
+            out.append(f"| {label} | {r['n']} | " + " | ".join(fmt(r[c[0]], c[2]) for c in cols) + " |")
+        out.append("")
     return "\n".join(out)
 
 
@@ -314,7 +326,7 @@ def paired_table(mode):
 
 
 def stopreasons(mode):
-    out = ["| cell | n | finish | max_turn | timeout | llm_none | overlong (main ≥ 32k) | folded ≥1 | branch limit |", "|---|---|---|---|---|---|---|---|---|"]
+    out = ["| cell | n | finish | max_turn | session timeout | window exhausted | overlong (main ≥ 32k) | folded ≥1 | branch limit |", "|---|---|---|---|---|---|---|---|---|"]
     for key, arm, step, wf, label, color in present:
         rs = sel(key, mode)
         if not rs: continue
@@ -402,13 +414,13 @@ T=1.0 n=4 (per-task mean of 4 samples):
 *Fig. 1 — Success vs total end-to-end tokens (top: cell means ± 95% CI; bottom: fraction of rollouts solved within an end-to-end token budget).*
 
 ![](./{STEM}_assets/fig2_peak_ctx_vs_e2e_tokens.png)
-*Fig. 2 — Peak active context vs total end-to-end tokens per rollout (large markers = cell means). Points below the dotted diagonal discarded tokens.*
+*Fig. 2 — Peak active context vs total end-to-end tokens per rollout (large markers = cell means; axes clipped at the 99.5th percentile — one GRPO/no-fold T=1 rollout received a single 4.2M-token observation). Points below the dotted diagonal discarded tokens.*
 
 ![](./{STEM}_assets/fig3_post_first_fold_usage.png)
 *Fig. 3 — Interaction after the first fold, for rollouts that folded.*
 
 ![](./{STEM}_assets/fig4_paired_task_diffs.png)
-*Fig. 4 — Paired per-task differences.*
+*Fig. 4 — Paired per-task differences (y-axes clipped to the 1st–99th percentile of task differences).*
 
 ![](./{STEM}_assets/fig5_token_composition.png)
 *Fig. 5 — Where the end-to-end tokens go.*
