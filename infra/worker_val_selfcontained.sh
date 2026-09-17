@@ -117,6 +117,12 @@ case "$ARM" in compactionrl|compactiongrpo)
 ++actor_rollout_ref.rollout.plugin.val_max_compactions=${VAL_MAX_COMPACTIONS:-3}" ;;
 esac
 
+# E2E token-usage study (2026-09-17): optional inference-side workflow override (search = no branch tool /
+# no folding; search_branch = training-time prompt with the branch tool) and the per-rollout token ledger
+# (agents/e2e_ledger.py; written by the agent-loop workers into $OUTDIR/ledger, mirrored with the results).
+[ -n "${FOLD_WORKFLOW:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.workflow=${FOLD_WORKFLOW}"
+if [ "${FOLD_E2E_LEDGER:-0}" = 1 ]; then export FOLD_E2E_LEDGER_DIR=$OUTDIR/ledger; mkdir -p "$FOLD_E2E_LEDGER_DIR"; fi
+
 cd "$CHECKOUT"
 sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" \
     -e "s#actor_rollout_ref.rollout.tensor_model_parallel_size=8#actor_rollout_ref.rollout.tensor_model_parallel_size=4#" \

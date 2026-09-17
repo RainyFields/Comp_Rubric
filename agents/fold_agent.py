@@ -12,6 +12,7 @@ from verl import DataProto
 from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_action, wrap_tool_response, AgentLoopOutput, AgentLoopMetrics
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
+from .e2e_ledger import build_ledger, write_ledger
 
 
 def print_chat(chat):
@@ -114,9 +115,11 @@ async def process_item(
     iteration = 0
     mask_rollout = True  # If True then no grad update on this traj
     session_message = []
+    stop_reason = 'max_turn'
     while iteration < max_turn:
         if time.time() - session_start_time > session_timeout:
             print('[SESSION] Session Timeout')
+            stop_reason = 'timeout'
             break
 
         iteration += 1
@@ -147,6 +150,7 @@ async def process_item(
         # print(response)
 
         if response is None:
+            stop_reason = 'llm_none'
             break
 
         session_message.append({'role': 'assistant', 'content': response})
@@ -199,6 +203,7 @@ async def process_item(
             observation = await run_action(env, response)
             if observation is None:
                 mask_rollout = False
+                stop_reason = 'finish'
                 break
 
         if agent['main'].chat[-1]['role'] == 'user':
@@ -237,6 +242,21 @@ async def process_item(
 
     if getattr(env, 'is_finish', False) or getattr(env, 'finish', False):
         mask_rollout = False
+    if os.environ.get('FOLD_E2E_LEDGER_DIR'):
+        try:
+            write_ledger({
+                'instance_id': str(env.instance_info.get('instance_id', env.instance_info.get('query_id', ''))),
+                'uid': str(uid), 'gen_uid': str(gen_uid), 'workflow': workflow, 'is_train': bool(is_train),
+                'score': float(score[1]), 'score_msg': str(score[0])[:2000],
+                'is_finish': bool(getattr(env, 'is_finish', False) or getattr(env, 'finish', False)),
+                'stop_reason': stop_reason, 'iterations': iteration, 'max_turn': max_turn,
+                'response_length': int(config.response_length), 'n_branches': len(branches), 'branch_names': list(branches),
+                'branch_limit_hit': int(len(branches) + 1 > max_session),
+                'env_stats': {k: v for k, v in env.stats.items() if isinstance(v, (int, float, str))},
+                'agents': build_ledger(agent, prompt_turn),
+            })
+        except Exception as e:
+            print(f'[E2E-LEDGER] build failed: {e}')
     if score[1] > 0:
         mask_rollout = False
 
