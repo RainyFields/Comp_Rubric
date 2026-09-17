@@ -31,3 +31,14 @@ date_pdt	sid	name	spec	note
 2026-09-16 16:05	fbf46ee9701545d5	fold-infra-fix-h100	stop	infra #14 STOPPED by me after shakeout2 (619c7466) finished 16:00 PDT
 2026-09-16 16:30	cbb4f84d901166fc	fold-infra-fix-h100	fold-infra-fix-h100.json	infra #15 on H100 for the FULL compactiongrpo run (mask_unfinished=False, threshold 8192); dies on the 4h grid unless resubmitted
 2026-09-16 17:08	af713ba2cbb770f9	fold-train-compactiongrpo-h100	fold-train-compactiongrpo-h100.json	FULL compactiongrpo run (100 steps, mask_unfinished=False, threshold 8192, H100), submitted after infra 15 READY; outputs under *_fix/compactiongrpo
+2026-09-16 20:16	f085f8fd4d1932dc	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #1 for arm compactiongrpo (previous cbb4f84d901166fc was killed)
+2026-09-17 00:12	ef332297d6976e42	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #2 for arm compactiongrpo (previous f085f8fd4d1932dc was killed)
+2026-09-17 04:12	2e22cc3e13046a89	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #3 for arm compactiongrpo (previous ef332297d6976e42 was killed)
+2026-09-17 08:16	f1a8458357d791f4	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #4 for arm compactiongrpo (previous 2e22cc3e13046a89 was killed)
+2026-09-17 12:04	03b90aab8dd39365	fold_e2e_grpo60_branch_h100	fold_e2e_grpo60_branch_h100.json	E2E token-usage study (2x2 + base): fold_e2e_grpo60_branch, modes greedy+t1n4, ledger on, repo tarball foldagent-repo-e2e (ca4a1a0)
+2026-09-17 12:05	926e5e6f585f8f52	fold_e2e_grpo60_nobranch_h100	fold_e2e_grpo60_nobranch_h100.json	E2E token-usage study (2x2 + base): fold_e2e_grpo60_nobranch, modes greedy+t1n4, ledger on, repo tarball foldagent-repo-e2e (ca4a1a0)
+2026-09-17 12:05	685e23294fda71c4	fold_e2e_foldgrpo50_branch_h100	fold_e2e_foldgrpo50_branch_h100.json	E2E token-usage study (2x2 + base): fold_e2e_foldgrpo50_branch, modes greedy+t1n4, ledger on, repo tarball foldagent-repo-e2e (ca4a1a0)
+2026-09-17 12:06	f54cfecf009f528b	fold_e2e_foldgrpo50_nobranch_h100	fold_e2e_foldgrpo50_nobranch_h100.json	E2E token-usage study (2x2 + base): fold_e2e_foldgrpo50_nobranch, modes greedy+t1n4, ledger on, repo tarball foldagent-repo-e2e (ca4a1a0)
+2026-09-17 12:07	eb35b7a65de1507c	fold_e2e_norlbase_branch_h100	fold_e2e_norlbase_branch_h100.json	E2E token-usage study (2x2 + base): fold_e2e_norlbase_branch, modes greedy+t1n4, ledger on, repo tarball foldagent-repo-e2e (ca4a1a0)
+2026-09-17 12:07	64213d5312710f68	fold_e2e_norlbase_nobranch_h100	fold_e2e_norlbase_nobranch_h100.json	E2E token-usage study (2x2 + base): fold_e2e_norlbase_nobranch, modes greedy+t1n4, ledger on, repo tarball foldagent-repo-e2e (ca4a1a0)
+2026-09-17 12:12	e9c576dcc36d779b	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #5 for arm compactiongrpo (previous f1a8458357d791f4 was killed)
