@@ -121,6 +121,7 @@ esac
 # no folding; search_branch = training-time prompt with the branch tool) and the per-rollout token ledger
 # (agents/e2e_ledger.py; written by the agent-loop workers into $OUTDIR/ledger, mirrored with the results).
 [ -n "${FOLD_WORKFLOW:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.workflow=${FOLD_WORKFLOW}"
+[ -n "${FOLD_SESSION_TIMEOUT:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.session_timeout=${FOLD_SESSION_TIMEOUT}"   # e2e t1n4 re-runs: 600 concurrent rollouts on one search+judge pod hit the 1 h default
 if [ "${FOLD_E2E_LEDGER:-0}" = 1 ]; then export FOLD_E2E_LEDGER_DIR=$OUTDIR/ledger; mkdir -p "$FOLD_E2E_LEDGER_DIR"; fi
 
 cd "$CHECKOUT"
