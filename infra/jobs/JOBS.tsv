@@ -45,3 +45,6 @@ date_pdt	sid	name	spec	note
 2026-09-17 12:49	ee10539206705d5f	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #6 for arm compactiongrpo (previous e9c576dcc36d779b was queued)
 2026-09-17 14:02	c5220b294491facc	fold_e2e_grpo60_branch_t1n4_t4h_h100	fold_e2e_grpo60_branch_t1n4_t4h_h100.json	E2E study: t1n4 re-run of the fold cell with session_timeout=4h (1h run had 10%/34% timeouts); tag _e2e_branch_t4h
 2026-09-17 14:02	7ea9d06bbfe4d595	fold_e2e_foldgrpo50_branch_t1n4_t4h_h100	fold_e2e_foldgrpo50_branch_t1n4_t4h_h100.json	E2E study: t1n4 re-run of the fold cell with session_timeout=4h (1h run had 10%/34% timeouts); tag _e2e_branch_t4h
+2026-09-17 16:11	4011eff592cdcc63	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #7 for arm compactiongrpo (previous ee10539206705d5f was killed)
+2026-09-17 20:14	468314e2890f5da0	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #8 for arm compactiongrpo (previous 4011eff592cdcc63 was killed)
+2026-09-17 20:47	5fc30e5bf85e8cc1	fold_e2e_foldgrpo50_branch_t1n4_t4h_h100	fold_e2e_foldgrpo50_branch_t1n4_t4h_h100.json	E2E study: RESUBMIT of the FoldGRPO t1n4 4h-timeout re-run (7ea9d06b failed at local infra startup, before val; grpo re-run c5220b29 DONE t1n4 .340, 0 timeouts)
