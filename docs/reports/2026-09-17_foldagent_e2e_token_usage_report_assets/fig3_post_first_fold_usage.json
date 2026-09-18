@@ -27,9 +27,9 @@
   "metric": "post_total",
   "cell": "grpo_fold",
   "mode": "t1n4",
-  "n_folded": 511,
-  "mean": 38.80796673189824,
-  "median": 27.206
+  "n_folded": 543,
+  "mean": 41.182963167587474,
+  "median": 24.24
  },
  {
   "metric": "post_total",
@@ -43,9 +43,9 @@
   "metric": "post_total",
   "cell": "fold_fold",
   "mode": "t1n4",
-  "n_folded": 589,
-  "mean": 53.84583361629881,
-  "median": 54.64
+  "n_folded": 592,
+  "mean": 71.34583445945945,
+  "median": 55.811499999999995
  },
  {
   "metric": "post_gen",
@@ -75,9 +75,9 @@
   "metric": "post_gen",
   "cell": "grpo_fold",
   "mode": "t1n4",
-  "n_folded": 511,
-  "mean": 1.9963718199608613,
-  "median": 1.512
+  "n_folded": 543,
+  "mean": 2.100106813996317,
+  "median": 1.386
  },
  {
   "metric": "post_gen",
@@ -91,9 +91,9 @@
   "metric": "post_gen",
   "cell": "fold_fold",
   "mode": "t1n4",
-  "n_folded": 589,
-  "mean": 1.787862478777589,
-  "median": 1.936
+  "n_folded": 592,
+  "mean": 2.3413597972972973,
+  "median": 1.9825
  },
  {
   "metric": "post_turns",
@@ -123,9 +123,9 @@
   "metric": "post_turns",
   "cell": "grpo_fold",
   "mode": "t1n4",
-  "n_folded": 511,
-  "mean": 14.641878669275929,
-  "median": 11.0
+  "n_folded": 543,
+  "mean": 15.605893186003684,
+  "median": 10.0
  },
  {
   "metric": "post_turns",
@@ -139,9 +139,9 @@
   "metric": "post_turns",
   "cell": "fold_fold",
   "mode": "t1n4",
-  "n_folded": 589,
-  "mean": 18.97792869269949,
-  "median": 21.0
+  "n_folded": 592,
+  "mean": 25.16554054054054,
+  "median": 20.0
  },
  {
   "metric": "post_tool_calls",
@@ -171,9 +171,9 @@
   "metric": "post_tool_calls",
   "cell": "grpo_fold",
   "mode": "t1n4",
-  "n_folded": 511,
-  "mean": 8.573385518590998,
-  "median": 6.0
+  "n_folded": 543,
+  "mean": 9.11049723756906,
+  "median": 5.0
  },
  {
   "metric": "post_tool_calls",
@@ -187,8 +187,8 @@
   "metric": "post_tool_calls",
   "cell": "fold_fold",
   "mode": "t1n4",
-  "n_folded": 589,
-  "mean": 11.0169779286927,
-  "median": 12.0
+  "n_folded": 592,
+  "mean": 14.9375,
+  "median": 11.0
  }
 ]

@@ -3,7 +3,7 @@ active context is the same with or without folding (every policy saturates the 3
 the mean context per forward pass drops only 10–20 %, and in exchange the trajectory becomes 3–5× longer in turns and 1.7–2.6× longer in
 end-to-end tokens, with 3.5–5.5× the cumulative model input. Most of that extra interaction happens **after the first fold**. FoldGRPO
 training does not learn to compensate for this: it learns to fold more and to spend ~60 % more end-to-end tokens than the plain-GRPO policy
-on the same tasks, for a success gain that is not significant (greedy +0.047 [−0.03, 0.12]; T=1 n=4: 0.00).
+on the same tasks, for a success gain that is not significant (greedy +0.047 [−0.03, 0.12]; T=1.0 n=4: +0.027 [−0.01, 0.06]).
 
 **1. Context efficiency (what folding actually changes).** Greedy, all rollouts: peak active context 31.1k (GRPO/fold) vs 30.7k (GRPO/no fold)
 and 32.4k (FoldGRPO/fold) vs 33.9k (FoldGRPO/no fold) — paired Δpeak +0.4k [−1.3k, 1.9k] and −1.4k [−2.8k, −0.2k]. The window is hit either
@@ -36,11 +36,16 @@ work to branches, i.e. by spending more end-to-end tokens, not by needing less p
 without increasing future interaction" nor "learns to compensate for post-compaction interaction" holds; "trades shorter (mean) context for
 more search/reasoning" is the description the data supports.
 
-**6. Sampling (T=1.0, n=4) agrees on tokens and disagrees only where an artefact intervenes.** The paired FoldGRPO/fold − GRPO/fold
-differences are +19.1k e2e tokens [15k, 23k], +6.0 turns, +86k cumulative input at Δsuccess 0.000 [−0.035, 0.035]. However the 1 h
-session timeout of the val worker killed 10 % (GRPO/fold) and 34 % (FoldGRPO/fold) of the 600 concurrent sampled rollouts (0 % in greedy and
-in all no-fold cells: the shared search + judge pod is throughput-bound at 600-way concurrency, median session 51 min for FoldGRPO/fold vs
-12 min in greedy). Timed-out rollouts score 0 and have truncated token counts, so the T=1 fold-cell numbers are lower bounds on both success
-and cost; among rollouts that did not time out FoldGRPO/fold scores 0.479 (biased upward: the long ones were dropped). Both fold cells are
-being re-run at T=1 with a 4 h session timeout (jobs c5220b294491facc, 7ea9d06bbfe4d595; tag `_e2e_branch_t4h`); this report is rebuilt
-automatically from them when they finish. **Greedy is the clean comparison in this version.**
+**6. Sampling (T=1.0, n=4) reproduces the greedy picture.** With the fold cells re-run under a 4 h session timeout (see below), the
+sampled results agree with greedy on every axis: success 0.340 (GRPO/fold) vs 0.367 (FoldGRPO/fold), paired Δ = +0.027 [−0.008, 0.062],
+p = 0.26; e2e tokens 67.2k vs 99.8k (paired +32.7k [26k, 39k]); turns 21.7 vs 32.2 (+10.5); branches 2.6 vs 4.5; cumulative model input
+391k vs 574k (+179k); peak context 31.6k vs 32.6k (Δ +1.0k); finish rate 91 % vs 96 %, window exhaustion 9 % vs 3 %; 58 % vs 71 % of the
+fold cells' tokens fall after the first fold; a solved task costs 41.6k vs 58.6k e2e tokens. The solved-within-budget curves cross between
+100k and 150k tokens per task (B = 50k: 0.247 vs 0.197; 100k: 0.322 vs 0.310; 150k: 0.340 vs 0.355; 400k: 0.340 vs 0.367).
+
+*Timeout artefact and re-runs.* The val worker's default 1 h session timeout is not binding for greedy (median session 8–12 min) or for the
+no-fold cells, but the 600 concurrent sampled rollouts of the fold cells are throughput-bound on the shared search + judge pod (median session
+50–55 min): the first T=1 runs lost 10 % (GRPO/fold) and 34 % (FoldGRPO/fold) of rollouts to the timeout, all scored 0 with truncated token
+counts (success read 0.317 / 0.317). Both cells were re-run with `FOLD_SESSION_TIMEOUT=14400` (jobs c5220b294491facc and 5fc30e5bf85e8cc1;
+tag `_e2e_branch_t4h`; 0 timeouts in either) and the tables above use the re-runs. The 1 h results are kept under the original tags for
+reference; they underestimate both the success and the cost of folding.

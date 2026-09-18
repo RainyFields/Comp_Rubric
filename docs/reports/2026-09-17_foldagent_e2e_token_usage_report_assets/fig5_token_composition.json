@@ -237,7 +237,7 @@
   "mode": "t1n4",
   "cell": "grpo_fold",
   "component": "gen_tokens",
-  "mean_tokens": 4511.39
+  "mean_tokens": 4783.491666666667
  },
  {
   "mode": "t1n4",
@@ -249,7 +249,7 @@
   "mode": "t1n4",
   "cell": "fold_fold",
   "component": "gen_tokens",
-  "mean_tokens": 3783.5716666666667
+  "mean_tokens": 4342.13
  },
  {
   "mode": "t1n4",
@@ -273,7 +273,7 @@
   "mode": "t1n4",
   "cell": "grpo_fold",
   "component": "obs_tokens",
-  "mean_tokens": 51907.555
+  "mean_tokens": 55413.628333333334
  },
  {
   "mode": "t1n4",
@@ -285,7 +285,7 @@
   "mode": "t1n4",
   "cell": "fold_fold",
   "component": "obs_tokens",
-  "mean_tokens": 70840.475
+  "mean_tokens": 87295.54333333333
  },
  {
   "mode": "t1n4",
@@ -309,7 +309,7 @@
   "mode": "t1n4",
   "cell": "grpo_fold",
   "component": "comp_in_tokens",
-  "mean_tokens": 1742.5733333333333
+  "mean_tokens": 1909.33
  },
  {
   "mode": "t1n4",
@@ -321,7 +321,7 @@
   "mode": "t1n4",
   "cell": "fold_fold",
   "component": "comp_in_tokens",
-  "mean_tokens": 2597.365
+  "mean_tokens": 3095.1283333333336
  },
  {
   "mode": "t1n4",
@@ -345,7 +345,7 @@
   "mode": "t1n4",
   "cell": "grpo_fold",
   "component": "frame_tokens",
-  "mean_tokens": 68.32666666666667
+  "mean_tokens": 74.83833333333334
  },
  {
   "mode": "t1n4",
@@ -357,6 +357,6 @@
   "mode": "t1n4",
   "cell": "fold_fold",
   "component": "frame_tokens",
-  "mean_tokens": 90.845
+  "mean_tokens": 111.97666666666667
  }
 ]

@@ -1,6 +1,6 @@
 # FoldAgent on BrowseComp-Plus: context efficiency vs end-to-end token usage
 
-*Build: `python3 docs/reports/build_e2e_report.py` (this file, assets and figures are regenerated from the HDFS ledgers). Repo commit at build time: `50e4e8b`.*
+*Build: `python3 docs/reports/build_e2e_report.py` (this file, assets and figures are regenerated from the HDFS ledgers). Repo commit at build time: `8aa019b`.*
 
 ## 1. Question and design
 
@@ -34,11 +34,11 @@ model input of its forward passes, not as new tokens.
 | grpo_nofold | greedy | grpo_60_greedy_e2e_nobranch_sc | 150 | DONE | 0.153 |
 | grpo_nofold | t1n4 | grpo_60_t1n4_e2e_nobranch_sc | 600 | DONE | 0.182 |
 | grpo_fold | greedy | grpo_60_greedy_e2e_branch_sc | 150 | DONE | 0.327 |
-| grpo_fold | t1n4 | grpo_60_t1n4_e2e_branch_sc | 600 | DONE | 0.317 |
+| grpo_fold | t1n4 | grpo_60_t1n4_e2e_branch_t4h_sc | 600 | DONE | 0.340 |
 | fold_nofold | greedy | foldgrpo_50_greedy_e2e_nobranch_sc | 150 | DONE | 0.067 |
 | fold_nofold | t1n4 | foldgrpo_50_t1n4_e2e_nobranch_sc | 600 | DONE | 0.053 |
 | fold_fold | greedy | foldgrpo_50_greedy_e2e_branch_sc | 150 | DONE | 0.373 |
-| fold_fold | t1n4 | foldgrpo_50_t1n4_e2e_branch_sc | 600 | DONE | 0.317 |
+| fold_fold | t1n4 | foldgrpo_50_t1n4_e2e_branch_t4h_sc | 600 | DONE | 0.367 |
 
 ## 2. Main tables
 
@@ -74,9 +74,9 @@ model input of its forward passes, not as new tokens.
 | base / no fold | 600 | 0.073 | 37,334 | 39,758 | 3,526 | 28,641 | 0 | 0 | 133,625 |
 | base / fold | 600 | 0.180 | 25,703 | 21,678 | 4,685 | 14,647 | 1,374 | 3,272 | 109,332 |
 | GRPO / no fold | 600 | 0.182 | 43,786 | 39,118 | 3,312 | 35,309 | 0 | 0 | 112,726 |
-| GRPO / fold | 600 | 0.317 | 63,203 | 48,729 | 4,511 | 51,908 | 1,743 | 2,970 | 391,104 |
+| GRPO / fold | 600 | 0.340 | 67,154 | 50,990 | 4,783 | 55,414 | 1,909 | 3,185 | 436,039 |
 | FoldGRPO / no fold | 600 | 0.053 | 39,117 | 40,035 | 1,972 | 31,975 | 0 | 0 | 152,424 |
-| FoldGRPO / fold | 600 | 0.317 | 82,285 | 84,103 | 3,784 | 70,840 | 2,597 | 3,024 | 477,142 |
+| FoldGRPO / fold | 600 | 0.367 | 99,818 | 84,308 | 4,342 | 87,296 | 3,095 | 3,362 | 615,312 |
 
 *interaction and context:*
 
@@ -85,9 +85,9 @@ model input of its forward passes, not as new tokens.
 | base / no fold | 600 | 6.2 | 6.0 | 0.00 | 6.2 | 32,517 | 20,020 | 32,185 | 0.82 | – | – | – |
 | base / fold | 600 | 7.7 | 2.5 | 1.75 | 7.7 | 20,170 | 11,977 | 8,692 | 0.08 | 8,631 | 4.6 | 1.1 |
 | GRPO / no fold | 600 | 5.5 | 5.1 | 0.00 | 5.5 | 31,155 | 19,510 | 38,638 | 0.67 | – | – | – |
-| GRPO / fold | 600 | 19.8 | 12.3 | 2.38 | 19.8 | 31,924 | 18,698 | 11,261 | 0.12 | 38,808 | 14.6 | 8.6 |
+| GRPO / fold | 600 | 21.7 | 13.3 | 2.63 | 21.7 | 31,572 | 18,807 | 10,683 | 0.09 | 41,183 | 15.6 | 9.1 |
 | FoldGRPO / no fold | 600 | 7.0 | 6.9 | 0.00 | 7.0 | 33,864 | 21,238 | 33,968 | 0.91 | – | – | – |
-| FoldGRPO / fold | 600 | 25.8 | 15.4 | 3.61 | 25.8 | 32,447 | 17,491 | 4,860 | 0.04 | 53,846 | 19.0 | 11.0 |
+| FoldGRPO / fold | 600 | 32.2 | 19.5 | 4.48 | 32.2 | 32,568 | 17,563 | 5,009 | 0.03 | 71,346 | 25.2 | 14.9 |
 
 
 ### 2.3 Successful rollouts only — greedy
@@ -122,9 +122,9 @@ model input of its forward passes, not as new tokens.
 | base / no fold | 44 | 1.000 | 22,177 | 22,110 | 2,141 | 14,871 | 0 | 0 | 86,203 |
 | base / fold | 108 | 1.000 | 23,787 | 21,483 | 3,380 | 14,350 | 1,066 | 1,923 | 86,989 |
 | GRPO / no fold | 109 | 1.000 | 23,650 | 23,772 | 2,259 | 16,232 | 0 | 0 | 81,853 |
-| GRPO / fold | 190 | 1.000 | 38,794 | 32,678 | 3,093 | 29,444 | 1,241 | 1,990 | 240,487 |
+| GRPO / fold | 204 | 1.000 | 41,605 | 33,226 | 3,164 | 32,082 | 1,337 | 2,079 | 262,765 |
 | FoldGRPO / no fold | 32 | 1.000 | 23,408 | 24,499 | 1,498 | 16,753 | 0 | 0 | 94,055 |
-| FoldGRPO / fold | 190 | 1.000 | 48,835 | 44,372 | 2,925 | 39,079 | 1,802 | 2,351 | 265,507 |
+| FoldGRPO / fold | 220 | 1.000 | 58,582 | 47,287 | 3,205 | 48,125 | 2,210 | 2,511 | 346,632 |
 
 *interaction and context:*
 
@@ -133,9 +133,9 @@ model input of its forward passes, not as new tokens.
 | base / no fold | 44 | 5.3 | 4.2 | 0.00 | 5.3 | 22,177 | 15,321 | 17,029 | 0.00 | – | – | – |
 | base / fold | 108 | 6.7 | 2.8 | 1.30 | 6.7 | 20,383 | 12,018 | 7,255 | 0.00 | 5,926 | 3.2 | 0.9 |
 | GRPO / no fold | 109 | 4.9 | 3.7 | 0.00 | 4.9 | 23,650 | 16,178 | 18,505 | 0.00 | – | – | – |
-| GRPO / fold | 190 | 14.1 | 8.5 | 1.68 | 14.1 | 27,556 | 15,966 | 7,001 | 0.00 | 14,635 | 7.3 | 3.7 |
+| GRPO / fold | 204 | 14.9 | 9.1 | 1.81 | 14.9 | 27,336 | 16,209 | 6,989 | 0.00 | 17,326 | 8.1 | 4.4 |
 | FoldGRPO / no fold | 32 | 5.9 | 4.9 | 0.00 | 5.9 | 23,408 | 15,678 | 18,268 | 0.00 | – | – | – |
-| FoldGRPO / fold | 190 | 17.1 | 10.0 | 2.53 | 17.1 | 27,759 | 14,414 | 2,637 | 0.00 | 23,159 | 10.3 | 5.6 |
+| FoldGRPO / fold | 220 | 21.3 | 12.7 | 3.10 | 21.3 | 28,242 | 14,714 | 3,139 | 0.00 | 33,851 | 14.5 | 8.2 |
 
 
 Columns: *e2e tokens* = prompt + generated + framing + observations + fold prompts/returns (everything before discard); *fold in* = branch prompts,
@@ -162,9 +162,9 @@ T=1.0 n=4:
 | base / no fold | 600 | 18% | 0% | 0% | 82% | 82% | 0% | 0% |
 | base / fold | 600 | 92% | 0% | 0% | 8% | 8% | 87% | 0% |
 | GRPO / no fold | 600 | 33% | 0% | 0% | 67% | 67% | 0% | 0% |
-| GRPO / fold | 600 | 78% | 0% | 10% | 12% | 12% | 85% | 0% |
+| GRPO / fold | 600 | 91% | 0% | 0% | 9% | 9% | 90% | 2% |
 | FoldGRPO / no fold | 600 | 9% | 0% | 0% | 91% | 91% | 0% | 0% |
-| FoldGRPO / fold | 600 | 62% | 0% | 34% | 4% | 4% | 98% | 0% |
+| FoldGRPO / fold | 600 | 96% | 0% | 0% | 3% | 3% | 99% | 9% |
 
 ## 3. Paired task-level comparisons
 
@@ -173,82 +173,82 @@ Greedy (one rollout per task):
 | comparison | metric | n tasks | mean Δ [95% CI] | median Δ | % tasks Δ>0 | sign-test p |
 |---|---|---|---|---|---|---|
 | FoldGRPO/fold − GRPO/fold (same tasks) | success | 150 | 0.047 [-0.027, 0.120] | 0.000 | 13% | 0.281 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | total_e2e_tokens | 150 | 38,459 [26,422, 50,763] | 20,903 | 69% | 0.000 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | turns | 150 | 11.9 [8.0, 16.1] | 9.0 | 69% | 0.000 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | tool_calls | 150 | 6.6 [4.0, 9.3] | 5.0 | 64% | 0.000 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | peak_ctx | 150 | 1,291 [-138, 2,639] | 322 | 54% | 0.369 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | cum_prompt_tokens | 150 | 215,657 [132,849, 303,859] | 138,373 | 63% | 0.001 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | total_e2e_tokens | 150 | 38,459 [26,383, 51,096] | 20,903 | 69% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | turns | 150 | 11.9 [7.9, 15.9] | 9.0 | 69% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | tool_calls | 150 | 6.6 [4.0, 9.2] | 5.0 | 64% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | peak_ctx | 150 | 1,291 [-50, 2,709] | 322 | 54% | 0.369 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | cum_prompt_tokens | 150 | 215,657 [128,254, 301,375] | 138,373 | 63% | 0.001 |
 | FoldGRPO: fold − no fold | success | 150 | 0.307 [0.227, 0.387] | 0.000 | 33% | 0.000 |
-| FoldGRPO: fold − no fold | total_e2e_tokens | 150 | 61,772 [50,780, 72,857] | 38,906 | 83% | 0.000 |
-| FoldGRPO: fold − no fold | turns | 150 | 24.6 [21.3, 28.0] | 19.0 | 90% | 0.000 |
+| FoldGRPO: fold − no fold | total_e2e_tokens | 150 | 61,772 [51,125, 72,872] | 38,906 | 83% | 0.000 |
+| FoldGRPO: fold − no fold | turns | 150 | 24.6 [21.3, 28.1] | 19.0 | 90% | 0.000 |
 | FoldGRPO: fold − no fold | tool_calls | 150 | 11.9 [9.7, 14.0] | 8.5 | 81% | 0.000 |
-| FoldGRPO: fold − no fold | peak_ctx | 150 | -1,444 [-2,766, -231] | 234 | 54% | 0.326 |
-| FoldGRPO: fold − no fold | cum_prompt_tokens | 150 | 444,679 [368,854, 520,038] | 295,167 | 85% | 0.000 |
+| FoldGRPO: fold − no fold | peak_ctx | 150 | -1,444 [-2,741, -147] | 234 | 54% | 0.326 |
+| FoldGRPO: fold − no fold | cum_prompt_tokens | 150 | 444,679 [371,266, 527,580] | 295,167 | 85% | 0.000 |
 | GRPO: fold − no fold | success | 150 | 0.173 [0.100, 0.247] | 0.000 | 21% | 0.000 |
-| GRPO: fold − no fold | total_e2e_tokens | 150 | 25,873 [18,899, 33,639] | 8,762 | 65% | 0.000 |
-| GRPO: fold − no fold | turns | 150 | 14.1 [11.5, 16.7] | 9.5 | 81% | 0.000 |
+| GRPO: fold − no fold | total_e2e_tokens | 150 | 25,873 [18,490, 33,792] | 8,762 | 65% | 0.000 |
+| GRPO: fold − no fold | turns | 150 | 14.1 [11.5, 16.9] | 9.5 | 81% | 0.000 |
 | GRPO: fold − no fold | tool_calls | 150 | 6.9 [5.2, 8.8] | 4.0 | 66% | 0.000 |
-| GRPO: fold − no fold | peak_ctx | 150 | 401 [-1,282, 1,904] | 766 | 52% | 0.683 |
-| GRPO: fold − no fold | cum_prompt_tokens | 150 | 269,751 [212,670, 328,635] | 168,095 | 76% | 0.000 |
+| GRPO: fold − no fold | peak_ctx | 150 | 401 [-1,070, 1,924] | 766 | 52% | 0.683 |
+| GRPO: fold − no fold | cum_prompt_tokens | 150 | 269,751 [212,807, 328,598] | 168,095 | 76% | 0.000 |
 | FoldGRPO/no fold − GRPO/no fold | success | 150 | -0.087 [-0.147, -0.027] | 0.000 | 3% | 0.011 |
-| FoldGRPO/no fold − GRPO/no fold | total_e2e_tokens | 150 | 2,561 [710, 4,314] | 630 | 57% | 0.086 |
-| FoldGRPO/no fold − GRPO/no fold | turns | 150 | 1.4 [0.9, 1.9] | 2.0 | 68% | 0.000 |
+| FoldGRPO/no fold − GRPO/no fold | total_e2e_tokens | 150 | 2,561 [705, 4,364] | 630 | 57% | 0.086 |
+| FoldGRPO/no fold − GRPO/no fold | turns | 150 | 1.4 [0.9, 2.0] | 2.0 | 68% | 0.000 |
 | FoldGRPO/no fold − GRPO/no fold | tool_calls | 150 | 1.7 [1.2, 2.3] | 2.0 | 69% | 0.000 |
-| FoldGRPO/no fold − GRPO/no fold | peak_ctx | 150 | 3,136 [1,878, 4,434] | 1,714 | 61% | 0.009 |
-| FoldGRPO/no fold − GRPO/no fold | cum_prompt_tokens | 150 | 40,728 [27,185, 54,122] | 46,297 | 73% | 0.000 |
-| base: fold − no fold | success | 150 | 0.060 [-0.013, 0.127] | 0.000 | 13% | 0.136 |
-| base: fold − no fold | total_e2e_tokens | 150 | -10,933 [-13,864, -7,929] | -13,123 | 27% | 0.000 |
-| base: fold − no fold | turns | 150 | 1.7 [0.8, 2.7] | 1.0 | 55% | 0.012 |
-| base: fold − no fold | tool_calls | 150 | -2.7 [-3.4, -2.0] | -3.0 | 21% | 0.000 |
-| base: fold − no fold | peak_ctx | 150 | -11,566 [-13,656, -9,514] | -14,278 | 23% | 0.000 |
-| base: fold − no fold | cum_prompt_tokens | 150 | -13,880 [-35,702, 7,751] | -24,714 | 37% | 0.001 |
+| FoldGRPO/no fold − GRPO/no fold | peak_ctx | 150 | 3,136 [1,867, 4,442] | 1,714 | 61% | 0.009 |
+| FoldGRPO/no fold − GRPO/no fold | cum_prompt_tokens | 150 | 40,728 [26,814, 54,441] | 46,297 | 73% | 0.000 |
+| base: fold − no fold | success | 150 | 0.060 [-0.013, 0.133] | 0.000 | 13% | 0.136 |
+| base: fold − no fold | total_e2e_tokens | 150 | -10,933 [-13,825, -8,125] | -13,123 | 27% | 0.000 |
+| base: fold − no fold | turns | 150 | 1.7 [0.8, 2.6] | 1.0 | 55% | 0.012 |
+| base: fold − no fold | tool_calls | 150 | -2.7 [-3.5, -2.0] | -3.0 | 21% | 0.000 |
+| base: fold − no fold | peak_ctx | 150 | -11,566 [-13,605, -9,500] | -14,278 | 23% | 0.000 |
+| base: fold − no fold | cum_prompt_tokens | 150 | -13,880 [-34,924, 8,480] | -24,714 | 37% | 0.001 |
 | FoldGRPO/fold − GRPO/no fold | success | 150 | 0.220 [0.140, 0.300] | 0.000 | 26% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | total_e2e_tokens | 150 | 64,332 [53,559, 75,039] | 43,157 | 88% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | turns | 150 | 26.0 [22.7, 29.4] | 21.0 | 97% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | tool_calls | 150 | 13.6 [11.4, 15.7] | 10.0 | 89% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | peak_ctx | 150 | 1,692 [311, 3,142] | 1,466 | 63% | 0.001 |
-| FoldGRPO/fold − GRPO/no fold | cum_prompt_tokens | 150 | 485,407 [412,540, 561,705] | 334,877 | 94% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | total_e2e_tokens | 150 | 64,332 [53,558, 75,568] | 43,157 | 88% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | turns | 150 | 26.0 [22.6, 29.5] | 21.0 | 97% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | tool_calls | 150 | 13.6 [11.5, 15.7] | 10.0 | 89% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | peak_ctx | 150 | 1,692 [207, 3,098] | 1,466 | 63% | 0.001 |
+| FoldGRPO/fold − GRPO/no fold | cum_prompt_tokens | 150 | 485,407 [410,751, 562,530] | 334,877 | 94% | 0.000 |
 
 T=1.0 n=4 (per-task mean of 4 samples):
 
 | comparison | metric | n tasks | mean Δ [95% CI] | median Δ | % tasks Δ>0 | sign-test p |
 |---|---|---|---|---|---|---|
-| FoldGRPO/fold − GRPO/fold (same tasks) | success | 150 | 0.000 [-0.035, 0.035] | 0.000 | 19% | 0.392 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | total_e2e_tokens | 150 | 19,082 [15,006, 23,338] | 17,582 | 73% | 0.000 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | turns | 150 | 6.0 [4.6, 7.5] | 6.4 | 76% | 0.000 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | tool_calls | 150 | 3.1 [2.2, 4.1] | 3.1 | 71% | 0.000 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | peak_ctx | 150 | 523 [-92, 1,142] | 526 | 57% | 0.086 |
-| FoldGRPO/fold − GRPO/fold (same tasks) | cum_prompt_tokens | 150 | 86,039 [56,464, 115,781] | 76,748 | 68% | 0.000 |
-| FoldGRPO: fold − no fold | success | 150 | 0.263 [0.210, 0.315] | 0.000 | 49% | 0.000 |
-| FoldGRPO: fold − no fold | total_e2e_tokens | 150 | 43,168 [37,974, 48,048] | 45,832 | 89% | 0.000 |
-| FoldGRPO: fold − no fold | turns | 150 | 18.8 [17.3, 20.3] | 19.9 | 99% | 0.000 |
-| FoldGRPO: fold − no fold | tool_calls | 150 | 8.5 [7.4, 9.5] | 9.6 | 87% | 0.000 |
-| FoldGRPO: fold − no fold | peak_ctx | 150 | -1,417 [-2,288, -615] | 290 | 57% | 0.121 |
-| FoldGRPO: fold − no fold | cum_prompt_tokens | 150 | 324,718 [289,135, 360,140] | 360,851 | 89% | 0.000 |
-| GRPO: fold − no fold | success | 150 | 0.135 [0.093, 0.178] | 0.000 | 35% | 0.000 |
-| GRPO: fold − no fold | total_e2e_tokens | 150 | 19,416 [3,118, 29,492] | 22,652 | 85% | 0.000 |
-| GRPO: fold − no fold | turns | 150 | 14.3 [12.9, 15.7] | 12.4 | 97% | 0.000 |
-| GRPO: fold − no fold | tool_calls | 150 | 7.2 [6.2, 8.3] | 6.2 | 89% | 0.000 |
-| GRPO: fold − no fold | peak_ctx | 150 | 768 [-44, 1,579] | 1,196 | 62% | 0.004 |
-| GRPO: fold − no fold | cum_prompt_tokens | 150 | 278,378 [244,449, 312,000] | 250,535 | 92% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | success | 150 | 0.027 [-0.008, 0.062] | 0.000 | 20% | 0.262 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | total_e2e_tokens | 150 | 32,663 [26,292, 39,001] | 24,930 | 81% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | turns | 150 | 10.5 [8.4, 12.6] | 9.5 | 79% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | tool_calls | 150 | 6.3 [4.9, 7.6] | 5.4 | 79% | 0.000 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | peak_ctx | 150 | 996 [393, 1,624] | 648 | 57% | 0.086 |
+| FoldGRPO/fold − GRPO/fold (same tasks) | cum_prompt_tokens | 150 | 179,274 [133,413, 227,503] | 141,262 | 78% | 0.000 |
+| FoldGRPO: fold − no fold | success | 150 | 0.313 [0.253, 0.377] | 0.000 | 47% | 0.000 |
+| FoldGRPO: fold − no fold | total_e2e_tokens | 150 | 60,700 [52,755, 68,772] | 47,522 | 92% | 0.000 |
+| FoldGRPO: fold − no fold | turns | 150 | 25.1 [22.6, 27.7] | 21.1 | 100% | 0.000 |
+| FoldGRPO: fold − no fold | tool_calls | 150 | 12.6 [10.9, 14.3] | 11.0 | 90% | 0.000 |
+| FoldGRPO: fold − no fold | peak_ctx | 150 | -1,296 [-2,123, -541] | 67 | 51% | 0.807 |
+| FoldGRPO: fold − no fold | cum_prompt_tokens | 150 | 462,888 [405,310, 522,060] | 359,591 | 93% | 0.000 |
+| GRPO: fold − no fold | success | 150 | 0.158 [0.115, 0.203] | 0.000 | 35% | 0.000 |
+| GRPO: fold − no fold | total_e2e_tokens | 150 | 23,368 [5,770, 34,364] | 22,890 | 84% | 0.000 |
+| GRPO: fold − no fold | turns | 150 | 16.2 [14.4, 18.0] | 14.0 | 99% | 0.000 |
+| GRPO: fold − no fold | tool_calls | 150 | 8.2 [7.0, 9.4] | 6.9 | 90% | 0.000 |
+| GRPO: fold − no fold | peak_ctx | 150 | 417 [-400, 1,208] | 983 | 57% | 0.086 |
+| GRPO: fold − no fold | cum_prompt_tokens | 150 | 323,313 [283,797, 365,376] | 279,956 | 95% | 0.000 |
 | FoldGRPO/no fold − GRPO/no fold | success | 150 | -0.128 [-0.168, -0.090] | 0.000 | 2% | 0.000 |
-| FoldGRPO/no fold − GRPO/no fold | total_e2e_tokens | 150 | -4,669 [-19,438, 3,268] | 1,479 | 66% | 0.000 |
+| FoldGRPO/no fold − GRPO/no fold | total_e2e_tokens | 150 | -4,669 [-19,650, 3,296] | 1,479 | 66% | 0.000 |
 | FoldGRPO/no fold − GRPO/no fold | turns | 150 | 1.5 [1.2, 1.9] | 1.5 | 76% | 0.000 |
 | FoldGRPO/no fold − GRPO/no fold | tool_calls | 150 | 1.9 [1.5, 2.2] | 1.8 | 81% | 0.000 |
-| FoldGRPO/no fold − GRPO/no fold | peak_ctx | 150 | 2,709 [2,055, 3,397] | 2,070 | 72% | 0.000 |
-| FoldGRPO/no fold − GRPO/no fold | cum_prompt_tokens | 150 | 39,698 [30,495, 48,890] | 35,758 | 79% | 0.000 |
-| base: fold − no fold | success | 150 | 0.107 [0.067, 0.145] | 0.000 | 26% | 0.000 |
-| base: fold − no fold | total_e2e_tokens | 150 | -11,631 [-13,012, -10,206] | -12,720 | 10% | 0.000 |
-| base: fold − no fold | turns | 150 | 1.5 [0.8, 2.3] | 0.5 | 59% | 0.021 |
+| FoldGRPO/no fold − GRPO/no fold | peak_ctx | 150 | 2,709 [2,043, 3,400] | 2,070 | 72% | 0.000 |
+| FoldGRPO/no fold − GRPO/no fold | cum_prompt_tokens | 150 | 39,698 [30,450, 49,278] | 35,758 | 79% | 0.000 |
+| base: fold − no fold | success | 150 | 0.107 [0.070, 0.147] | 0.000 | 26% | 0.000 |
+| base: fold − no fold | total_e2e_tokens | 150 | -11,631 [-13,076, -10,203] | -12,720 | 10% | 0.000 |
+| base: fold − no fold | turns | 150 | 1.5 [0.7, 2.3] | 0.5 | 59% | 0.021 |
 | base: fold − no fold | tool_calls | 150 | -3.4 [-3.8, -3.1] | -3.5 | 7% | 0.000 |
-| base: fold − no fold | peak_ctx | 150 | -12,347 [-13,247, -11,449] | -13,014 | 1% | 0.000 |
-| base: fold − no fold | cum_prompt_tokens | 150 | -24,293 [-39,598, -7,234] | -44,094 | 28% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | success | 150 | 0.135 [0.087, 0.185] | 0.000 | 35% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | total_e2e_tokens | 150 | 38,499 [21,564, 49,430] | 47,647 | 93% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | turns | 150 | 20.3 [18.9, 21.8] | 21.4 | 100% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | tool_calls | 150 | 10.4 [9.4, 11.3] | 11.2 | 97% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | peak_ctx | 150 | 1,292 [447, 2,074] | 1,474 | 73% | 0.000 |
-| FoldGRPO/fold − GRPO/no fold | cum_prompt_tokens | 150 | 364,417 [329,779, 399,260] | 391,489 | 96% | 0.000 |
+| base: fold − no fold | peak_ctx | 150 | -12,347 [-13,224, -11,448] | -13,014 | 1% | 0.000 |
+| base: fold − no fold | cum_prompt_tokens | 150 | -24,293 [-39,808, -6,712] | -44,094 | 28% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | success | 150 | 0.185 [0.137, 0.235] | 0.000 | 37% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | total_e2e_tokens | 150 | 56,031 [37,115, 69,161] | 50,009 | 96% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | turns | 150 | 26.7 [24.2, 29.3] | 22.2 | 99% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | tool_calls | 150 | 14.4 [12.9, 16.0] | 12.0 | 98% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | peak_ctx | 150 | 1,412 [677, 2,169] | 2,058 | 69% | 0.000 |
+| FoldGRPO/fold − GRPO/no fold | cum_prompt_tokens | 150 | 502,587 [447,143, 559,534] | 398,808 | 99% | 0.000 |
 
 ## 4. Figures
 
@@ -274,7 +274,7 @@ active context is the same with or without folding (every policy saturates the 3
 the mean context per forward pass drops only 10–20 %, and in exchange the trajectory becomes 3–5× longer in turns and 1.7–2.6× longer in
 end-to-end tokens, with 3.5–5.5× the cumulative model input. Most of that extra interaction happens **after the first fold**. FoldGRPO
 training does not learn to compensate for this: it learns to fold more and to spend ~60 % more end-to-end tokens than the plain-GRPO policy
-on the same tasks, for a success gain that is not significant (greedy +0.047 [−0.03, 0.12]; T=1 n=4: 0.00).
+on the same tasks, for a success gain that is not significant (greedy +0.047 [−0.03, 0.12]; T=1.0 n=4: +0.027 [−0.01, 0.06]).
 
 **1. Context efficiency (what folding actually changes).** Greedy, all rollouts: peak active context 31.1k (GRPO/fold) vs 30.7k (GRPO/no fold)
 and 32.4k (FoldGRPO/fold) vs 33.9k (FoldGRPO/no fold) — paired Δpeak +0.4k [−1.3k, 1.9k] and −1.4k [−2.8k, −0.2k]. The window is hit either
@@ -307,14 +307,19 @@ work to branches, i.e. by spending more end-to-end tokens, not by needing less p
 without increasing future interaction" nor "learns to compensate for post-compaction interaction" holds; "trades shorter (mean) context for
 more search/reasoning" is the description the data supports.
 
-**6. Sampling (T=1.0, n=4) agrees on tokens and disagrees only where an artefact intervenes.** The paired FoldGRPO/fold − GRPO/fold
-differences are +19.1k e2e tokens [15k, 23k], +6.0 turns, +86k cumulative input at Δsuccess 0.000 [−0.035, 0.035]. However the 1 h
-session timeout of the val worker killed 10 % (GRPO/fold) and 34 % (FoldGRPO/fold) of the 600 concurrent sampled rollouts (0 % in greedy and
-in all no-fold cells: the shared search + judge pod is throughput-bound at 600-way concurrency, median session 51 min for FoldGRPO/fold vs
-12 min in greedy). Timed-out rollouts score 0 and have truncated token counts, so the T=1 fold-cell numbers are lower bounds on both success
-and cost; among rollouts that did not time out FoldGRPO/fold scores 0.479 (biased upward: the long ones were dropped). Both fold cells are
-being re-run at T=1 with a 4 h session timeout (jobs c5220b294491facc, 7ea9d06bbfe4d595; tag `_e2e_branch_t4h`); this report is rebuilt
-automatically from them when they finish. **Greedy is the clean comparison in this version.**
+**6. Sampling (T=1.0, n=4) reproduces the greedy picture.** With the fold cells re-run under a 4 h session timeout (see below), the
+sampled results agree with greedy on every axis: success 0.340 (GRPO/fold) vs 0.367 (FoldGRPO/fold), paired Δ = +0.027 [−0.008, 0.062],
+p = 0.26; e2e tokens 67.2k vs 99.8k (paired +32.7k [26k, 39k]); turns 21.7 vs 32.2 (+10.5); branches 2.6 vs 4.5; cumulative model input
+391k vs 574k (+179k); peak context 31.6k vs 32.6k (Δ +1.0k); finish rate 91 % vs 96 %, window exhaustion 9 % vs 3 %; 58 % vs 71 % of the
+fold cells' tokens fall after the first fold; a solved task costs 41.6k vs 58.6k e2e tokens. The solved-within-budget curves cross between
+100k and 150k tokens per task (B = 50k: 0.247 vs 0.197; 100k: 0.322 vs 0.310; 150k: 0.340 vs 0.355; 400k: 0.340 vs 0.367).
+
+*Timeout artefact and re-runs.* The val worker's default 1 h session timeout is not binding for greedy (median session 8–12 min) or for the
+no-fold cells, but the 600 concurrent sampled rollouts of the fold cells are throughput-bound on the shared search + judge pod (median session
+50–55 min): the first T=1 runs lost 10 % (GRPO/fold) and 34 % (FoldGRPO/fold) of rollouts to the timeout, all scored 0 with truncated token
+counts (success read 0.317 / 0.317). Both cells were re-run with `FOLD_SESSION_TIMEOUT=14400` (jobs c5220b294491facc and 5fc30e5bf85e8cc1;
+tag `_e2e_branch_t4h`; 0 timeouts in either) and the tables above use the re-runs. The 1 h results are kept under the original tags for
+reference; they underestimate both the success and the cost of folding.
 
 
 ## 6. Caveats

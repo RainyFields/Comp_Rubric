@@ -56,8 +56,8 @@
  {
   "mode": "t1n4",
   "cell": "grpo_fold",
-  "tokens_mean": 63202.75166666666,
-  "peak_ctx_mean": 31923.658333333333
+  "tokens_mean": 67154.19499999999,
+  "peak_ctx_mean": 31571.923333333332
  },
  {
   "mode": "t1n4",
@@ -68,7 +68,7 @@
  {
   "mode": "t1n4",
   "cell": "fold_fold",
-  "tokens_mean": 82285.16333333333,
-  "peak_ctx_mean": 32446.896666666667
+  "tokens_mean": 99817.685,
+  "peak_ctx_mean": 32567.55333333333
  }
 ]

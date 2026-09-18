@@ -1,0 +1,1885 @@
+<html><head><meta charset='utf-8'><style>
+@page { size: A4; margin: 1.9cm 2.0cm; @bottom-center { content: counter(page); font-size: 8pt; color: #888; } }
+body { font-family: 'DejaVu Serif', Georgia, serif; font-size: 9.5pt; line-height: 1.42; color: #1a1a1a; }
+h1 { font-size: 15pt; } h2 { font-size: 12.5pt; margin-top: 1.2em; border-bottom: 1px solid #ccc; }
+h3 { font-size: 10.5pt; margin-top: 1em; }
+table { border-collapse: collapse; font-size: 7.6pt; margin: 0.5em 0; width: 100%; }
+th, td { border: 1px solid #bbb; padding: 2px 4px; text-align: right; } th { background: #eee; } td:first-child, th:first-child { text-align: left; }
+img { max-width: 100%; } code { font-family: 'DejaVu Sans Mono', monospace; font-size: 8pt; }
+pre { background: #f4f4f4; padding: 6px; font-size: 7.6pt; white-space: pre-wrap; }
+</style></head><body><h1>FoldAgent on BrowseComp-Plus: context efficiency vs end-to-end token usage</h1>
+<p><em>Build: <code>python3 docs/reports/build_e2e_report.py</code> (this file, assets and figures are regenerated from the HDFS ledgers). Repo commit at build time: <code>8aa019b</code>.</em></p>
+<h2>1. Question and design</h2>
+<p>Does FoldAgent's folding reduce <strong>active context</strong> while <em>increasing</em> the total interaction needed to solve the same task?
+Three efficiencies are separated: <strong>context efficiency</strong> (peak / mean active context per forward pass), <strong>trajectory efficiency</strong>
+(turns, tool calls, tokens generated), and <strong>end-to-end inference efficiency</strong> (every token generated or returned before anything was
+folded away, and the cumulative model input over all forward passes).</p>
+<p><strong>Cells.</strong> Training ∈ {no-RL Qwen3-8B base, GRPO checkpoint 60 (59 real steps), FoldGRPO checkpoint 50 (46 real steps)} ×
+inference ∈ {<strong>no fold</strong>: <code>plugin.workflow=search</code> (the branch tool is removed from the prompt; single-thread ReAct with search/open_page/finish),
+<strong>fold</strong>: <code>plugin.workflow=search_branch</code> (the training-time prompt with the branch/return tools; the policy decides when to branch, a branch
+inherits the main context, runs its own sub-trajectory and is folded to its return message)}. Both RL checkpoints were trained with the
+branch tool available: "vanilla GRPO" is the authors' baseline (same agent, plain GRPO, no fold-specific process reward), not a branch-free
+ReAct-GRPO. The no-fold cells are therefore an inference-time ablation for every model.</p>
+<p><strong>Evaluation.</strong> Identical to the fix-campaign final evals: 150-item BC-Plus test split, two decodings — greedy (n=1) and T=1.0 top-p=1.0 n=4 —
+prompt 8k + response window 32k per thread, <code>max_turn</code> 100 across threads, up to 10 branches, gpt-oss-120b judge, self-contained 8×H100 val-only
+batch jobs (<code>infra/worker_val_selfcontained.sh</code>, <code>FOLD_WORKFLOW</code>, <code>FOLD_E2E_LEDGER=1</code>). Same tasks and same sampling settings across cells; task-level
+pairing by <code>instance_id</code> (t1n4 pairs the per-task mean of 4 samples).</p>
+<p><strong>Ledger.</strong> <code>agents/e2e_ledger.py</code> records, for every thread of every rollout, each turn's exact token ids the policy generated or was fed
+(<code>scripts/e2e_metrics.py</code> defines every metric). Folded-away branch tokens are counted in full; a branch's inherited context is counted as
+model input of its forward passes, not as new tokens.</p>
+<table>
+<thead>
+<tr>
+<th>cell</th>
+<th>mode</th>
+<th>results dir tag</th>
+<th>rollouts</th>
+<th>status</th>
+<th>trainer val score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base_nofold</td>
+<td>greedy</td>
+<td>norl_base_greedy_e2e_nobranch_sc</td>
+<td>150</td>
+<td>DONE</td>
+<td>0.087</td>
+</tr>
+<tr>
+<td>base_nofold</td>
+<td>t1n4</td>
+<td>norl_base_t1n4_e2e_nobranch_sc</td>
+<td>600</td>
+<td>DONE</td>
+<td>0.073</td>
+</tr>
+<tr>
+<td>base_fold</td>
+<td>greedy</td>
+<td>norl_base_greedy_e2e_branch_sc</td>
+<td>150</td>
+<td>DONE</td>
+<td>0.147</td>
+</tr>
+<tr>
+<td>base_fold</td>
+<td>t1n4</td>
+<td>norl_base_t1n4_e2e_branch_sc</td>
+<td>600</td>
+<td>DONE</td>
+<td>0.180</td>
+</tr>
+<tr>
+<td>grpo_nofold</td>
+<td>greedy</td>
+<td>grpo_60_greedy_e2e_nobranch_sc</td>
+<td>150</td>
+<td>DONE</td>
+<td>0.153</td>
+</tr>
+<tr>
+<td>grpo_nofold</td>
+<td>t1n4</td>
+<td>grpo_60_t1n4_e2e_nobranch_sc</td>
+<td>600</td>
+<td>DONE</td>
+<td>0.182</td>
+</tr>
+<tr>
+<td>grpo_fold</td>
+<td>greedy</td>
+<td>grpo_60_greedy_e2e_branch_sc</td>
+<td>150</td>
+<td>DONE</td>
+<td>0.327</td>
+</tr>
+<tr>
+<td>grpo_fold</td>
+<td>t1n4</td>
+<td>grpo_60_t1n4_e2e_branch_t4h_sc</td>
+<td>600</td>
+<td>DONE</td>
+<td>0.340</td>
+</tr>
+<tr>
+<td>fold_nofold</td>
+<td>greedy</td>
+<td>foldgrpo_50_greedy_e2e_nobranch_sc</td>
+<td>150</td>
+<td>DONE</td>
+<td>0.067</td>
+</tr>
+<tr>
+<td>fold_nofold</td>
+<td>t1n4</td>
+<td>foldgrpo_50_t1n4_e2e_nobranch_sc</td>
+<td>600</td>
+<td>DONE</td>
+<td>0.053</td>
+</tr>
+<tr>
+<td>fold_fold</td>
+<td>greedy</td>
+<td>foldgrpo_50_greedy_e2e_branch_sc</td>
+<td>150</td>
+<td>DONE</td>
+<td>0.373</td>
+</tr>
+<tr>
+<td>fold_fold</td>
+<td>t1n4</td>
+<td>foldgrpo_50_t1n4_e2e_branch_t4h_sc</td>
+<td>600</td>
+<td>DONE</td>
+<td>0.367</td>
+</tr>
+</tbody>
+</table>
+<h2>2. Main tables</h2>
+<h3>2.1 All rollouts — greedy</h3>
+<p><em>tokens:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>success</th>
+<th>e2e tokens</th>
+<th>e2e median</th>
+<th>generated</th>
+<th>observations</th>
+<th>fold in</th>
+<th>fold gen</th>
+<th>cum. input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>150</td>
+<td>0.087</td>
+<td>36,478</td>
+<td>39,906</td>
+<td>4,272</td>
+<td>27,040</td>
+<td>0</td>
+<td>0</td>
+<td>117,601</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>150</td>
+<td>0.147</td>
+<td>25,545</td>
+<td>20,538</td>
+<td>4,581</td>
+<td>14,594</td>
+<td>1,374</td>
+<td>3,199</td>
+<td>103,720</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>150</td>
+<td>0.153</td>
+<td>36,754</td>
+<td>39,044</td>
+<td>3,159</td>
+<td>28,430</td>
+<td>0</td>
+<td>0</td>
+<td>110,043</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>150</td>
+<td>0.327</td>
+<td>62,627</td>
+<td>45,094</td>
+<td>4,301</td>
+<td>51,531</td>
+<td>1,755</td>
+<td>2,872</td>
+<td>379,794</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>150</td>
+<td>0.067</td>
+<td>39,315</td>
+<td>39,814</td>
+<td>2,064</td>
+<td>32,082</td>
+<td>0</td>
+<td>0</td>
+<td>150,772</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>150</td>
+<td>0.373</td>
+<td>101,087</td>
+<td>80,578</td>
+<td>4,311</td>
+<td>88,538</td>
+<td>3,154</td>
+<td>3,384</td>
+<td>595,451</td>
+</tr>
+</tbody>
+</table>
+<p><em>interaction and context:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>turns</th>
+<th>tool calls</th>
+<th>branches</th>
+<th>fwd passes</th>
+<th>peak ctx</th>
+<th>mean ctx</th>
+<th>main growth</th>
+<th>overlong</th>
+<th>post-fold tokens</th>
+<th>post-fold turns</th>
+<th>post-fold tool calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>150</td>
+<td>5.6</td>
+<td>5.3</td>
+<td>0.00</td>
+<td>5.6</td>
+<td>31,778</td>
+<td>19,033</td>
+<td>31,329</td>
+<td>0.76</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>150</td>
+<td>7.3</td>
+<td>2.6</td>
+<td>1.72</td>
+<td>7.3</td>
+<td>20,213</td>
+<td>12,276</td>
+<td>9,394</td>
+<td>0.11</td>
+<td>8,678</td>
+<td>4.4</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>150</td>
+<td>5.4</td>
+<td>5.0</td>
+<td>0.00</td>
+<td>5.4</td>
+<td>30,734</td>
+<td>19,335</td>
+<td>31,605</td>
+<td>0.71</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>150</td>
+<td>19.5</td>
+<td>12.0</td>
+<td>2.43</td>
+<td>19.5</td>
+<td>31,135</td>
+<td>18,293</td>
+<td>10,832</td>
+<td>0.11</td>
+<td>38,554</td>
+<td>14.4</td>
+<td>8.3</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>150</td>
+<td>6.8</td>
+<td>6.7</td>
+<td>0.00</td>
+<td>6.8</td>
+<td>33,871</td>
+<td>21,637</td>
+<td>34,166</td>
+<td>0.91</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>150</td>
+<td>31.4</td>
+<td>18.6</td>
+<td>4.43</td>
+<td>31.4</td>
+<td>32,426</td>
+<td>17,343</td>
+<td>4,894</td>
+<td>0.03</td>
+<td>73,970</td>
+<td>25.0</td>
+<td>14.6</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 All rollouts — T=1.0, n=4</h3>
+<p><em>tokens:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>success</th>
+<th>e2e tokens</th>
+<th>e2e median</th>
+<th>generated</th>
+<th>observations</th>
+<th>fold in</th>
+<th>fold gen</th>
+<th>cum. input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>600</td>
+<td>0.073</td>
+<td>37,334</td>
+<td>39,758</td>
+<td>3,526</td>
+<td>28,641</td>
+<td>0</td>
+<td>0</td>
+<td>133,625</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>600</td>
+<td>0.180</td>
+<td>25,703</td>
+<td>21,678</td>
+<td>4,685</td>
+<td>14,647</td>
+<td>1,374</td>
+<td>3,272</td>
+<td>109,332</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>600</td>
+<td>0.182</td>
+<td>43,786</td>
+<td>39,118</td>
+<td>3,312</td>
+<td>35,309</td>
+<td>0</td>
+<td>0</td>
+<td>112,726</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>600</td>
+<td>0.340</td>
+<td>67,154</td>
+<td>50,990</td>
+<td>4,783</td>
+<td>55,414</td>
+<td>1,909</td>
+<td>3,185</td>
+<td>436,039</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>600</td>
+<td>0.053</td>
+<td>39,117</td>
+<td>40,035</td>
+<td>1,972</td>
+<td>31,975</td>
+<td>0</td>
+<td>0</td>
+<td>152,424</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>600</td>
+<td>0.367</td>
+<td>99,818</td>
+<td>84,308</td>
+<td>4,342</td>
+<td>87,296</td>
+<td>3,095</td>
+<td>3,362</td>
+<td>615,312</td>
+</tr>
+</tbody>
+</table>
+<p><em>interaction and context:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>turns</th>
+<th>tool calls</th>
+<th>branches</th>
+<th>fwd passes</th>
+<th>peak ctx</th>
+<th>mean ctx</th>
+<th>main growth</th>
+<th>overlong</th>
+<th>post-fold tokens</th>
+<th>post-fold turns</th>
+<th>post-fold tool calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>600</td>
+<td>6.2</td>
+<td>6.0</td>
+<td>0.00</td>
+<td>6.2</td>
+<td>32,517</td>
+<td>20,020</td>
+<td>32,185</td>
+<td>0.82</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>600</td>
+<td>7.7</td>
+<td>2.5</td>
+<td>1.75</td>
+<td>7.7</td>
+<td>20,170</td>
+<td>11,977</td>
+<td>8,692</td>
+<td>0.08</td>
+<td>8,631</td>
+<td>4.6</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>600</td>
+<td>5.5</td>
+<td>5.1</td>
+<td>0.00</td>
+<td>5.5</td>
+<td>31,155</td>
+<td>19,510</td>
+<td>38,638</td>
+<td>0.67</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>600</td>
+<td>21.7</td>
+<td>13.3</td>
+<td>2.63</td>
+<td>21.7</td>
+<td>31,572</td>
+<td>18,807</td>
+<td>10,683</td>
+<td>0.09</td>
+<td>41,183</td>
+<td>15.6</td>
+<td>9.1</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>600</td>
+<td>7.0</td>
+<td>6.9</td>
+<td>0.00</td>
+<td>7.0</td>
+<td>33,864</td>
+<td>21,238</td>
+<td>33,968</td>
+<td>0.91</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>600</td>
+<td>32.2</td>
+<td>19.5</td>
+<td>4.48</td>
+<td>32.2</td>
+<td>32,568</td>
+<td>17,563</td>
+<td>5,009</td>
+<td>0.03</td>
+<td>71,346</td>
+<td>25.2</td>
+<td>14.9</td>
+</tr>
+</tbody>
+</table>
+<h3>2.3 Successful rollouts only — greedy</h3>
+<p><em>tokens:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>success</th>
+<th>e2e tokens</th>
+<th>e2e median</th>
+<th>generated</th>
+<th>observations</th>
+<th>fold in</th>
+<th>fold gen</th>
+<th>cum. input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>13</td>
+<td>1.000</td>
+<td>22,031</td>
+<td>20,648</td>
+<td>2,619</td>
+<td>14,249</td>
+<td>0</td>
+<td>0</td>
+<td>60,636</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>22</td>
+<td>1.000</td>
+<td>20,096</td>
+<td>18,512</td>
+<td>3,412</td>
+<td>10,830</td>
+<td>864</td>
+<td>1,862</td>
+<td>78,467</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>23</td>
+<td>1.000</td>
+<td>23,118</td>
+<td>22,492</td>
+<td>2,336</td>
+<td>15,617</td>
+<td>0</td>
+<td>0</td>
+<td>79,277</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>49</td>
+<td>1.000</td>
+<td>38,621</td>
+<td>29,233</td>
+<td>2,921</td>
+<td>29,515</td>
+<td>1,171</td>
+<td>1,917</td>
+<td>237,970</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>10</td>
+<td>1.000</td>
+<td>23,426</td>
+<td>24,462</td>
+<td>1,587</td>
+<td>16,669</td>
+<td>0</td>
+<td>0</td>
+<td>92,984</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>56</td>
+<td>1.000</td>
+<td>58,653</td>
+<td>48,424</td>
+<td>3,086</td>
+<td>48,343</td>
+<td>2,184</td>
+<td>2,430</td>
+<td>330,826</td>
+</tr>
+</tbody>
+</table>
+<p><em>interaction and context:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>turns</th>
+<th>tool calls</th>
+<th>branches</th>
+<th>fwd passes</th>
+<th>peak ctx</th>
+<th>mean ctx</th>
+<th>main growth</th>
+<th>overlong</th>
+<th>post-fold tokens</th>
+<th>post-fold turns</th>
+<th>post-fold tool calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>13</td>
+<td>4.1</td>
+<td>2.9</td>
+<td>0.00</td>
+<td>4.1</td>
+<td>22,031</td>
+<td>14,410</td>
+<td>16,880</td>
+<td>0.00</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>22</td>
+<td>5.9</td>
+<td>2.3</td>
+<td>1.09</td>
+<td>5.9</td>
+<td>18,626</td>
+<td>11,818</td>
+<td>7,807</td>
+<td>0.00</td>
+<td>2,466</td>
+<td>1.9</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>23</td>
+<td>4.7</td>
+<td>3.6</td>
+<td>0.00</td>
+<td>4.7</td>
+<td>23,118</td>
+<td>16,208</td>
+<td>17,966</td>
+<td>0.00</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>49</td>
+<td>13.8</td>
+<td>8.6</td>
+<td>1.59</td>
+<td>13.8</td>
+<td>26,864</td>
+<td>15,600</td>
+<td>6,593</td>
+<td>0.00</td>
+<td>15,682</td>
+<td>7.7</td>
+<td>4.3</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>10</td>
+<td>5.7</td>
+<td>4.6</td>
+<td>0.00</td>
+<td>5.7</td>
+<td>23,426</td>
+<td>15,839</td>
+<td>18,274</td>
+<td>0.00</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>56</td>
+<td>20.6</td>
+<td>12.0</td>
+<td>3.07</td>
+<td>20.6</td>
+<td>27,852</td>
+<td>14,494</td>
+<td>2,754</td>
+<td>0.00</td>
+<td>33,427</td>
+<td>14.1</td>
+<td>7.8</td>
+</tr>
+</tbody>
+</table>
+<h3>2.4 Successful rollouts only — T=1.0, n=4</h3>
+<p><em>tokens:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>success</th>
+<th>e2e tokens</th>
+<th>e2e median</th>
+<th>generated</th>
+<th>observations</th>
+<th>fold in</th>
+<th>fold gen</th>
+<th>cum. input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>44</td>
+<td>1.000</td>
+<td>22,177</td>
+<td>22,110</td>
+<td>2,141</td>
+<td>14,871</td>
+<td>0</td>
+<td>0</td>
+<td>86,203</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>108</td>
+<td>1.000</td>
+<td>23,787</td>
+<td>21,483</td>
+<td>3,380</td>
+<td>14,350</td>
+<td>1,066</td>
+<td>1,923</td>
+<td>86,989</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>109</td>
+<td>1.000</td>
+<td>23,650</td>
+<td>23,772</td>
+<td>2,259</td>
+<td>16,232</td>
+<td>0</td>
+<td>0</td>
+<td>81,853</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>204</td>
+<td>1.000</td>
+<td>41,605</td>
+<td>33,226</td>
+<td>3,164</td>
+<td>32,082</td>
+<td>1,337</td>
+<td>2,079</td>
+<td>262,765</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>32</td>
+<td>1.000</td>
+<td>23,408</td>
+<td>24,499</td>
+<td>1,498</td>
+<td>16,753</td>
+<td>0</td>
+<td>0</td>
+<td>94,055</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>220</td>
+<td>1.000</td>
+<td>58,582</td>
+<td>47,287</td>
+<td>3,205</td>
+<td>48,125</td>
+<td>2,210</td>
+<td>2,511</td>
+<td>346,632</td>
+</tr>
+</tbody>
+</table>
+<p><em>interaction and context:</em></p>
+<table>
+<thead>
+<tr>
+<th>cell (train / inference)</th>
+<th>n</th>
+<th>turns</th>
+<th>tool calls</th>
+<th>branches</th>
+<th>fwd passes</th>
+<th>peak ctx</th>
+<th>mean ctx</th>
+<th>main growth</th>
+<th>overlong</th>
+<th>post-fold tokens</th>
+<th>post-fold turns</th>
+<th>post-fold tool calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>44</td>
+<td>5.3</td>
+<td>4.2</td>
+<td>0.00</td>
+<td>5.3</td>
+<td>22,177</td>
+<td>15,321</td>
+<td>17,029</td>
+<td>0.00</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>108</td>
+<td>6.7</td>
+<td>2.8</td>
+<td>1.30</td>
+<td>6.7</td>
+<td>20,383</td>
+<td>12,018</td>
+<td>7,255</td>
+<td>0.00</td>
+<td>5,926</td>
+<td>3.2</td>
+<td>0.9</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>109</td>
+<td>4.9</td>
+<td>3.7</td>
+<td>0.00</td>
+<td>4.9</td>
+<td>23,650</td>
+<td>16,178</td>
+<td>18,505</td>
+<td>0.00</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>204</td>
+<td>14.9</td>
+<td>9.1</td>
+<td>1.81</td>
+<td>14.9</td>
+<td>27,336</td>
+<td>16,209</td>
+<td>6,989</td>
+<td>0.00</td>
+<td>17,326</td>
+<td>8.1</td>
+<td>4.4</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>32</td>
+<td>5.9</td>
+<td>4.9</td>
+<td>0.00</td>
+<td>5.9</td>
+<td>23,408</td>
+<td>15,678</td>
+<td>18,268</td>
+<td>0.00</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>220</td>
+<td>21.3</td>
+<td>12.7</td>
+<td>3.10</td>
+<td>21.3</td>
+<td>28,242</td>
+<td>14,714</td>
+<td>3,139</td>
+<td>0.00</td>
+<td>33,851</td>
+<td>14.5</td>
+<td>8.2</td>
+</tr>
+</tbody>
+</table>
+<p>Columns: <em>e2e tokens</em> = prompt + generated + framing + observations + fold prompts/returns (everything before discard); <em>fold in</em> = branch prompts,
+overflow-summary prompts and folded return messages injected into contexts; <em>fold gen</em> = policy tokens spent on branch-call / return / summary turns;
+<em>cum. input</em> = Σ input length over all forward passes; <em>peak ctx</em> = max input+output length of any forward pass; <em>post-fold</em> = after the first fold
+(rollouts that folded; NaN otherwise). Means with bootstrap CIs are in <code>assets/cell_summary.csv</code>.</p>
+<h3>2.5 Termination</h3>
+<p>Greedy:</p>
+<table>
+<thead>
+<tr>
+<th>cell</th>
+<th>n</th>
+<th>finish</th>
+<th>max_turn</th>
+<th>session timeout</th>
+<th>window exhausted</th>
+<th>overlong (main ≥ 32k)</th>
+<th>folded ≥1</th>
+<th>branch limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>150</td>
+<td>24%</td>
+<td>0%</td>
+<td>0%</td>
+<td>76%</td>
+<td>76%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>150</td>
+<td>89%</td>
+<td>0%</td>
+<td>0%</td>
+<td>11%</td>
+<td>11%</td>
+<td>87%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>150</td>
+<td>29%</td>
+<td>0%</td>
+<td>0%</td>
+<td>71%</td>
+<td>71%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>150</td>
+<td>89%</td>
+<td>0%</td>
+<td>0%</td>
+<td>11%</td>
+<td>11%</td>
+<td>85%</td>
+<td>1%</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>150</td>
+<td>8%</td>
+<td>0%</td>
+<td>0%</td>
+<td>92%</td>
+<td>91%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>150</td>
+<td>97%</td>
+<td>0%</td>
+<td>0%</td>
+<td>3%</td>
+<td>3%</td>
+<td>98%</td>
+<td>13%</td>
+</tr>
+</tbody>
+</table>
+<p>T=1.0 n=4:</p>
+<table>
+<thead>
+<tr>
+<th>cell</th>
+<th>n</th>
+<th>finish</th>
+<th>max_turn</th>
+<th>session timeout</th>
+<th>window exhausted</th>
+<th>overlong (main ≥ 32k)</th>
+<th>folded ≥1</th>
+<th>branch limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base / no fold</td>
+<td>600</td>
+<td>18%</td>
+<td>0%</td>
+<td>0%</td>
+<td>82%</td>
+<td>82%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>base / fold</td>
+<td>600</td>
+<td>92%</td>
+<td>0%</td>
+<td>0%</td>
+<td>8%</td>
+<td>8%</td>
+<td>87%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>GRPO / no fold</td>
+<td>600</td>
+<td>33%</td>
+<td>0%</td>
+<td>0%</td>
+<td>67%</td>
+<td>67%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>GRPO / fold</td>
+<td>600</td>
+<td>91%</td>
+<td>0%</td>
+<td>0%</td>
+<td>9%</td>
+<td>9%</td>
+<td>90%</td>
+<td>2%</td>
+</tr>
+<tr>
+<td>FoldGRPO / no fold</td>
+<td>600</td>
+<td>9%</td>
+<td>0%</td>
+<td>0%</td>
+<td>91%</td>
+<td>91%</td>
+<td>0%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>FoldGRPO / fold</td>
+<td>600</td>
+<td>96%</td>
+<td>0%</td>
+<td>0%</td>
+<td>3%</td>
+<td>3%</td>
+<td>99%</td>
+<td>9%</td>
+</tr>
+</tbody>
+</table>
+<h2>3. Paired task-level comparisons</h2>
+<p>Greedy (one rollout per task):</p>
+<table>
+<thead>
+<tr>
+<th>comparison</th>
+<th>metric</th>
+<th>n tasks</th>
+<th>mean Δ [95% CI]</th>
+<th>median Δ</th>
+<th>% tasks Δ&gt;0</th>
+<th>sign-test p</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>success</td>
+<td>150</td>
+<td>0.047 [-0.027, 0.120]</td>
+<td>0.000</td>
+<td>13%</td>
+<td>0.281</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>38,459 [26,383, 51,096]</td>
+<td>20,903</td>
+<td>69%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>turns</td>
+<td>150</td>
+<td>11.9 [7.9, 15.9]</td>
+<td>9.0</td>
+<td>69%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>6.6 [4.0, 9.2]</td>
+<td>5.0</td>
+<td>64%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>1,291 [-50, 2,709]</td>
+<td>322</td>
+<td>54%</td>
+<td>0.369</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>215,657 [128,254, 301,375]</td>
+<td>138,373</td>
+<td>63%</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.307 [0.227, 0.387]</td>
+<td>0.000</td>
+<td>33%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>61,772 [51,125, 72,872]</td>
+<td>38,906</td>
+<td>83%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>24.6 [21.3, 28.1]</td>
+<td>19.0</td>
+<td>90%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>11.9 [9.7, 14.0]</td>
+<td>8.5</td>
+<td>81%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>-1,444 [-2,741, -147]</td>
+<td>234</td>
+<td>54%</td>
+<td>0.326</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>444,679 [371,266, 527,580]</td>
+<td>295,167</td>
+<td>85%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.173 [0.100, 0.247]</td>
+<td>0.000</td>
+<td>21%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>25,873 [18,490, 33,792]</td>
+<td>8,762</td>
+<td>65%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>14.1 [11.5, 16.9]</td>
+<td>9.5</td>
+<td>81%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>6.9 [5.2, 8.8]</td>
+<td>4.0</td>
+<td>66%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>401 [-1,070, 1,924]</td>
+<td>766</td>
+<td>52%</td>
+<td>0.683</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>269,751 [212,807, 328,598]</td>
+<td>168,095</td>
+<td>76%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>success</td>
+<td>150</td>
+<td>-0.087 [-0.147, -0.027]</td>
+<td>0.000</td>
+<td>3%</td>
+<td>0.011</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>2,561 [705, 4,364]</td>
+<td>630</td>
+<td>57%</td>
+<td>0.086</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>1.4 [0.9, 2.0]</td>
+<td>2.0</td>
+<td>68%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>1.7 [1.2, 2.3]</td>
+<td>2.0</td>
+<td>69%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>3,136 [1,867, 4,442]</td>
+<td>1,714</td>
+<td>61%</td>
+<td>0.009</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>40,728 [26,814, 54,441]</td>
+<td>46,297</td>
+<td>73%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.060 [-0.013, 0.133]</td>
+<td>0.000</td>
+<td>13%</td>
+<td>0.136</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>-10,933 [-13,825, -8,125]</td>
+<td>-13,123</td>
+<td>27%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>1.7 [0.8, 2.6]</td>
+<td>1.0</td>
+<td>55%</td>
+<td>0.012</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>-2.7 [-3.5, -2.0]</td>
+<td>-3.0</td>
+<td>21%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>-11,566 [-13,605, -9,500]</td>
+<td>-14,278</td>
+<td>23%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>-13,880 [-34,924, 8,480]</td>
+<td>-24,714</td>
+<td>37%</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.220 [0.140, 0.300]</td>
+<td>0.000</td>
+<td>26%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>64,332 [53,558, 75,568]</td>
+<td>43,157</td>
+<td>88%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>26.0 [22.6, 29.5]</td>
+<td>21.0</td>
+<td>97%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>13.6 [11.5, 15.7]</td>
+<td>10.0</td>
+<td>89%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>1,692 [207, 3,098]</td>
+<td>1,466</td>
+<td>63%</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>485,407 [410,751, 562,530]</td>
+<td>334,877</td>
+<td>94%</td>
+<td>0.000</td>
+</tr>
+</tbody>
+</table>
+<p>T=1.0 n=4 (per-task mean of 4 samples):</p>
+<table>
+<thead>
+<tr>
+<th>comparison</th>
+<th>metric</th>
+<th>n tasks</th>
+<th>mean Δ [95% CI]</th>
+<th>median Δ</th>
+<th>% tasks Δ&gt;0</th>
+<th>sign-test p</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>success</td>
+<td>150</td>
+<td>0.027 [-0.008, 0.062]</td>
+<td>0.000</td>
+<td>20%</td>
+<td>0.262</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>32,663 [26,292, 39,001]</td>
+<td>24,930</td>
+<td>81%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>turns</td>
+<td>150</td>
+<td>10.5 [8.4, 12.6]</td>
+<td>9.5</td>
+<td>79%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>6.3 [4.9, 7.6]</td>
+<td>5.4</td>
+<td>79%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>996 [393, 1,624]</td>
+<td>648</td>
+<td>57%</td>
+<td>0.086</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/fold (same tasks)</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>179,274 [133,413, 227,503]</td>
+<td>141,262</td>
+<td>78%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.313 [0.253, 0.377]</td>
+<td>0.000</td>
+<td>47%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>60,700 [52,755, 68,772]</td>
+<td>47,522</td>
+<td>92%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>25.1 [22.6, 27.7]</td>
+<td>21.1</td>
+<td>100%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>12.6 [10.9, 14.3]</td>
+<td>11.0</td>
+<td>90%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>-1,296 [-2,123, -541]</td>
+<td>67</td>
+<td>51%</td>
+<td>0.807</td>
+</tr>
+<tr>
+<td>FoldGRPO: fold − no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>462,888 [405,310, 522,060]</td>
+<td>359,591</td>
+<td>93%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.158 [0.115, 0.203]</td>
+<td>0.000</td>
+<td>35%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>23,368 [5,770, 34,364]</td>
+<td>22,890</td>
+<td>84%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>16.2 [14.4, 18.0]</td>
+<td>14.0</td>
+<td>99%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>8.2 [7.0, 9.4]</td>
+<td>6.9</td>
+<td>90%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>417 [-400, 1,208]</td>
+<td>983</td>
+<td>57%</td>
+<td>0.086</td>
+</tr>
+<tr>
+<td>GRPO: fold − no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>323,313 [283,797, 365,376]</td>
+<td>279,956</td>
+<td>95%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>success</td>
+<td>150</td>
+<td>-0.128 [-0.168, -0.090]</td>
+<td>0.000</td>
+<td>2%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>-4,669 [-19,650, 3,296]</td>
+<td>1,479</td>
+<td>66%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>1.5 [1.2, 1.9]</td>
+<td>1.5</td>
+<td>76%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>1.9 [1.5, 2.2]</td>
+<td>1.8</td>
+<td>81%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>2,709 [2,043, 3,400]</td>
+<td>2,070</td>
+<td>72%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/no fold − GRPO/no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>39,698 [30,450, 49,278]</td>
+<td>35,758</td>
+<td>79%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.107 [0.070, 0.147]</td>
+<td>0.000</td>
+<td>26%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>-11,631 [-13,076, -10,203]</td>
+<td>-12,720</td>
+<td>10%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>1.5 [0.7, 2.3]</td>
+<td>0.5</td>
+<td>59%</td>
+<td>0.021</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>-3.4 [-3.8, -3.1]</td>
+<td>-3.5</td>
+<td>7%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>-12,347 [-13,224, -11,448]</td>
+<td>-13,014</td>
+<td>1%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>base: fold − no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>-24,293 [-39,808, -6,712]</td>
+<td>-44,094</td>
+<td>28%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>success</td>
+<td>150</td>
+<td>0.185 [0.137, 0.235]</td>
+<td>0.000</td>
+<td>37%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>total_e2e_tokens</td>
+<td>150</td>
+<td>56,031 [37,115, 69,161]</td>
+<td>50,009</td>
+<td>96%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>turns</td>
+<td>150</td>
+<td>26.7 [24.2, 29.3]</td>
+<td>22.2</td>
+<td>99%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>tool_calls</td>
+<td>150</td>
+<td>14.4 [12.9, 16.0]</td>
+<td>12.0</td>
+<td>98%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>peak_ctx</td>
+<td>150</td>
+<td>1,412 [677, 2,169]</td>
+<td>2,058</td>
+<td>69%</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>FoldGRPO/fold − GRPO/no fold</td>
+<td>cum_prompt_tokens</td>
+<td>150</td>
+<td>502,587 [447,143, 559,534]</td>
+<td>398,808</td>
+<td>99%</td>
+<td>0.000</td>
+</tr>
+</tbody>
+</table>
+<h2>4. Figures</h2>
+<p><img alt="" src="./2026-09-17_foldagent_e2e_token_usage_report_assets/fig1_success_vs_e2e_tokens.png" />
+<em>Fig. 1 — Success vs total end-to-end tokens (top: cell means ± 95% CI; bottom: fraction of rollouts solved within an end-to-end token budget).</em></p>
+<p><img alt="" src="./2026-09-17_foldagent_e2e_token_usage_report_assets/fig2_peak_ctx_vs_e2e_tokens.png" />
+<em>Fig. 2 — Peak active context vs total end-to-end tokens per rollout (large markers = cell means; axes clipped at the 99.5th percentile — one GRPO/no-fold T=1 rollout received a single 4.2M-token observation). Points below the dotted diagonal discarded tokens.</em></p>
+<p><img alt="" src="./2026-09-17_foldagent_e2e_token_usage_report_assets/fig3_post_first_fold_usage.png" />
+<em>Fig. 3 — Interaction after the first fold, for rollouts that folded.</em></p>
+<p><img alt="" src="./2026-09-17_foldagent_e2e_token_usage_report_assets/fig4_paired_task_diffs.png" />
+<em>Fig. 4 — Paired per-task differences (y-axes clipped to the 1st–99th percentile of task differences).</em></p>
+<p><img alt="" src="./2026-09-17_foldagent_e2e_token_usage_report_assets/fig5_token_composition.png" />
+<em>Fig. 5 — Where the end-to-end tokens go.</em></p>
+<h2>5. Findings</h2>
+<p><strong>Headline.</strong> On the same 150 tasks, FoldAgent's folding does <strong>not</strong> buy shorter active context for free. For both RL checkpoints the peak
+active context is the same with or without folding (every policy saturates the 32k window somewhere in the trajectory; paired Δpeak ≈ 0),
+the mean context per forward pass drops only 10–20 %, and in exchange the trajectory becomes 3–5× longer in turns and 1.7–2.6× longer in
+end-to-end tokens, with 3.5–5.5× the cumulative model input. Most of that extra interaction happens <strong>after the first fold</strong>. FoldGRPO
+training does not learn to compensate for this: it learns to fold more and to spend ~60 % more end-to-end tokens than the plain-GRPO policy
+on the same tasks, for a success gain that is not significant (greedy +0.047 [−0.03, 0.12]; T=1.0 n=4: +0.027 [−0.01, 0.06]).</p>
+<p><strong>1. Context efficiency (what folding actually changes).</strong> Greedy, all rollouts: peak active context 31.1k (GRPO/fold) vs 30.7k (GRPO/no fold)
+and 32.4k (FoldGRPO/fold) vs 33.9k (FoldGRPO/no fold) — paired Δpeak +0.4k [−1.3k, 1.9k] and −1.4k [−2.8k, −0.2k]. The window is hit either
+in the main thread (no fold) or inside a branch (fold). Mean input length per forward pass: 18.3k / 17.3k with folding vs 19.3k / 21.6k without.
+Only the untrained base model gets a real context reduction from folding (peak 20.2k vs 31.8k, −11.6k paired), because it returns from
+branches after ~2 tool calls.</p>
+<p><strong>2. Trajectory efficiency (interaction).</strong> Folding multiplies interaction: turns 19.5 vs 5.4 (GRPO) and 31.4 vs 6.8 (FoldGRPO); tool calls
+12.0 vs 5.0 and 18.6 vs 6.7; branches per rollout 2.4 (GRPO) and 4.4 (FoldGRPO). Of the fold cells' end-to-end tokens, 62 % (GRPO) and 73 %
+(FoldGRPO) are generated or returned after the first fold (38.6k / 74.0k tokens, 14.4 / 25.0 turns; Fig. 3). Restricting to successful
+rollouts the pattern is the same: a solved task costs 23.1k e2e tokens for GRPO/no fold, 38.6k for GRPO/fold and 58.7k for FoldGRPO/fold
+(20.1k for base/fold).</p>
+<p><strong>3. End-to-end inference efficiency.</strong> Greedy means (medians): e2e tokens 36.8k (39.0k) GRPO/no fold → 62.6k (45.1k) GRPO/fold → 101.1k (80.6k)
+FoldGRPO/fold; cumulative model input 110k → 380k → 595k tokens per rollout. Paired on the same tasks, FoldGRPO/fold − GRPO/fold = +38.5k
+e2e tokens [26k, 51k], +11.9 turns, +6.6 tool calls, +216k cumulative input (all p &lt; 0.001), for +0.047 success (p = 0.28). The
+solved-within-budget curves (Fig. 1, bottom) show GRPO/fold dominating FoldGRPO/fold up to an end-to-end budget of ~100k tokens
+(B = 50k: 0.253 vs 0.193; 75k: 0.307 vs 0.287); FoldGRPO/fold only pulls ahead when &gt; 100k tokens per task are allowed (0.373 vs 0.327 at 400k).</p>
+<p><strong>4. Why the no-fold cells are not simply "cheaper".</strong> Without the branch tool both RL policies die at the window: 71 % (GRPO) and 91 %
+(FoldGRPO) of rollouts end with the 32k window exhausted before an answer (success 0.153 and 0.067; FoldGRPO/no fold is <em>below the base model</em>,
+0.087). Their low e2e token counts are the cost of a killed trajectory, not of an efficient one. Folding converts the hard window limit into a
+soft budget on interaction: finish rate 89 % / 97 %, window exhaustion 11 % / 3 %. So the honest reading is: folding buys <em>survival past the
+window</em>, and the trained policies pay for it with interaction, not with a smaller active context.</p>
+<p><strong>5. What FoldGRPO training learned.</strong> Relative to GRPO with the same tool: +2 branches per rollout, +60 % e2e tokens, 13 % of greedy rollouts
+hit the 10-branch limit (GRPO 1 %), and complete dependence on the tool (no-fold success 0.067 vs GRPO's 0.153). It did learn to <em>stop</em>:
+97 % finish and 3 % window exhaustion (GRPO 89 % / 11 %), and its main thread is shorter — but the stopping is achieved by delegating more
+work to branches, i.e. by spending more end-to-end tokens, not by needing less post-fold interaction. Neither "reduces context occupancy
+without increasing future interaction" nor "learns to compensate for post-compaction interaction" holds; "trades shorter (mean) context for
+more search/reasoning" is the description the data supports.</p>
+<p><strong>6. Sampling (T=1.0, n=4) reproduces the greedy picture.</strong> With the fold cells re-run under a 4 h session timeout (see below), the
+sampled results agree with greedy on every axis: success 0.340 (GRPO/fold) vs 0.367 (FoldGRPO/fold), paired Δ = +0.027 [−0.008, 0.062],
+p = 0.26; e2e tokens 67.2k vs 99.8k (paired +32.7k [26k, 39k]); turns 21.7 vs 32.2 (+10.5); branches 2.6 vs 4.5; cumulative model input
+391k vs 574k (+179k); peak context 31.6k vs 32.6k (Δ +1.0k); finish rate 91 % vs 96 %, window exhaustion 9 % vs 3 %; 58 % vs 71 % of the
+fold cells' tokens fall after the first fold; a solved task costs 41.6k vs 58.6k e2e tokens. The solved-within-budget curves cross between
+100k and 150k tokens per task (B = 50k: 0.247 vs 0.197; 100k: 0.322 vs 0.310; 150k: 0.340 vs 0.355; 400k: 0.340 vs 0.367).</p>
+<p><em>Timeout artefact and re-runs.</em> The val worker's default 1 h session timeout is not binding for greedy (median session 8–12 min) or for the
+no-fold cells, but the 600 concurrent sampled rollouts of the fold cells are throughput-bound on the shared search + judge pod (median session
+50–55 min): the first T=1 runs lost 10 % (GRPO/fold) and 34 % (FoldGRPO/fold) of rollouts to the timeout, all scored 0 with truncated token
+counts (success read 0.317 / 0.317). Both cells were re-run with <code>FOLD_SESSION_TIMEOUT=14400</code> (jobs c5220b294491facc and 5fc30e5bf85e8cc1;
+tag <code>_e2e_branch_t4h</code>; 0 timeouts in either) and the tables above use the re-runs. The 1 h results are kept under the original tags for
+reference; they underestimate both the success and the cost of folding.</p>
+<h2>6. Caveats</h2>
+<ul>
+<li>Both RL checkpoints are truncated runs (46 / 59 real steps) from the fix campaign and were trained <em>with</em> the branch tool; the no-fold cells
+  are an inference-time ablation with a different system prompt (<code>search</code> vs <code>search_branch</code>), so they measure "the same policy without the
+  ability to fold", not a branch-free-trained baseline.</li>
+<li>"Compaction" here is FoldAgent's branch/fold; the CompactionRL-style summary compaction (<code>compactiongrpo</code> arm) was still training and is not included.</li>
+<li>Judge = gpt-oss-120b (not the paper's GPT models); success = judge-graded correctness of the final answer (0/1).</li>
+<li>The bottom of the 32k window: a thread that fills its window keeps its partial context; <code>overlong</code> marks main threads that reached the window.</li>
+<li>Token counts are exact ids from the ledger; the branch's inherited context is re-rendered by the chat template (±1 token per inherited turn).</li>
+<li>Greedy decoding on vLLM is not bit-reproducible across nodes; t1n4 CIs reflect sampling noise over 4 samples × 150 tasks.</li>
+</ul>
+<h2>7. Reproduce</h2>
+<pre><code># 1. jobs (already submitted; specs in infra/jobs/fold_e2e_*_h100.json, ledger in infra/jobs/JOBS.tsv)
+cd ~/xiaoxuan/FoldAgent/infra/jobs &amp;&amp; merlin-cli --control-plane i18n-tt job-v2 runs create --from-file fold_e2e_grpo60_branch_h100.json   # ... x6
+# 2. report (reads /mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_*_e2e_*_sc/ledger)
+python3 docs/reports/build_e2e_report.py
+# tests: ~/xiaoxuan/envs/fold_train/bin/python -m unittest tests.test_e2e_ledger tests.test_e2e_metrics
+</code></pre>
+<p>Artifacts: <code>docs/reports/2026-09-17_foldagent_e2e_token_usage_report_assets/</code> (rollouts.csv = one row per rollout with every metric; cell_summary.csv; paired_diffs.csv; figures as PNG+PDF with JSON data).</p></body></html>
