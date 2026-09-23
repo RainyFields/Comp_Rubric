@@ -607,10 +607,12 @@ class Agent(AgentContext):
         return response
 
     async def react(self, run_action, max_turn=64, max_tokens=None, session_timeout=60 * 60,
-                    should_continue=None, summary_prompt=None, safe_finish=None, observation_prompt=None, env=None):
+                    should_continue=None, summary_prompt=None, safe_finish=None, observation_prompt=None, env=None,
+                    max_consecutive_no_call=3):
         # Run react for max_turn turn
         if should_continue is None:
             should_continue = lambda st: True
+        no_call_run, forced_reason = 0, None
         session_start_time = time.time()
         iteration = 0
         if max_tokens is not None:
@@ -645,6 +647,13 @@ class Agent(AgentContext):
                 capture_action(self, parse_actions(response), getattr(env, "last_action_results", None) if env is not None else None, observation)
             if observation is None:
                 break
+            # loop protection: N consecutive turns without a valid call end the branch (forced return with the last
+            # message) instead of burning the turn budget re-emitting the same malformed call (shakeout #1: 101-step branches)
+            no_call_run = no_call_run + 1 if str(observation).startswith('No function call was detected') else 0
+            if max_consecutive_no_call and no_call_run >= max_consecutive_no_call:
+                last_response, forced_reason = response, 'no_call_loop'
+                print(f'[BRANCH] forced return after {no_call_run} consecutive turns without a valid call')
+                break
             if observation_prompt:
                 observation += '\n' + observation_prompt
             self.append({'role': 'user', 'content': wrap_tool_response(observation), })
@@ -659,7 +668,7 @@ class Agent(AgentContext):
         elif last_response is None:
             last_response = str(response)
 
-        return {'last_response': last_response, 'iteration': iteration}
+        return {'last_response': last_response, 'iteration': iteration, 'forced_reason': forced_reason}
 
     def set_process_reward(self, turn, reward):
         if isinstance(turn, str) and turn.lower() == 'all':

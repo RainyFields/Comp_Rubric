@@ -123,8 +123,18 @@ def parse_actions(text: Optional[str], turn_id: Optional[str] = None) -> dict:
     elif "branch" in names and len(names) > 1:
         error = "a branch call must be the only function call in the turn; nothing was executed"
     unclosed = max(0, len(FN_NAME.findall(body)) - len(calls))
+    # A line-anchored terminal opener (finish/return) with no closing tag after the last closed call: not executable, but
+    # the harness may treat it as a malformed terminal attempt (the checkpoint trained under the old lenient harness
+    # closes `return` with `<function>` in ~30% of branch turns) instead of looping on "No function call was detected".
+    unclosed_terminal, unclosed_terminal_args = None, {}
+    openers = list(re.finditer(r"(?m)^[ \t]*<function=([^>\s]+)>", body))
+    last_closed_end = calls[-1]["span"][1] if calls else -1
+    if openers and openers[-1].start() >= last_closed_end and openers[-1].group(1) in TERMINAL_CALLS:
+        unclosed_terminal = openers[-1].group(1)
+        unclosed_terminal_args = dict(PARAM.findall(body[openers[-1].end():]))
     return {"calls": calls, "executable": [] if error else calls, "error": error,
-            "calls_in_think": n_think_calls, "unclosed_tags": unclosed}
+            "calls_in_think": n_think_calls, "unclosed_tags": unclosed,
+            "unclosed_terminal": unclosed_terminal, "unclosed_terminal_args": unclosed_terminal_args}
 
 
 def extract_fn_calls_strict(text: Optional[str]) -> list:

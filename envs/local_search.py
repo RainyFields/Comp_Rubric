@@ -511,7 +511,9 @@ Once you’re confident everything is covered and verified, submit the final ans
                         return {'observation': observation.strip()}
                     self.stats['is_finish'] = 1
                     self.is_finish = True
-                    return {'action': 'finish'}
+                    self.last_action_results.append({'call_id': fn.get('call_id'), 'function': 'finish', 'arguments': fn['arguments'],
+                                                     'status': 'ok', 'observation': None})
+                    return {'action': 'finish', 'results': self.last_action_results}
                 else:
                     # Clearer error for unsupported functions (+= : an earlier call's output in the same turn is kept)
                     observation += f'[Error] The function "{name}" is not supported.\n'

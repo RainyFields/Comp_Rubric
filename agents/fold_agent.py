@@ -86,6 +86,8 @@ async def process_item(
         process_reward = None
     max_traj = getattr(config.plugin, "max_traj", None)
     enable_summary = getattr(config.plugin, "enable_summary", False)
+    max_no_call = int(getattr(config.plugin, "max_consecutive_no_call", 3) or 0)   # 0 = off
+    no_call_run = 0
 
     llm_client = context.llm_client
 
@@ -176,10 +178,13 @@ async def process_item(
                     max_turn=max_turn,
                     max_tokens=getattr(config.plugin, "branch_len", None),
                     session_timeout=session_timeout - time.time() + session_start_time,
-                    should_continue=lambda resp: not any(c['function'] == 'return' for c in parse_actions(resp)['executable']),
+                    # a closed `return`, or a malformed one (opener without </function>: what the old lenient harness accepted), ends the branch
+                    should_continue=lambda resp: not (any(c['function'] == 'return' for c in parse_actions(resp)['executable'])
+                                                      or parse_actions(resp)['unclosed_terminal'] == 'return'),
                     safe_finish=lambda
                         x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if any(c['function'] in ('finish', 'branch') for c in parse_actions(x)['executable']) else None,
                     env=env,
+                    max_consecutive_no_call=max_no_call,
                     summary_prompt="The context limit has been exceeded for the branch. Please finish the sub task directly and clearly state the progress made and the pending jobs of the sub task. Only summarize the sub task progress, using the return tool.",
                     observation_prompt=f"* You are now in branch mode: {description}. Conduct the sub task based on instruction, and when you complete the assigned sub task, use return tool to return, do not perform action beyond the assigned sub task.",
                 )
@@ -187,6 +192,10 @@ async def process_item(
                 last_response = agent_return['last_response']
                 session_message.extend(agent[agent_name].messages()[len(history):])
                 fn_call_ret = last_strict_call(last_response)
+                parsed_ret = parse_actions(last_response)
+                malformed_return = fn_call_ret is None and parsed_ret['unclosed_terminal'] == 'return'
+                if malformed_return:      # message of a `return` whose </function> is missing (flagged in the capture)
+                    fn_call_ret = {'function': 'return', 'arguments': parsed_ret['unclosed_terminal_args'], 'call_id': None}
                 branch_message = None
                 if fn_call_ret is not None and fn_call_ret['function'] == 'return':
                     if 'message' in fn_call_ret['arguments']:
@@ -201,7 +210,8 @@ async def process_item(
                 observation = branch_message
                 branch_return[agent_name] = observation
                 action_results = [{'call_id': fn_call['call_id'], 'function': 'branch', 'status': 'ok', 'observation': observation,
-                                   'branch_agent': agent_name, 'branch_turns': agent_return['iteration']}]
+                                   'branch_agent': agent_name, 'branch_turns': agent_return['iteration'],
+                                   'branch_end': 'malformed_return' if malformed_return else (agent_return.get('forced_reason') or ('return' if fn_call_ret else 'other'))}]
         else:
             observation = await run_action(env, response)
             action_results = getattr(env, 'last_action_results', None)
@@ -223,6 +233,11 @@ async def process_item(
         # Environment/tool result: wrap so the chat template keeps prior <think> blocks (see wrap_tool_response)
         agent['main'].append({'role': 'user', 'content': wrap_tool_response(observation)})
         session_message.append({'role': 'user', 'content': observation})
+        no_call_run = no_call_run + 1 if str(observation).startswith('No function call was detected') else 0
+        if max_no_call and no_call_run >= max_no_call:      # loop protection (shakeout #1): stop instead of re-emitting a malformed call to max_turn
+            print(f'[SESSION] stop: {no_call_run} consecutive turns without a valid function call')
+            stop_reason = 'no_call_loop'
+            break
 
     env.stats['session_time'] = time.time() - session_start_time
 

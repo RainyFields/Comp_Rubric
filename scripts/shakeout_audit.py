@@ -36,7 +36,7 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 from agents.parsing import find_think, parse_actions  # noqa: E402
 from agents.prompts import COMPACTION_SUMMARY_PROMPT  # noqa: E402
 
-QUESTION = re.compile(r"Question: (.*?)\n\nYour response should contain", re.S)
+QUESTION = re.compile(r"Question: (.*?)\n\n(?:\* You can search|Your response should contain)", re.S)   # search / search_branch / search_base prompts
 DOCID_CITE = re.compile(r"\[(?:docid:\s*)?(\d{3,})\]")
 DOCID_OBS = re.compile(r"docid: (\d+)")
 QSUM_HEAD = COMPACTION_SUMMARY_PROMPT.split("\n")[0][:40]
@@ -179,8 +179,12 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
                 t["executed"] = [{k: v for k, v in x.items() if k != "observation"} | {"observation_chars": len(x.get("observation") or "")} for x in res]
                 t["observation"] = act.get("observation")
                 t["observation_chars"] = act.get("observation_chars")
-                exec_ids = [x.get("call_id") for x in res if x.get("status") == "ok"]
-                t["check_exec_subset_of_executable"] = set(x.get("call_id") for x in res if x.get("call_id")) <= set(t["parsed"]["executable"]) | {None}
+                # executed functions must be exactly the executable calls, in order (env ids are turn-agnostic: compare by sequence)
+                exec_fns = [x.get("function") for x in res if x.get("status") in ("ok", "error")]
+                expected_fns = [c["function"] for c in parsed["executable"]]
+                if exec_fns and exec_fns[0] == "guard":
+                    expected_fns = exec_fns
+                t["check_exec_subset_of_executable"] = (exec_fns == expected_fns) or (exec_fns == ["branch"] and expected_fns == ["branch"]) or (not exec_fns and (not expected_fns or parsed["error"] is not None))
                 t["check_no_think_call_executed"] = True   # by construction of parse_actions; verified via the subset check + calls_in_think
                 if act.get("observation") and res and all(x.get("observation") is not None for x in res):
                     joined = "".join(x["observation"] for x in res).strip()
@@ -193,7 +197,7 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
             # template / boundaries (text level, on the exact prompt)
             pt = r.get("prompt_text") or ""
             t["check_no_glued_boundary"] = "<|im_end|><|im_start|>" not in pt
-            t["template_inserted_empty_think"] = pt.count("<|im_start|>assistant\n<think>\n\n</think>")
+            t["double_newline_empty_think_in_prompt"] = pt.count("<|im_start|>assistant\n<think>\n\n</think>")   # model-written when fork ids are exact
             if not t["check_no_glued_boundary"]:
                 checks["glued_boundary_prompts"] += 1
             # masks
@@ -214,16 +218,29 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
                     ok = P[:len(expect)] == expect
                     t["check_prefix_continuity"] = ok
                     if not ok:
-                        prefix_break += 1
-                        checks["prefix_break"] += 1
+                        # designed rollbacks: compaction rolls the last step back before q_sum; a branch that hits its
+                        # budget rolls back 2 turns before the forced-return prompt. Everything else is a real break.
+                        pt_now = r.get("prompt_text") or ""
+                        designed = (QSUM_HEAD in pt_now[-6000:]) or ("The context limit has been exceeded for the branch" in pt_now[-6000:])
+                        t["prefix_break_kind"] = "designed_rollback" if designed else "UNEXPECTED"
+                        if designed:
+                            checks["designed_rollback"] += 1
+                        else:
+                            prefix_break += 1
+                            checks["prefix_break_UNEXPECTED"] += 1
                 miss = []
                 for (ti, cids) in completions_by_agent[agent_name]:
                     if not contains(P, cids):
                         miss.append(ti)
                 t["history_completions_missing"] = miss
                 if miss:
-                    hist_missing += 1
-                    checks["history_completion_missing"] += 1
+                    rolled = any(x.get("prefix_break_kind") == "designed_rollback" for x in turns_out if x["agent"] == agent_name) or t.get("prefix_break_kind") == "designed_rollback"
+                    t["history_missing_kind"] = "after_designed_rollback" if rolled else "UNEXPECTED"
+                    if rolled:
+                        checks["history_missing_after_rollback"] += 1
+                    else:
+                        hist_missing += 1
+                        checks["history_completion_missing_UNEXPECTED"] += 1
                 if comp:
                     completions_by_agent[agent_name].append((r["turn_index"], list(comp)))
             prev = r
@@ -255,8 +272,9 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
     for a, srows in agents.items():
         for i, r in enumerate(srows):
             pt = r.get("prompt_text") or ""
-            if pt.rstrip().endswith("<|im_start|>assistant\n") and QSUM_HEAD in pt[-4000:]:
+            if pt.endswith("<|im_start|>assistant\n") and QSUM_HEAD in pt[-6000:]:
                 summary_tokens += r.get("completion_tokens") or 0
+                r["_is_summary_step"] = True
     # tokens / cost
     main_rows = agents.get("main", []) or agents.get("seg0", [])
     gen_main = sum((r.get("completion_tokens") or 0) for a, srows in agents.items() if a == "main" or str(a).startswith("seg") for r in srows) - summary_tokens
@@ -270,7 +288,12 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
     last_act = None
     if last_main is not None:
         last_act = action_by.get((last_main["agent"], last_main["turn_index"]))
-    finished = bool(last_act and last_act.get("observation") is None and any(x.get("function") == "finish" for x in (last_act.get("results") or [])))
+    finished = bool(last_act and last_act.get("observation") is None and
+                    ((any(x.get("function") == "finish" for x in (last_act.get("results") or []))) or
+                     (parse_actions(last_main.get("completion_text") or "")["executable"][-1:] and parse_actions(last_main.get("completion_text") or "")["executable"][-1]["function"] == "finish")))
+    if not finished and last_main is not None and not actions:      # captures without action records (old code): infer from the last completion
+        pl = parse_actions(last_main.get("completion_text") or "")
+        finished = bool(pl["executable"]) and pl["executable"][-1]["function"] == "finish"
     if ends:
         stop = ends[-1].get("stop_reason")
     elif finished:
@@ -411,7 +434,7 @@ def aggregate(summaries, turns_all):
     agg["other_checks"] = dict(sum((Counter(s["checks"]) for s in summaries), Counter()))
     agg["steps_total"] = len(turns_all)
     agg["turns_with_glued_boundary"] = sum(1 for t in turns_all if not t.get("check_no_glued_boundary", True))
-    agg["template_inserted_empty_think_prompts"] = sum(1 for t in turns_all if t.get("template_inserted_empty_think"))
+    agg["prompts_with_double_newline_empty_think"] = sum(1 for t in turns_all if t.get("double_newline_empty_think_in_prompt"))
     agg["think"] = dict(Counter(t["think"] for t in turns_all))
     agg["mask_checked"] = sum(1 for t in turns_all if "check_mask" in t)
     agg["mask_ok"] = sum(1 for t in turns_all if t.get("check_mask") is True)
@@ -496,7 +519,7 @@ def cmd_compare(args):
             "gen_main", "gen_branch", "gen_summary", "gen_total", "prefill_tokens", "peak_context", "peak_context_main", "wall_s",
             "calls_by_type", "multi_call_turns", "malformed_turns", "calls_in_think", "unsupported_calls", "duplicate_queries",
             "duplicate_branch_prompts", "long_observations", "cap_hits", "cap_over", "history_missing_turns", "prefix_breaks",
-            "fork_checks", "tail_checks", "other_checks", "turns_with_glued_boundary", "template_inserted_empty_think_prompts", "think",
+            "fork_checks", "tail_checks", "other_checks", "turns_with_glued_boundary", "prompts_with_double_newline_empty_think", "think",
             "mask_ok", "mask_checked", "prompt_sha1_ok", "exec_subset_ok", "obs_concat_ok", "citations"]
     md = ["| metric | " + " | ".join(arms) + " |\n", "|---|" + "---|" * len(arms) + "\n"]
     for k in keys:

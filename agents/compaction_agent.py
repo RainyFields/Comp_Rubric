@@ -54,6 +54,7 @@ class CompactionConfig:
     max_turn: int = 100               # total assistant turns across all segments
     session_timeout: float = 3600.0
     mask_unfinished: bool = True      # FoldAgent convention: unfinished zero-reward rollouts carry no gradient
+    max_consecutive_no_call: int = 3  # loop protection: stop after N consecutive turns without a valid call (0 = off)
     resume_keep_task_prompt: bool = True   # True: resumed segment = (system + task) + u_resume + tail (FoldAgent runs so far);
                                            # False: paper Eq. 9, (system) + u_resume + tail — the task survives only via the summary
 
@@ -72,6 +73,7 @@ class CompactionConfig:
             max_turn=int(g("val_max_turn", g("max_turn", cls.max_turn)) if not is_train else g("max_turn", cls.max_turn)),
             session_timeout=float(g("session_timeout", cls.session_timeout)),
             mask_unfinished=bool(g("mask_unfinished", cls.mask_unfinished)),
+            max_consecutive_no_call=int(g("max_consecutive_no_call", cls.max_consecutive_no_call) or 0),
             resume_keep_task_prompt=bool(g("resume_keep_task_prompt", cls.resume_keep_task_prompt)),
         )
 
@@ -136,6 +138,7 @@ async def run_compaction_rollout(
     steps: list[tuple] = []                  # (assistant text, wrapped observation, assistant ids, observation ids) of the current segment
     session_message: list[dict] = []
     t0, iteration, finished, stop_reason = time.time(), 0, False, "max_turn"
+    no_call_run = 0
 
     used = _generated_tokens                 # per segment: its own prompt length is subtracted (prompts may differ)
 
@@ -208,6 +211,10 @@ async def run_compaction_rollout(
         seg.append({"role": "user", "content": wrapped})
         session_message.append({"role": "user", "content": observation})
         steps.append((response, wrapped, assistant_ids, list(seg.chat_ids[-1])))
+        no_call_run = no_call_run + 1 if str(observation).startswith("No function call was detected") else 0
+        if cc.max_consecutive_no_call and no_call_run >= cc.max_consecutive_no_call:
+            stop_reason = "no_call_loop"
+            break
 
     stats["segments"] = len(segments)
     stats["turns"] = iteration
