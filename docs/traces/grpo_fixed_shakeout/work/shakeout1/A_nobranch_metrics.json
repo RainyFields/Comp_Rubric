@@ -1,0 +1,115 @@
+{
+ "rollouts": 18,
+ "correct": 1,
+ "finished": 2,
+ "unfinished": 16,
+ "stop_reasons": {
+  "context_exhausted(llm_none)": 16,
+  "finish": 2
+ },
+ "accuracy": 0.056,
+ "n_main_turns": {
+  "mean": 7.4,
+  "median": 7,
+  "max": 16
+ },
+ "n_branches": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "n_compactions": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_main": {
+  "mean": 2973.4,
+  "median": 2923,
+  "max": 5287
+ },
+ "gen_branch": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_summary": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_total": {
+  "mean": 2973.4,
+  "median": 2923,
+  "max": 5287
+ },
+ "prefill_tokens": {
+  "mean": 174555.6,
+  "median": 163020,
+  "max": 366858
+ },
+ "peak_context": {
+  "mean": 40577.7,
+  "median": 41141,
+  "max": 60229
+ },
+ "peak_context_main": {
+  "mean": 40577.7,
+  "median": 41141,
+  "max": 60229
+ },
+ "wall_s": {
+  "mean": 24.9,
+  "median": 24.7,
+  "max": 46.5
+ },
+ "calls_by_type": {
+  "search": 78,
+  "open_page": 54,
+  "finish": 2
+ },
+ "multi_call_turns": 9,
+ "malformed_turns": 12,
+ "calls_in_think": 9,
+ "unsupported_calls": 0,
+ "duplicate_queries": 17,
+ "duplicate_branch_prompts": 0,
+ "long_observations": 7,
+ "cap_hits": 5,
+ "cap_over": 0,
+ "history_missing_turns": 0,
+ "prefix_breaks": 0,
+ "fork_checks": {},
+ "tail_checks": {},
+ "other_checks": {
+  "exec_not_subset": 2
+ },
+ "steps_total": 133,
+ "turns_with_glued_boundary": 0,
+ "prompts_with_double_newline_empty_think": 0,
+ "think": {
+  "present": 42,
+  "empty": 64,
+  "none": 27
+ },
+ "mask_checked": 117,
+ "mask_ok": 117,
+ "prompt_sha1_ok": [
+  133,
+  133
+ ],
+ "exec_subset_ok": [
+  115,
+  117
+ ],
+ "obs_concat_ok": [
+  112,
+  112
+ ],
+ "citations": {
+  "rollouts_with_citations": 2,
+  "unseen_citation_rollouts": 0
+ },
+ "arm": "A_nobranch",
+ "results_dir": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_grpo_50_greedy_fx_shk_A_nobranch_sc"
+}

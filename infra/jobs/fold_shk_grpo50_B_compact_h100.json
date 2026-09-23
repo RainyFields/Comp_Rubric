@@ -31,7 +31,7 @@
     "FOLD_ARM": "grpo",
     "FOLD_STEP": "50",
     "FOLD_MODES": "greedy",
-    "FOLD_TAGSUF": "_fx_shk_B_compact",
+    "FOLD_TAGSUF": "_fx_shk2_B_compact",
     "FOLD_CKPT_ROOT": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix",
     "MERLIN_JOB_INSTANCE_TYPE": "Evaluation",
     "HAS_TT_DATA": "False",

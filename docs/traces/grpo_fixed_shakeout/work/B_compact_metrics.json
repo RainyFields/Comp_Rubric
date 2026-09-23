@@ -1,0 +1,119 @@
+{
+ "rollouts": 18,
+ "correct": 1,
+ "finished": 4,
+ "unfinished": 14,
+ "stop_reasons": {
+  "budget_exhausted": 14,
+  "finish": 4
+ },
+ "accuracy": 0.056,
+ "n_main_turns": {
+  "mean": 5.8,
+  "median": 6,
+  "max": 10
+ },
+ "n_branches": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "n_compactions": {
+  "mean": 2.7,
+  "median": 3,
+  "max": 3
+ },
+ "gen_main": {
+  "mean": 3054.0,
+  "median": 3136,
+  "max": 5794
+ },
+ "gen_branch": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_summary": {
+  "mean": 2227.0,
+  "median": 2329,
+  "max": 3198
+ },
+ "gen_total": {
+  "mean": 5281.0,
+  "median": 5511,
+  "max": 8797
+ },
+ "prefill_tokens": {
+  "mean": 355246.1,
+  "median": 408469,
+  "max": 611992
+ },
+ "peak_context": {
+  "mean": 33989.1,
+  "median": 34210,
+  "max": 37292
+ },
+ "peak_context_main": {
+  "mean": 31429.8,
+  "median": 33064,
+  "max": 37292
+ },
+ "wall_s": {
+  "mean": 71.0,
+  "median": 72.7,
+  "max": 102.9
+ },
+ "calls_by_type": {
+  "search": 158,
+  "open_page": 105,
+  "finish": 4
+ },
+ "multi_call_turns": 5,
+ "malformed_turns": 9,
+ "calls_in_think": 13,
+ "unsupported_calls": 0,
+ "duplicate_queries": 68,
+ "duplicate_branch_prompts": 0,
+ "long_observations": 9,
+ "cap_hits": 4,
+ "cap_over": 0,
+ "history_missing_turns": 0,
+ "prefix_breaks": 0,
+ "fork_checks": {},
+ "tail_checks": {
+  "exact": 190
+ },
+ "other_checks": {
+  "tail_ok": 190,
+  "designed_rollback": 7,
+  "history_missing_after_rollback": 3
+ },
+ "steps_total": 297,
+ "turns_with_glued_boundary": 0,
+ "prompts_with_double_newline_empty_think": 0,
+ "think": {
+  "present": 47,
+  "empty": 242,
+  "none": 8
+ },
+ "mask_checked": 297,
+ "mask_ok": 297,
+ "prompt_sha1_ok": [
+  297,
+  297
+ ],
+ "exec_subset_ok": [
+  248,
+  248
+ ],
+ "obs_concat_ok": [
+  241,
+  241
+ ],
+ "citations": {
+  "rollouts_with_citations": 4,
+  "unseen_citation_rollouts": 0
+ },
+ "arm": "B_compact",
+ "results_dir": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_grpo_50_greedy_fx_shk2_B_compact_sc"
+}

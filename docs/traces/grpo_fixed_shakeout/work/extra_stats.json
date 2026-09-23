@@ -1,0 +1,56 @@
+{
+ "A_branch": {
+  "steps": 246,
+  "cap_hits": 4,
+  "cap_think_cut": 3,
+  "no_call_obs": 5,
+  "think_empty": 186,
+  "think_present": 43,
+  "branch_ends": {
+   "return": 11,
+   "malformed_return": 14
+  },
+  "loops_stop": 0,
+  "gen_main": 58401,
+  "gen_branch": 14841,
+  "gen_summary": 0,
+  "prefill": 4802559,
+  "obs_gt_8k_tokens": 14,
+  "dup_q": 32,
+  "searches": 106
+ },
+ "A_nobranch": {
+  "steps": 138,
+  "cap_hits": 8,
+  "cap_think_cut": 7,
+  "no_call_obs": 7,
+  "think_empty": 74,
+  "think_present": 40,
+  "branch_ends": {},
+  "loops_stop": 0,
+  "gen_main": 56173,
+  "gen_branch": 0,
+  "gen_summary": 0,
+  "prefill": 3135477,
+  "obs_gt_8k_tokens": 17,
+  "dup_q": 20,
+  "searches": 78
+ },
+ "B_compact": {
+  "steps": 297,
+  "cap_hits": 4,
+  "cap_think_cut": 3,
+  "no_call_obs": 3,
+  "think_empty": 242,
+  "think_present": 47,
+  "branch_ends": {},
+  "loops_stop": 0,
+  "gen_main": 54972,
+  "gen_branch": 0,
+  "gen_summary": 40086,
+  "prefill": 6394430,
+  "obs_gt_8k_tokens": 35,
+  "dup_q": 68,
+  "searches": 158
+ }
+}
