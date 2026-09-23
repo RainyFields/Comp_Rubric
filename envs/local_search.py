@@ -338,9 +338,14 @@ def extract_fn_call(text):
     return parse_response(text)["executable"] or None
 
 
-def parse_response(text, turn_id=None, max_calls=None):
-    """Shared grammar (agents.parsing.parse_actions); the legacy Qwen ``<tool_call>`` JSON form is accepted too."""
-    from agents.parsing import parse_actions
+def parse_response(text, turn_id=None, max_calls=None, grammar="strict"):
+    """Shared grammar (agents.parsing.parse_actions); the legacy Qwen ``<tool_call>`` JSON form is accepted too.
+    ``grammar="legacy"`` reproduces the pre-3f697bf environment parser (plugin.protocol=legacy)."""
+    from agents.parsing import parse_actions, extract_fn_calls_legacy
+    if grammar == "legacy":
+        calls = extract_fn_calls_legacy(text)
+        return {'calls': calls, 'executable': calls, 'error': None, 'calls_in_think': 0, 'unclosed_tags': 0,
+                'truncated_calls': 0, 'unclosed_terminal': None, 'unclosed_terminal_args': {}, 'grammar': 'legacy'}
     if text and ('<tool_call>' in text or '<answer>' in text):
         json_tool = extract_json_tool(text)
         if json_tool:
@@ -386,7 +391,9 @@ class LocalSearch:
 
     async def run_action(self, response):
         self.stats['action'] += 1
-        parsed = parse_response(response, max_calls=getattr(self.config.plugin, 'max_calls_per_turn', None))
+        from agents.protocol import resolve as _resolve_protocol
+        parsed = parse_response(response, max_calls=getattr(self.config.plugin, 'max_calls_per_turn', None),
+                                grammar=_resolve_protocol(getattr(self.config, 'plugin', None)).action_grammar)
         self.last_parsed = parsed
         self.last_action_results = []
         if parsed.get('error'):

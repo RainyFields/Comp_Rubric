@@ -148,6 +148,36 @@ def parse_actions(text: Optional[str], turn_id: Optional[str] = None, max_calls:
             "unclosed_terminal": unclosed_terminal, "unclosed_terminal_args": unclosed_terminal_args}
 
 
+def extract_fn_calls_legacy(text: Optional[str], max_line_gap: int = 4) -> list:
+    """The environment grammar of the pre-3f697bf training harness (envs/local_search.py before 83a3070), kept for
+    plugin.action_grammar="legacy": line-anchored, closed calls on the RAW text (think blocks NOT stripped), grouped
+    by < ``max_line_gap`` newlines, only the LAST group is returned and all of its calls execute in order."""
+    if not text:
+        return []
+    body = _ROLE_MARK.split(text)[-1].strip()
+    matches = list(STRICT_FN.finditer(body))
+    if not matches:
+        return []
+    groups = [[matches[0]]]
+    for m in matches[1:]:
+        prev = groups[-1][-1]
+        gap = body.count("\n", prev.end(), m.start())
+        groups[-1].append(m) if gap < max_line_gap else groups.append([m])
+    return [{"call_id": f"c{k}", "function": m.group(1), "arguments": dict(PARAM.findall(m.group(2)))}
+            for k, m in enumerate(groups[-1], 1)]
+
+
+def legacy_branch_call(text: Optional[str]) -> Optional[dict]:
+    """Pre-3f697bf agent-side branch detection: the last closed ``<function=…>…</function>`` anywhere (think included)."""
+    c = extract_fn_call(text)
+    return c if c is not None and c.get("function") == "branch" else None
+
+
+def legacy_return_requested(text: Optional[str]) -> bool:
+    """Pre-3f697bf branch termination rule: the literal substring ``<function=return>`` anywhere in the response."""
+    return bool(text) and "<function=return>" in text
+
+
 def extract_fn_calls_strict(text: Optional[str]) -> list:
     """Executable calls of a turn under the shared grammar (empty when the turn is malformed). Kept for callers/tests."""
     return parse_actions(text)["executable"]

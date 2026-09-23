@@ -6,6 +6,7 @@ set -uo pipefail
 source /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_common_bootstrap.sh
 ARM=${FOLD_ARM:?}; STEPS=${FOLD_STEPS:-100}
 [ -n "${FOLD_MODEL_PATH:-}" ] && export MODEL_PATH=$FOLD_MODEL_PATH   # policy family (default Qwen/Qwen3-8B in worker_train.sh)
+[ -n "${FOLD_PROTOCOL:-}" ] && export PROTOCOL=$FOLD_PROTOCOL           # rollout protocol (agents/protocol.py): v2 default | legacy
 OUT=${FOLD_OUT_TAG:-$ARM}   # HDFS output subdir (ckpt/val dumps/logs); shakeouts set e.g. <arm>_shakeout to keep the arm dir clean
 export MARK=${FOLD_MARK:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/markers_fix}
 export HDFS_CKPT=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix/$OUT

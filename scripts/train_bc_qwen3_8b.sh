@@ -4,6 +4,7 @@
 PROMPT_LENGTH=8192
 RESPONSE_LENGTH=32768
 MAX_LENGTH=40960
+PROTOCOL=${PROTOCOL:-v2}   # agents/protocol.py: v2 (corrected, default) | legacy (pre-3f697bf training format)
 MODEL_PATH=Qwen/Qwen3-8B
 TRAIN_DATA_PATH=data/bc_train.parquet
 TEST_DATA_PATH=data/bc_test.parquet
@@ -37,6 +38,7 @@ python -m scripts.train_fold \
   actor_rollout_ref.actor.ppo_infer_max_token_len_per_gpu=${MAX_LENGTH} \
   +actor_rollout_ref.rollout.plugin.workflow=search_branch \
   +actor_rollout_ref.rollout.plugin.max_turn=100 \
+  +actor_rollout_ref.rollout.plugin.protocol=${PROTOCOL:-v2} \
   +actor_rollout_ref.rollout.plugin.retry_cjk=10 \
   +actor_rollout_ref.rollout.plugin.turn_max_new_tokens=2048 \
   +actor_rollout_ref.rollout.plugin.max_session=10 \

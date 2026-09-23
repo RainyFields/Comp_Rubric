@@ -1,7 +1,8 @@
 #!/bin/bash
 # Model-agnostic launcher for every BrowseComp-Plus arm (one script, ARM + MODEL_PATH knobs).
 #
-#   ARM=foldgrpo|grpo|compactiongrpo|compactionrl  MODEL_PATH=Qwen/Qwen3-8B  bash scripts/train_bc.sh [extra hydra overrides]
+#   ARM=foldgrpo|grpo|compactiongrpo|compactionrl  PROTOCOL=${PROTOCOL:-v2}   # agents/protocol.py: v2 (corrected, default) | legacy (pre-3f697bf training format)
+MODEL_PATH=Qwen/Qwen3-8B  bash scripts/train_bc.sh [extra hydra overrides]
 #
 # Defaults reproduce the frozen per-arm scripts exactly (scripts/train_bc_qwen3_8b.sh = authors' script, used for the
 # Qwen3-8B campaigns; scripts/train_bc_compaction{grpo,rl}.sh): same rollout budget (32 prompts x 8 samples, 8k prompt /
@@ -105,6 +106,7 @@ python -m scripts.train_fold \
   actor_rollout_ref.actor.ppo_max_token_len_per_gpu=${MAX_LENGTH} \
   actor_rollout_ref.actor.ppo_infer_max_token_len_per_gpu=${MAX_LENGTH} \
   +actor_rollout_ref.rollout.plugin.max_turn=100 \
+  +actor_rollout_ref.rollout.plugin.protocol=${PROTOCOL:-v2} \
   +actor_rollout_ref.rollout.plugin.retry_cjk=10 \
   +actor_rollout_ref.rollout.plugin.turn_max_new_tokens=2048 \
   +actor_rollout_ref.rollout.plugin.session_timeout=3600 \

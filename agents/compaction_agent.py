@@ -104,10 +104,14 @@ async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn
     seg.capture_name = "segment"      # renumbered below by the caller
     seg.append({"role": "user", "content": COMPACTION_RESUME_TEMPLATE.format(summary=summary)})
     for assistant_text, observation_wrapped, assistant_ids, observation_ids in tail:
-        # verbatim tail: the previous segment's exact token ids (raw sampled assistant turn incl. its think block, and the
-        # rendered observation), non-trainable — not a re-render through the chat template (audit finding F1)
-        seg.append_tokens({"role": "assistant", "content": assistant_text}, assistant_ids)
-        seg.append_tokens({"role": "user", "content": observation_wrapped}, observation_ids)
+        if seg.protocol.tail_inherit == "ids":
+            # verbatim tail: the previous segment's exact token ids (raw sampled assistant turn incl. its think block, and
+            # the rendered observation), non-trainable — not a re-render through the chat template (audit finding F1)
+            seg.append_tokens({"role": "assistant", "content": assistant_text}, assistant_ids)
+            seg.append_tokens({"role": "user", "content": observation_wrapped}, observation_ids)
+        else:   # legacy (compactiongrpo run af713ba2): re-rendered through the chat template
+            seg.append({"role": "assistant", "content": assistant_text})
+            seg.append({"role": "user", "content": observation_wrapped})
     return seg
 
 

@@ -141,7 +141,10 @@ class CallLLM(LLMClass):  # Call LLM in Verl RL env
         max_new_tokens = max_len - len(input_ids)
         # Per-turn cap (plugin.turn_max_new_tokens). Before 2026-09-23 the capped value was computed into an unused
         # variable and never sent (audit finding F4: turns up to 6k tokens with a 2048 cap configured).
-        if hasattr(self.config, 'plugin') and getattr(self.config.plugin, 'turn_max_new_tokens', -1) > 0:
+        # plugin.protocol=legacy reproduces that (enforce_turn_cap=False).
+        from agents.protocol import resolve as _resolve_protocol
+        if hasattr(self.config, 'plugin') and getattr(self.config.plugin, 'turn_max_new_tokens', -1) > 0 \
+                and _resolve_protocol(getattr(self.config, 'plugin', None)).enforce_turn_cap:
             max_new_tokens = min(max_new_tokens, self.config.plugin.turn_max_new_tokens)
         if 'max_new_tokens' in kwargs:
             max_new_tokens = min(max_new_tokens, kwargs['max_new_tokens'])
@@ -302,6 +305,8 @@ class AgentContext:
             self.response_length = config.response_length
 
         self.context_uid = str(uuid.uuid4())
+        from agents.protocol import resolve_from_config
+        self.protocol = resolve_from_config(config)
 
         self.chat = copy.deepcopy([turn for turn in chat])
         self.chat = truncate_prompt(self.chat, config.prompt_length, tokenizer, prompt_turn)
@@ -418,10 +423,12 @@ class AgentContext:
                 self.token_mask[-1].append(False)
             # canonical turn terminator is '<|im_end|>\n'; sampled turns stopped at <|im_end|>, so the next turn's
             # '<|im_start|>' followed it with no newline (audit finding F5). Append the newline as a non-trained token.
-            for t in self._turn_end_newline_ids():
-                self.chat_ids[-1].append(t)
-                self.log_probs[-1].append(0.0)
-                self.token_mask[-1].append(False)
+            # plugin.protocol=legacy (pre-3f697bf checkpoints) keeps the glued form the checkpoint was trained on.
+            if self.protocol.turn_end_newline:
+                for t in self._turn_end_newline_ids():
+                    self.chat_ids[-1].append(t)
+                    self.log_probs[-1].append(0.0)
+                    self.token_mask[-1].append(False)
 
     def _turn_end_newline_ids(self):
         """Token ids the template puts after the end-of-turn token (a single '\n' for Qwen); [] if the template does not."""

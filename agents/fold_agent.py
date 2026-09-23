@@ -13,7 +13,8 @@ from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
 from .e2e_ledger import build_ledger, write_ledger
-from .parsing import extract_fn_call, extract_fn_calls_strict, extract_summary, last_strict_call, parse_actions  # noqa: F401
+from .parsing import extract_fn_call, extract_fn_calls_strict, extract_summary, last_strict_call, parse_actions, legacy_branch_call, legacy_return_requested  # noqa: F401
+from .protocol import resolve as resolve_protocol
 from .utils import capture_action, capture_event
 
 
@@ -88,6 +89,7 @@ async def process_item(
     enable_summary = getattr(config.plugin, "enable_summary", False)
     max_no_call = int(getattr(config.plugin, "max_consecutive_no_call", 3) or 0)   # 0 = off
     no_call_run = 0
+    proto = resolve_protocol(getattr(config, "plugin", None))
 
     llm_client = context.llm_client
 
@@ -150,7 +152,12 @@ async def process_item(
         # of the turn; finish/return are terminal-only; several search/open_page calls execute in order.
         parsed = parse_actions(response, turn_id=str(len(agent['main'].chat) - 1))
         exec_names = [c['function'] for c in parsed['executable']]
-        fn_call = parsed['executable'][0] if exec_names == ['branch'] else None
+        if proto.legacy_grammar:      # pre-3f697bf agent rule: last closed call anywhere (think included) decides `branch`
+            lb = legacy_branch_call(response)
+            fn_call = dict(lb, call_id=None) if lb else None
+            parsed = dict(parsed, error=None)
+        else:
+            fn_call = parsed['executable'][0] if exec_names == ['branch'] else None
         action_results = None
         if parsed['error']:
             observation = f"[Error] {parsed['error']}"
@@ -167,9 +174,13 @@ async def process_item(
                 branches.append(agent_name)
                 branch_tasks[agent_name] = message_to_branch
                 history = agent['main'].messages()
-                # Inherit the main context's TOKEN IDS (raw sampled assistant turns included) instead of re-tokenising the
+                # v2: inherit the main context's TOKEN IDS (raw sampled assistant turns included) instead of re-tokenising the
                 # history from text, which normalised '<think>\n</think>' and inserted empty think blocks (audit finding F1).
-                agent[agent_name] = agent['main'].fork(llm_client)
+                # legacy: re-tokenise from text exactly as the pre-3f697bf training harness did.
+                if proto.branch_inherit == "ids":
+                    agent[agent_name] = agent['main'].fork(llm_client)
+                else:
+                    agent[agent_name] = Agent(llm_client, history, tokenizer, config, prompt_turn=prompt_turn)
                 agent[agent_name].capture_name = agent_name
                 branch_prompt_formatted = branch_prompt.format(message=message_to_branch)
                 agent[agent_name].append({'role': 'user', 'content': branch_prompt_formatted})
@@ -178,11 +189,13 @@ async def process_item(
                     max_turn=max_turn,
                     max_tokens=getattr(config.plugin, "branch_len", None),
                     session_timeout=session_timeout - time.time() + session_start_time,
-                    # a closed `return`, or a malformed one (opener without </function>: what the old lenient harness accepted), ends the branch
-                    should_continue=lambda resp: not (any(c['function'] == 'return' for c in parse_actions(resp)['executable'])
-                                                      or parse_actions(resp)['unclosed_terminal'] == 'return'),
-                    safe_finish=lambda
-                        x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if any(c['function'] in ('finish', 'branch') for c in parse_actions(x)['executable']) else None,
+                    # a closed `return`, or a malformed one (opener without </function>: what the old lenient harness accepted), ends the branch;
+                    # legacy grammar: the literal substring `<function=return>` anywhere (pre-3f697bf rule)
+                    should_continue=(lambda resp: not legacy_return_requested(resp)) if proto.legacy_grammar else
+                                    (lambda resp: not (any(c['function'] == 'return' for c in parse_actions(resp)['executable'])
+                                                       or parse_actions(resp)['unclosed_terminal'] == 'return')),
+                    safe_finish=(lambda x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if ('<function=finish>' in x or '<function=branch>' in x) else None) if proto.legacy_grammar else
+                                (lambda x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if any(c['function'] in ('finish', 'branch') for c in parse_actions(x)['executable']) else None),
                     env=env,
                     max_consecutive_no_call=max_no_call,
                     summary_prompt="The context limit has been exceeded for the branch. Please finish the sub task directly and clearly state the progress made and the pending jobs of the sub task. Only summarize the sub task progress, using the return tool.",
@@ -191,7 +204,7 @@ async def process_item(
                 iteration += agent_return['iteration']
                 last_response = agent_return['last_response']
                 session_message.extend(agent[agent_name].messages()[len(history):])
-                fn_call_ret = last_strict_call(last_response)
+                fn_call_ret = extract_fn_call(last_response) if proto.legacy_grammar else last_strict_call(last_response)
                 parsed_ret = parse_actions(last_response)
                 malformed_return = fn_call_ret is None and parsed_ret['unclosed_terminal'] == 'return'
                 if malformed_return:      # message of a `return` whose </function> is missing (flagged in the capture)

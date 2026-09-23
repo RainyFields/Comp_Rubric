@@ -26,9 +26,11 @@ SEARCH = "<function=search>\n<parameter=query>theater depression {i}</parameter>
 FINISH = "<function=finish>\n<parameter=answer>The Rialto</parameter>\n</function>"
 
 
-def _cfg(response_length):
-    return types.SimpleNamespace(prompt_length=8192, response_length=response_length,
-                                 plugin=types.SimpleNamespace(retry_cjk=0, turn_max_new_tokens=-1))
+def _cfg(response_length, protocol=None):
+    plugin = types.SimpleNamespace(retry_cjk=0, turn_max_new_tokens=-1)
+    if protocol:
+        plugin.protocol = protocol
+    return types.SimpleNamespace(prompt_length=8192, response_length=response_length, plugin=plugin)
 
 
 class ScriptedLLM:
@@ -63,12 +65,12 @@ async def _act(response):
     return "[Search Results] " + " ".join(f"doc{n}_{j} snippet about theaters" for j in range(12))
 
 
-def _run(cc_kwargs, response_length=1600, finish_at=12, **llm_kwargs):
+def _run(cc_kwargs, response_length=1600, finish_at=12, protocol=None, **llm_kwargs):
     from agents.compaction_agent import CompactionConfig, run_compaction_rollout
     llm = ScriptedLLM(TOK, finish_at=finish_at, **llm_kwargs)
     cc = CompactionConfig(**{"max_compactions": 3, "threshold": 350, "tail_steps": 2, "summary_max_tokens": 120,
                              "max_turn": 50, **cc_kwargs})
-    cfg = _cfg(response_length)
+    cfg = _cfg(response_length, protocol)
     out = asyncio.run(run_compaction_rollout(PROMPT, llm, TOK, cfg, _act, cc))
     return out, llm, cfg
 

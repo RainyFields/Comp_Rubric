@@ -127,6 +127,9 @@ if [ "${FOLD_AGENT:-}" = compaction ]; then
 ++actor_rollout_ref.rollout.plugin.compaction_tail_steps=${TAIL_STEPS:-2} ++actor_rollout_ref.rollout.plugin.summary_max_tokens=${SUMMARY_MAX_TOKENS:-2048} \
 ++actor_rollout_ref.rollout.plugin.mask_unfinished=False ++actor_rollout_ref.rollout.plugin.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT:-True}"
 fi
+# Protocol (agents/protocol.py): v2 = corrected rollout format (default, new training runs); legacy = pre-3f697bf training-time
+# format for the Qwen3-8B checkpoints of Aug–Sep 2026. Set FOLD_PROTOCOL in the job env_map.
+[ -n "${FOLD_PROTOCOL:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.protocol=${FOLD_PROTOCOL}"
 VALFILE_SED=""
 [ -n "${FOLD_VAL_FILE:-}" ] && VALFILE_SED="-e s#TEST_DATA_PATH=data/bc_test.parquet#TEST_DATA_PATH=${FOLD_VAL_FILE}#"
 
