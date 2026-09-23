@@ -1,6 +1,6 @@
 # Compaction-RL project — status (2026-09-23, SF time)
 
-Repo `~/xiaoxuan/FoldAgent` (fork of github.com/sunnweiwei/FoldAgent, arXiv:2510.11967; NOT pushed — origin is the
+Repo `~/xiaoxuan/Comp_Rubric` (fork of github.com/sunnweiwei/FoldAgent, arXiv:2510.11967; NOT pushed — origin is the
 authors' repo, push to a new remote after user OK). One track so far: **BrowseComp-Plus (BC-Plus) deep-research search
 agent, Qwen3-8B policy (thinking mode on), gpt-oss-120b judge**, 8×H100 batch jobs on the ark-eng-algorithm queue.
 Latest hand-off: `~/xiaoxuan/handoffs/2026-09-16_compactionrl-baseline_HANDOFF.md`. Method details: `docs/baselines/README.md`.

@@ -93,7 +93,7 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
       recipe in `README.md`); jobs copy them from `$SRC/data/`.
 - [ ] Venvs: rebuild from `fold-job-assets/fold_train.tar.gz` / `fold_infra.tar.gz` (`tar xzf -C ~/xiaoxuan/envs`) — or build `fold_train_q35` (C1).
       Path `~/xiaoxuan/envs/<name>` is hard-coded in `infra/worker_*.sh` and `fold_common_bootstrap.sh` (`XD=/home/tiger/xiaoxuan`).
-- [ ] Repo location: scripts assume `/home/tiger/xiaoxuan/FoldAgent` (`SRC=`) — keep it, or change `SRC`/`XD` in `infra/worker_train.sh`,
+- [ ] Repo location: scripts assume `/home/tiger/xiaoxuan/Comp_Rubric` (`SRC=`) — keep it, or change `SRC`/`XD` in `infra/worker_train.sh`,
       `infra/worker_val_selfcontained.sh`, `infra/jobs/fold_common_bootstrap.sh`, `infra/infra_resubmit_loop.sh`, `infra/jobs/status.sh`.
 - [ ] Tokenizers for the CPU tests: `~/xiaoxuan/tokenizers/Qwen3.5-9B` (copy from `fold-job-assets/tokenizers/`) and `Qwen/Qwen3-8B` in the HF cache.
 - [ ] HDFS mounts: `/mnt/hdfs/mlsys` must be mounted (RW) on the box — assets `/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/`, outputs

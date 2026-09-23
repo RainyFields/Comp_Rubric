@@ -5,7 +5,7 @@
 set -uo pipefail
 
 ARM=${ARM:?}; STEP=${STEP:?}; SKIP_GREEDY=${SKIP_GREEDY:-0}
-REPO=/home/tiger/xiaoxuan/FoldAgent
+REPO=/home/tiger/xiaoxuan/Comp_Rubric
 VENV_INFRA=/home/tiger/xiaoxuan/envs/fold_infra
 VENV_TRAIN=/home/tiger/xiaoxuan/envs/fold_train
 MARK=$REPO/infra/markers

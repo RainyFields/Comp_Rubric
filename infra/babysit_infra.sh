@@ -3,7 +3,7 @@
 # explicitly authorised). Kept for the August mlx-worker era only; the batch-job era uses
 # infra/infra_resubmit_loop.sh, started by hand with user authorisation for one arm at a time.
 # Infra babysitter: keeps search+judge node alive; emits one line per state change.
-M=/home/tiger/xiaoxuan/FoldAgent/infra/markers
+M=/home/tiger/xiaoxuan/Comp_Rubric/infra/markers
 relaunches=0
 while [ $relaunches -le 40 ]; do
   IP=$(cat "$M/INFRA_READY" 2>/dev/null)
@@ -27,8 +27,8 @@ while [ $relaunches -le 40 ]; do
   setsid nohup mlx worker launch --resourcetype arnold --usergroup ark-eng-algorithm \
     --cluster cloudnative-maliva --queuename "$QUEUE" \
     --gpu 8 --type "$GTYPE" --alias fold-infra --no-input \
-    -- bash /home/tiger/xiaoxuan/FoldAgent/infra/worker_infra.sh \
-    > /home/tiger/xiaoxuan/FoldAgent/infra/launch_infra.log 2>&1 < /dev/null &
+    -- bash /home/tiger/xiaoxuan/Comp_Rubric/infra/worker_infra.sh \
+    > /home/tiger/xiaoxuan/Comp_Rubric/infra/launch_infra.log 2>&1 < /dev/null &
   for i in $(seq 1 240); do
     [ -f "$M/INFRA_READY" ] && { echo "INFRA READY: $(cat $M/INFRA_READY)"; break; }
     [ -f "$M/INFRA_FAILED" ] && { echo "INFRA RELAUNCH FAILED (see markers logs)"; break; }

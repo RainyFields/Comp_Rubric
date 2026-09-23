@@ -9,7 +9,7 @@ from uuid import uuid4
 from typing import Any, Union
 
 from verl import DataProto
-from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_action, wrap_tool_response, AgentLoopOutput, AgentLoopMetrics
+from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_action, wrap_tool_response, AgentLoopOutput, AgentLoopMetrics, CAPTURE_TAG
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
 from .e2e_ledger import build_ledger, write_ledger
@@ -89,8 +89,11 @@ async def process_item(
     llm_client = context.llm_client
 
     prompt_turn = len(user_prompt)
+    CAPTURE_TAG.set({'uid': str(uid), 'gen_uid': str(gen_uid), 'is_train': bool(is_train),
+                     'instance_id': str(env.instance_info.get('instance_id', env.instance_info.get('query_id', '')))})
     agent = dict()
     agent['main'] = Agent(llm_client, user_prompt, tokenizer, config, prompt_turn=prompt_turn)
+    agent['main'].capture_name = 'main'
     branches = []
     branch_tasks = {}
     branch_return = {}
@@ -127,6 +130,7 @@ async def process_item(
                 f"summarized as follow:\n\n{summary}\n\nNow continue work on it.")
             current = current + '+'
             agent[current] = Agent(llm_client, user_prompt, tokenizer, config, prompt_turn=prompt_turn)
+            agent[current].capture_name = current
             agent[current].append({'role': 'assistant', 'content': ""})
             agent[current].append({'role': 'user', 'content': next_session_prompt})
             session_message.append({'role': 'user', 'content': next_session_prompt})
@@ -153,6 +157,7 @@ async def process_item(
                 branch_tasks[agent_name] = message_to_branch
                 history = agent['main'].messages()
                 agent[agent_name] = Agent(llm_client, history, tokenizer, config, prompt_turn=prompt_turn)
+                agent[agent_name].capture_name = agent_name
                 branch_prompt_formatted = branch_prompt.format(message=message_to_branch)
                 agent[agent_name].append({'role': 'user', 'content': branch_prompt_formatted})
                 agent_return = await agent[agent_name].react(

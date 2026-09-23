@@ -9,7 +9,7 @@ set -u
 ARM=${ARM:?}; ARM_SID=${ARM_SID:?}; INFRA_SID=${INFRA_SID:?}; SPEC=${SPEC:-fold-infra-fix-h100.json}
 MAX_RESUBMITS=${MAX_RESUBMITS:-40}; MIN_GAP=${MIN_GAP:-2100}; STALE=${STALE:-1200}
 M=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/markers_fix
-J=/home/tiger/xiaoxuan/FoldAgent/infra/jobs
+J=/home/tiger/xiaoxuan/Comp_Rubric/infra/jobs
 CP=i18n-tt
 log() { echo "[infra-loop $(date '+%F %T')] $*"; }
 status() { merlin-cli --control-plane $CP job-v2 runs get --json "{\"sid\":\"$1\"}" 2>/dev/null | python3 -c 'import sys,json

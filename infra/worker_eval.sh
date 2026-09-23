@@ -7,7 +7,7 @@
 set -uo pipefail
 
 RUN_TAG=${RUN_TAG:?}; TEMP=${TEMP:?}; MODEL_PATH=${MODEL_PATH:?}
-REPO=/home/tiger/xiaoxuan/FoldAgent
+REPO=/home/tiger/xiaoxuan/Comp_Rubric
 VENV=/home/tiger/xiaoxuan/envs/fold_infra
 MARK=$REPO/infra/markers
 OUT=$REPO/results/$RUN_TAG

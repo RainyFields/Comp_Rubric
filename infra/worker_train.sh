@@ -11,7 +11,7 @@ set -uo pipefail
 ARM=${ARM:?foldgrpo|grpo}; STEPS=${STEPS:?}
 MODEL_PATH=${MODEL_PATH:-Qwen/Qwen3-8B}                                     # policy (HF id or local dir); default = the Qwen3-8B campaigns
 MODEL_TAG=${MODEL_TAG:-$(basename "$MODEL_PATH" | tr 'A-Z' 'a-z')}          # qwen3-8b | qwen3.5-9b | ... (run names)
-SRC=/home/tiger/xiaoxuan/FoldAgent
+SRC=/home/tiger/xiaoxuan/Comp_Rubric
 CHECKOUT=/home/tiger/xiaoxuan/fold_arms/$ARM
 VENV=/home/tiger/xiaoxuan/envs/fold_train
 MARK=${MARK:-$SRC/infra/markers}                                            # batch jobs: shared HDFS dir

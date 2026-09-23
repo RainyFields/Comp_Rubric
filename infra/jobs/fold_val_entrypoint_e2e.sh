@@ -8,7 +8,7 @@ set -uo pipefail
 ASSETS=/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets
 HDFS_OUT=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results
 XD=/home/tiger/xiaoxuan
-SRC=$XD/FoldAgent
+SRC=$XD/FoldAgent   # LEGACY: foldagent-repo-e2e.tar.gz (commit ca4a1a0) unpacks as FoldAgent/
 MODES=${FOLD_MODES:-"greedy t1n4"}
 export TAGSUF=${FOLD_TAGSUF:-_fix}
 ARM=${FOLD_ARM:-norl}; STEP=${FOLD_STEP:-base}

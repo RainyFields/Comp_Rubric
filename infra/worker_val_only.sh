@@ -7,7 +7,7 @@
 set -uo pipefail
 
 ARM=${ARM:?}; STEP=${STEP:?}; MODE=${MODE:?}
-SRC=/home/tiger/xiaoxuan/FoldAgent
+SRC=/home/tiger/xiaoxuan/Comp_Rubric
 CHECKOUT=/home/tiger/xiaoxuan/fold_arms/valonly_${ARM}_${STEP}_${MODE}
 VENV=/home/tiger/xiaoxuan/envs/fold_train
 MARK=$SRC/infra/markers

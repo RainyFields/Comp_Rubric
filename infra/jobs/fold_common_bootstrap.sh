@@ -3,7 +3,7 @@
 # Restores the devbox venvs + repo from md5-verified HDFS tarballs at the same absolute paths.
 ASSETS=/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets
 XD=/home/tiger/xiaoxuan
-SRC=$XD/FoldAgent
+SRC=$XD/Comp_Rubric   # repo dir inside foldagent-repo.tar.gz (renamed from FoldAgent 2026-09-23)
 log() { echo "[foldjob $(date '+%m-%d %H:%M:%S')] $*"; }
 ls "$ASSETS" >/dev/null 2>&1 || { log "FATAL: HDFS fuse not available"; exit 41; }
 df -h /tmp | tail -1; nproc; free -g | head -2

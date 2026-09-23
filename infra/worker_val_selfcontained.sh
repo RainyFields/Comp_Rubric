@@ -7,7 +7,7 @@
 set -uo pipefail
 
 ARM=${ARM:?}; STEP=${STEP:?}; MODE=${MODE:?}
-SRC=/home/tiger/xiaoxuan/FoldAgent
+SRC=/home/tiger/xiaoxuan/Comp_Rubric
 VENVT=/home/tiger/xiaoxuan/envs/fold_train
 VENVI=/home/tiger/xiaoxuan/envs/fold_infra
 MARK=$SRC/infra/markers
@@ -124,6 +124,8 @@ esac
 [ -n "${FOLD_WORKFLOW:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.workflow=${FOLD_WORKFLOW}"
 [ -n "${FOLD_SESSION_TIMEOUT:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.session_timeout=${FOLD_SESSION_TIMEOUT}"   # e2e t1n4 re-runs: 600 concurrent rollouts on one search+judge pod hit the 1 h default
 if [ "${FOLD_E2E_LEDGER:-0}" = 1 ]; then export FOLD_E2E_LEDGER_DIR=$OUTDIR/ledger; mkdir -p "$FOLD_E2E_LEDGER_DIR"; fi
+# Prompt capture for trace audits (agents/utils._capture_step): exact policy inputs per step, main + branches, mirrored with the results
+if [ "${FOLD_PROMPT_CAPTURE:-0}" = 1 ]; then export FOLD_PROMPT_CAPTURE_DIR=$OUTDIR/capture; mkdir -p "$FOLD_PROMPT_CAPTURE_DIR"; fi
 
 cd "$CHECKOUT"
 sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" \

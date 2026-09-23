@@ -455,6 +455,38 @@ class AgentContext:
         }
 
 
+import contextvars
+import json as _json
+
+# Prompt capture for audits (env FOLD_PROMPT_CAPTURE_DIR): every Agent.step appends one JSON line with the EXACT token
+# ids sent to the policy (decoded with special tokens) and the sampled completion. process_item sets CAPTURE_TAG
+# (rollout uid etc.) so records can be grouped; Agent.capture_name tells main / branch / segment apart.
+CAPTURE_TAG: contextvars.ContextVar = contextvars.ContextVar("fold_capture_tag", default=None)
+
+
+def _capture_step(agent, prompt, completion, max_len):
+    d = os.environ.get("FOLD_PROMPT_CAPTURE_DIR")
+    if not d:
+        return
+    try:
+        os.makedirs(d, exist_ok=True)
+        msg = completion["choices"][0]["message"] if completion else {}
+        ids = msg.get("raw_output_ids") or []
+        rec = {
+            "ts": time.time(), "pid": os.getpid(), "tag": CAPTURE_TAG.get(), "agent": getattr(agent, "capture_name", None),
+            "context_uid": agent.context_uid, "turn_index": len(agent.chat) - (1 if completion else 0),
+            "prompt_tokens": len(prompt), "prompt_ids_len": agent.prompt_ids_len, "max_len": max_len,
+            "prompt_text": agent.tokenizer.decode(prompt, skip_special_tokens=False),
+            "completion_tokens": len(ids), "completion_text": msg.get("content"),
+            "completion_text_with_special": agent.tokenizer.decode(ids, skip_special_tokens=False) if ids else None,
+            "completion_none": completion is None,
+        }
+        with open(os.path.join(d, f"capture_{os.getpid()}.jsonl"), "a") as f:
+            f.write(_json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception as e:  # never break a rollout because of the audit hook
+        print(f"[CAPTURE] failed: {e}")
+
+
 class Agent(AgentContext):
     # Agent utils
     def __init__(self, llm_client, conversations, tokenizer, config, prompt_turn=2):
@@ -462,6 +494,7 @@ class Agent(AgentContext):
         self.llm_client = llm_client
         self.retry_cjk = getattr(config.plugin, "retry_cjk", 0)
         self.info_cache = {}
+        self.capture_name = None
 
     async def step(self, max_new_tokens=None, retry_cjk=0):
         prompt = self.context()
@@ -471,9 +504,11 @@ class Agent(AgentContext):
         completion = await self.llm_client.create_completion(
             prompt, uid=self.context_uid, max_len=max_len, messages=self.chat)
         if completion is None:
+            _capture_step(self, prompt, None, max_len)
             return None
         response = completion["choices"][0]["message"]["content"]
         self.append({'role': 'assistant', 'content': response}, completion)
+        _capture_step(self, prompt, completion, max_len)
         return response
 
     async def react(self, run_action, max_turn=64, max_tokens=None, session_timeout=60 * 60,

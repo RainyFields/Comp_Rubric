@@ -39,7 +39,7 @@ from verl import DataProto
 from .fold_agent import print_chat
 from .parsing import extract_summary, strip_think
 from .prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT, create_chat
-from .utils import Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, run_action, select_env, wrap_tool_response
+from .utils import CAPTURE_TAG, Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, run_action, select_env, wrap_tool_response
 
 
 @dataclass
@@ -98,6 +98,7 @@ async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn
         seg_prompt = [t for t in user_prompt[:prompt_turn] if t.get("role") == "system"] + list(user_prompt[prompt_turn:])
         seg_prompt_turn = sum(1 for t in user_prompt[:prompt_turn] if t.get("role") == "system")
     seg = Agent(llm_client, seg_prompt, tokenizer, config, prompt_turn=seg_prompt_turn)
+    seg.capture_name = "segment"      # renumbered below by the caller
     seg.append({"role": "user", "content": COMPACTION_RESUME_TEMPLATE.format(summary=summary)})
     for assistant_text, observation_wrapped in tail:
         seg.append({"role": "assistant", "content": assistant_text})       # completion=None -> mask 0
@@ -126,6 +127,7 @@ async def run_compaction_rollout(
     budget = config.response_length
     stats: collections.Counter = collections.Counter()
     seg = Agent(llm_client, user_prompt, tokenizer, config, prompt_turn=prompt_turn)
+    seg.capture_name = "seg0"
     segments, seg_info = [seg], [{"summary_tokens": 0, "tail_steps": 0}]
     steps: list[tuple[str, str]] = []        # (assistant text, wrapped observation) of the current segment
     session_message: list[dict] = []
@@ -178,6 +180,7 @@ async def run_compaction_rollout(
                 k -= 1
             stats["tail_steps"] += k
             seg = new_seg
+            seg.capture_name = f"seg{len(segments)}"
             segments.append(seg)
             seg_info.append({"summary_tokens": 0, "tail_steps": k})
             steps = list(tail[len(tail) - k:])
@@ -282,6 +285,8 @@ async def process_item(item: DataProto, context: TaskContext) -> Union[AgentLoop
     workflow = item.non_tensor_batch["extra_info"][0].get("workflow", None) or getattr(config.plugin, "workflow", "search")
     user_prompt = create_chat(env.instance_info["problem_statement"], workflow, item)
     cc = CompactionConfig.from_plugin(config.plugin, is_train)
+    CAPTURE_TAG.set({"uid": str(uid), "gen_uid": str(gen_uid), "is_train": bool(is_train),
+                     "instance_id": str(env.instance_info.get("instance_id", env.instance_info.get("query_id", "")))})
 
     session_start = time.time()
     rollout = await run_compaction_rollout(

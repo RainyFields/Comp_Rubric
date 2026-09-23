@@ -4,7 +4,7 @@
 # GPU plan: 0,1 = Qwen3-Embedding-8B search server | 2-5 = gpt-oss-120b vLLM TP4 | 6,7 = spare (Qwen3-8B eval serving)
 set -uo pipefail
 
-REPO=/home/tiger/xiaoxuan/FoldAgent
+REPO=/home/tiger/xiaoxuan/Comp_Rubric
 VENV=/home/tiger/xiaoxuan/envs/fold_infra
 LOCAL=/tmp/fold_infra
 MARK=${MARK:-$REPO/infra/markers}          # batch jobs: shared HDFS dir
