@@ -18,11 +18,11 @@ import os
 import re
 import time
 
-_FN = re.compile(r'<function=([^>]+)>')
+from .parsing import fn_call_names, think_is_empty
 
 
 def _kind_assistant(text: str) -> str:
-    fns = _FN.findall(text or '')
+    fns = fn_call_names(text)
     if not fns:
         return 'no_call'
     return fns[-1]  # search / open_page / branch / return / finish / ...
@@ -59,7 +59,7 @@ def build_ledger(agents: dict, prompt_turn: int) -> list:
             if role == 'assistant':
                 rec['ctx_before'] = ctx + gp if i >= inherited else None
                 rec['kind'] = _kind_assistant(turn.get('content'))
-                rec['think_empty'] = int(bool(re.search(r'<think>\s*</think>', turn.get('content') or '')))
+                rec['think_empty'] = int(think_is_empty(turn.get('content')))
             else:
                 rec['kind'] = _kind_user(turn.get('content'), i, inherited, is_branch) if i >= inherited else 'prompt'
             turns.append(rec)

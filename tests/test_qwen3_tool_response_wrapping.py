@@ -32,50 +32,41 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-TOKENIZER_CANDIDATES = [
-    os.environ.get("QWEN3_TOKENIZER_PATH"),
-    "Qwen/Qwen3-8B",
-    "Qwen/Qwen3-1.7B",  # same chat template as Qwen3-8B; usually in the local HF cache
-    "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt/foldgrpo/global_step_90/actor/huggingface",
-]
+from tests.tokenizers import load_tokenizer, profile_of  # noqa: E402
 
+_load_qwen3_tokenizer = load_tokenizer   # legacy name used by the other test modules
 
-def _load_qwen3_tokenizer():
-    from transformers import AutoTokenizer
-    for cand in TOKENIZER_CANDIDATES:
-        if not cand:
-            continue
-        try:
-            tok = AutoTokenizer.from_pretrained(cand)
-        except Exception:
-            continue
-        if tok.chat_template is None and os.path.isdir(cand):
-            jinja = os.path.join(cand, "chat_template.jinja")
-            if os.path.exists(jinja):
-                tok.chat_template = open(jinja).read()
-        if tok.chat_template and "tool_response" in tok.chat_template and "last_query_index" in tok.chat_template:
-            return tok
-    return None
-
-
-TOK = _load_qwen3_tokenizer()
+TOK = load_tokenizer()
+PROFILE = profile_of(TOK) if TOK is not None else None
 CFG = types.SimpleNamespace(prompt_length=8192, response_length=32768, plugin=types.SimpleNamespace(retry_cjk=0))
 SYSTEM_USER = [{"role": "system", "content": "You are a search agent."},
                {"role": "user", "content": "Q: which theater was built by a local during the Depression?"}]
 
 
 def _completion(tok, think_body, action):
-    """Build a CallLLM-style completion (raw sampled ids + decoded text) with a think block."""
-    text = f"<think>\n{think_body}\n</think>\n\n{action}"
+    """Build a CallLLM-style completion (raw sampled ids + decoded text) with a think block.
+
+    Qwen3 samples ``<think>…</think>``; Qwen3.5 pre-fills ``<think>\n`` in the generation prompt, so its samples
+    start mid-thought (no opening tag) — mimic whichever family the tokenizer belongs to.
+    """
+    opener = "" if PROFILE.think_prefilled else "<think>\n"
+    text = f"{opener}{think_body}\n</think>\n\n{action}"
     ids = tok.encode(text, add_special_tokens=False) + [tok.eos_token_id]
     decoded = tok.decode(ids, skip_special_tokens=True)
     return decoded, {"choices": [{"message": {"content": decoded, "raw_output_ids": ids,
                                               "response_log_probs": [0.0] * len(ids)}}]}
 
 
+_ANCHOR = [{"role": "user", "content": "anchor"}]
+
+
 def _render_single_user_turn(tok, content):
-    """Reference tokens for one user turn rendered on its own by the template."""
-    return tok.apply_chat_template([{"role": "user", "content": content}], add_generation_prompt=False, tokenize=True)
+    """Reference tokens for one user turn rendered on its own by the template (behind an anchor query, because
+    Qwen3.5's template refuses a chat whose only user message is a <tool_response>)."""
+    full = tok.apply_chat_template(_ANCHOR + [{"role": "user", "content": content}], add_generation_prompt=False, tokenize=True)
+    prev = tok.apply_chat_template(_ANCHOR, add_generation_prompt=False, tokenize=True)
+    assert full[:len(prev)] == prev
+    return full[len(prev):]
 
 
 @unittest.skipIf(TOK is None, "Qwen3 tokenizer not available offline; set QWEN3_TOKENIZER_PATH")
@@ -111,7 +102,8 @@ class TestToolResponseWrapping(unittest.TestCase):
     def test_think_blocks_preserved_across_tool_turns(self):
         ctx, thinks, _, _ = self._run_turns(wrap=True)
         context_text = TOK.decode(ctx.context())
-        self.assertEqual(context_text.count("<think>"), self.N_TURNS)
+        # one per assistant turn (sampled by Qwen3 / pre-filled by Qwen3.5) + the pre-filled opener of the pending generation prompt
+        self.assertEqual(context_text.count("<think>"), self.N_TURNS + int(PROFILE.think_prefilled))
         for marker in thinks:
             self.assertIn(marker, context_text)
         # Template semantics: with tool responses the query boundary does not move, so even a

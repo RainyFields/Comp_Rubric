@@ -15,9 +15,11 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-from tests.test_qwen3_tool_response_wrapping import _load_qwen3_tokenizer  # noqa: E402
+from tests.tokenizers import load_tokenizer, profile_of  # noqa: E402
 
-TOK = _load_qwen3_tokenizer()
+TOK = load_tokenizer()
+PROFILE = profile_of(TOK) if TOK is not None else None
+OPENER = "" if (PROFILE is not None and PROFILE.think_prefilled) else "<think>\n"   # Qwen3.5 pre-fills the opener
 PROMPT = [{"role": "system", "content": "You are a search agent. Tools: search, open_page, finish."},
           {"role": "user", "content": "Q: which theater was built by a local during the Depression?"}]
 SEARCH = "<function=search>\n<parameter=query>theater depression {i}</parameter>\n</function>"
@@ -41,13 +43,13 @@ class ScriptedLLM:
         self.calls += 1
         if messages and messages[-1]["role"] == "user" and messages[-1]["content"] == COMPACTION_SUMMARY_PROMPT:
             self.summary_calls += 1
-            text = "<think>\nsummarising\n</think>\n\n<summary>\nSUMMARY#%d %s\n</summary>" % (
+            text = OPENER + "summarising\n</think>\n\n<summary>\nSUMMARY#%d %s\n</summary>" % (
                 self.summary_calls, "finding " * self.summary_words)
         else:
             self.step_calls += 1
             i = self.step_calls
             action = FINISH if i >= self.finish_at else SEARCH.format(i=i)
-            text = "<think>\nTHINK#%d %s\n</think>\n\n%s" % (i, ("reason " * self.think_words), action)
+            text = OPENER + "THINK#%d %s\n</think>\n\n%s" % (i, ("reason " * self.think_words), action)
         ids = self.tok.encode(text, add_special_tokens=False) + [self.tok.eos_token_id]
         decoded = self.tok.decode(ids, skip_special_tokens=True)
         return {"choices": [{"message": {"content": decoded, "raw_output_ids": ids,

@@ -18,8 +18,10 @@ Writes <out>/val_<arm>.csv, <out>/train_<arm>.csv, <out>/summary.md and prints t
 import argparse, csv, glob, json, math, os, re, sys
 from collections import Counter
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from agents.parsing import find_think  # noqa: E402  (accepts Qwen3.5's pre-filled <think> opener)
+
 TURN_SPLIT = re.compile(r"\nassistant\n")
-THINK = re.compile(r"<think>(.*?)</think>", re.S)
 CALL = re.compile(r"<function=(\w+)>")
 METRIC = re.compile(r"([\w/\-@.]+):(-?(?:\d+\.?\d*(?:e[+-]?\d+)?|nan|inf))(?= - |$)")
 
@@ -31,12 +33,12 @@ def parse_traj(text):
         turns[0] = turns[0][len("assistant\n"):]
     st = Counter(turns=len(turns))
     for t in turns:
-        th = THINK.search(t)
-        if th is None:
+        reasoning, _ = find_think(t)
+        if reasoning is None:
             st["no_think"] += 1
         else:
             st["think"] += 1
-            if not th.group(1).strip():
+            if not reasoning:
                 st["empty_think"] += 1
         calls = CALL.findall(t)
         for c in calls:

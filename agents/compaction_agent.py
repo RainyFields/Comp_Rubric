@@ -29,7 +29,6 @@ import asyncio
 import collections
 import copy
 import os
-import re
 import time
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Optional, Union
@@ -37,11 +36,10 @@ from uuid import uuid4
 
 from verl import DataProto
 
-from .fold_agent import extract_fn_call, extract_summary, print_chat
+from .fold_agent import print_chat
+from .parsing import extract_summary, strip_think
 from .prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT, create_chat
 from .utils import Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, run_action, select_env, wrap_tool_response
-
-STRIP_THINK = re.compile(r"<think>.*?</think>", re.S)
 
 
 @dataclass
@@ -74,12 +72,9 @@ class CompactionConfig:
         )
 
 
-def _strip_think(text: str) -> str:
-    return STRIP_THINK.sub("", text or "").strip()
-
-
 def _summary_from_response(response: str) -> str:
-    return extract_summary(response) or _strip_think(response)
+    """The <summary> block if present, else the response without its think block (tagged or pre-filled opener)."""
+    return extract_summary(response) or strip_think(response)
 
 
 async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary, tail):

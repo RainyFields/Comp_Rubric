@@ -37,7 +37,7 @@ source "$VENVI/bin/activate"
 JUDGE_MODEL=${JUDGE_MODEL:-openai/gpt-oss-120b}   # HF id, or a local snapshot dir (skips the download)
 if [ -f "$JUDGE_MODEL/config.json" ]; then true & D2=$!; else
 ( hf download openai/gpt-oss-120b >/dev/null 2>&1 || huggingface-cli download openai/gpt-oss-120b >/dev/null ) & D2=$!; fi
-( hf download Qwen/Qwen3-8B >/dev/null 2>&1 || huggingface-cli download Qwen/Qwen3-8B >/dev/null ) & D3=$!
+( [ -d "${MODEL_PATH:-Qwen/Qwen3-8B}" ] || hf download "${MODEL_PATH:-Qwen/Qwen3-8B}" >/dev/null 2>&1 || huggingface-cli download "${MODEL_PATH:-Qwen/Qwen3-8B}" >/dev/null ) & D3=$!
 wait $D1 || fail "dl embed"; wait $D2 || fail "dl judge"; wait $D3 || fail "dl base"
 
 # gpt-oss judge: openai_harmony must load the o200k/cl100k tiktoken vocab; some pods (n214 pool) cannot reach
@@ -59,8 +59,9 @@ CUDA_VISIBLE_DEVICES=5,6 nohup vllm serve "$JUDGE_MODEL" --enforce-eager \
 JUDGE_PID=$!
 
 # ---------- model prep (parallel with infra warmup) ----------
+BASE_MODEL=${MODEL_PATH:-Qwen/Qwen3-8B}     # the policy family (norl evaluates it directly; RL arms load a checkpoint of it)
 if [ "$ARM" = norl ]; then
-  MODEL=Qwen/Qwen3-8B
+  MODEL=$BASE_MODEL
 else
   CKPT_ROOT=${CKPT_ROOT:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt}   # retrain campaign: .../ckpt_fix
   HDFS_ACTOR=$CKPT_ROOT/$ARM/global_step_$STEP/actor

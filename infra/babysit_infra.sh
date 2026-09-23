@@ -1,4 +1,7 @@
 #!/bin/bash
+# DEPRECATED (2026-09-23): persistent auto-relaunch loops are against the working rules (no babysitters unless
+# explicitly authorised). Kept for the August mlx-worker era only; the batch-job era uses
+# infra/infra_resubmit_loop.sh, started by hand with user authorisation for one arm at a time.
 # Infra babysitter: keeps search+judge node alive; emits one line per state change.
 M=/home/tiger/xiaoxuan/FoldAgent/infra/markers
 relaunches=0

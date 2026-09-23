@@ -11,6 +11,7 @@ SRC=$XD/FoldAgent
 MODES=${FOLD_MODES:-"greedy t1n4"}
 export TAGSUF=${FOLD_TAGSUF:-_fix}
 ARM=${FOLD_ARM:-norl}; STEP=${FOLD_STEP:-base}
+[ -n "${FOLD_MODEL_PATH:-}" ] && export MODEL_PATH=$FOLD_MODEL_PATH   # policy family (default Qwen/Qwen3-8B in worker_val_selfcontained.sh)
 export CKPT_ROOT=${FOLD_CKPT_ROOT:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt}
 log() { echo "[foldjob $(date '+%m-%d %H:%M:%S')] $*"; }
 

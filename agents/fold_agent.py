@@ -13,6 +13,7 @@ from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
 from .e2e_ledger import build_ledger, write_ledger
+from .parsing import extract_fn_call, extract_summary  # noqa: F401  (re-exported; shared with compaction_agent & scripts)
 
 
 def print_chat(chat):
@@ -23,22 +24,6 @@ def print_chat(chat):
         else:
             chat_str += '# ' + turn['role'] + '\n\n' + turn['content'] + "\n\n---\n\n"
     return chat_str
-
-def extract_fn_call(text):
-    if text is None:
-        return None
-    func_matches = re.findall(r'<function=([^>]+)>', text)
-    if not func_matches:
-        return None
-    last_function = func_matches[-1]
-    last_func_pos = text.rfind(f'<function={last_function}>')
-    text_after_last_func = text[last_func_pos:]
-    params = dict(re.findall(r'<parameter=([^>]+)>(.*?)</parameter>', text_after_last_func, re.DOTALL))
-    return {'function': last_function, 'arguments': params}
-
-def extract_summary(text: str) -> str:
-    matches = re.findall(r'<summary>(.*?)</summary>', text, re.DOTALL)
-    return matches[-1].strip() if matches else None
 
 def clean_response(response):
     if '<function=return>' in response:

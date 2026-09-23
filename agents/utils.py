@@ -311,11 +311,32 @@ class AgentContext:
         """
         if i >= self.prompt_turn:
             return self.render_single_turn(self.chat[i])
-        tokens = self.tokenizer.apply_chat_template(self.chat[:i + 1], add_generation_prompt=False, tokenize=True)
-        prev = self.tokenizer.apply_chat_template(self.chat[:i], add_generation_prompt=False,
-                                                  tokenize=True) if i > 0 else []
+        tokens = self._render_prefix(i + 1)
+        prev = self._render_prefix(i)
         turn_tokens = tokens[len(prev):]
         return turn_tokens
+
+    _ANCHOR = [{'role': 'user', 'content': 'anchor'}]
+
+    def _render_prefix(self, k):
+        """Token ids of ``chat[:k]`` (prompt turns only) as the template renders them.
+
+        Qwen3's template renders any prefix; Qwen3.5's raises ``No user query found`` for a prefix without a
+        plain user message (e.g. the system turn alone). In that case the prefix is rendered followed by a plain
+        anchor query whose own tokens are sliced off, which yields the same prefix tokens (user/system turns are
+        rendered as a pure append).
+        """
+        if k <= 0:
+            return []
+        try:
+            return self.tokenizer.apply_chat_template(self.chat[:k], add_generation_prompt=False, tokenize=True)
+        except Exception as e:  # jinja2 TemplateError from templates that need a user query
+            if 'user query' not in str(e):
+                raise
+            full = self.tokenizer.apply_chat_template(self.chat[:k] + self._ANCHOR, add_generation_prompt=False, tokenize=True)
+            tail = self.tokenizer.apply_chat_template(self._ANCHOR, add_generation_prompt=False, tokenize=True)
+            assert full[len(full) - len(tail):] == tail, 'chat template does not render the anchor query as a pure append'
+            return full[:len(full) - len(tail)]
 
     def render_single_turn(self, turn):
         """Render one message on its own, independent of the rest of the conversation.
@@ -328,7 +349,7 @@ class AgentContext:
         assistant turn therefore matches what the policy saw when it generated it.
         """
         anchor = self.chat[:1] if self.chat and self.chat[0].get('role') == 'system' else []
-        anchor = anchor + [{'role': 'user', 'content': 'anchor'}]
+        anchor = anchor + self._ANCHOR
         tokens = self.tokenizer.apply_chat_template(anchor + [turn], add_generation_prompt=False, tokenize=True)
         prev = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True)
         assert tokens[:len(prev)] == prev, 'chat template does not render turns as a pure append'

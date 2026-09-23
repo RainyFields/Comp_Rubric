@@ -9,6 +9,8 @@
 set -uo pipefail
 
 ARM=${ARM:?foldgrpo|grpo}; STEPS=${STEPS:?}
+MODEL_PATH=${MODEL_PATH:-Qwen/Qwen3-8B}                                     # policy (HF id or local dir); default = the Qwen3-8B campaigns
+MODEL_TAG=${MODEL_TAG:-$(basename "$MODEL_PATH" | tr 'A-Z' 'a-z')}          # qwen3-8b | qwen3.5-9b | ... (run names)
 SRC=/home/tiger/xiaoxuan/FoldAgent
 CHECKOUT=/home/tiger/xiaoxuan/fold_arms/$ARM
 VENV=/home/tiger/xiaoxuan/envs/fold_train
@@ -17,10 +19,10 @@ HDFS_CKPT=${HDFS_CKPT:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt/$ARM}
 KEEP_LOCAL=${KEEP_LOCAL:-2}                                                 # verified-uploaded ckpts to keep on /tmp
 LOCAL_CKPT=/tmp/fold_ckpt/$ARM
 case "$ARM" in
-  foldgrpo)       RUN_NAME=foldgrpo_qwen3-8b_bcplus ;;
-  grpo)           RUN_NAME=grpo_qwen3-8b_bcplus_baseline ;;
-  compactionrl)   RUN_NAME=compactionrl_qwen3-8b_bcplus ;;        # CompactionRL, PPO + critic (paper-faithful)
-  compactiongrpo) RUN_NAME=compactiongrpo_qwen3-8b_bcplus ;;      # CompactionRL rollout + group-relative advantage
+  foldgrpo)       RUN_NAME=foldgrpo_${MODEL_TAG}_bcplus ;;
+  grpo)           RUN_NAME=grpo_${MODEL_TAG}_bcplus_baseline ;;
+  compactionrl)   RUN_NAME=compactionrl_${MODEL_TAG}_bcplus ;;        # CompactionRL, PPO + critic (paper-faithful)
+  compactiongrpo) RUN_NAME=compactiongrpo_${MODEL_TAG}_bcplus ;;      # CompactionRL rollout + group-relative advantage
   *) echo "unknown ARM=$ARM (foldgrpo|grpo|compactionrl|compactiongrpo)" >&2; exit 2 ;;
 esac
 RUN_NAME=${RUN_NAME}${RUN_SUFFIX:-}
@@ -66,7 +68,7 @@ else
   source "$VENV/bin/activate"
 fi
 python -c "import torch,vllm,flash_attn,ray; print('torch',torch.__version__,'vllm',vllm.__version__)" || fail "import gate"
-hf download Qwen/Qwen3-8B >/dev/null 2>&1 || huggingface-cli download Qwen/Qwen3-8B >/dev/null || fail "dl Qwen3-8B"
+if [ ! -d "$MODEL_PATH" ]; then hf download "$MODEL_PATH" >/dev/null 2>&1 || huggingface-cli download "$MODEL_PATH" >/dev/null || fail "dl $MODEL_PATH"; fi
 
 # --- local judge shim (scope judge via OPENAI_URL custom dialect; grader via OPENAI_BASE_URL) ---
 mkdir -p "$CHECKOUT/logs"
@@ -132,8 +134,10 @@ esac
 cd "$CHECKOUT"
 mkdir -p logs
 export PYTHONPATH=$CHECKOUT${PYTHONPATH:+:$PYTHONPATH}   # ray AgentLoopWorkers must import scripts.train_fold
+export ARM MODEL_PATH MODEL_TAG STEPS EXPERIMENT_NAME=$RUN_NAME   # picked up by the unified launcher when TRAIN_SCRIPT=scripts/train_bc.sh
 sed -e "s#trainer.total_training_steps=100#trainer.total_training_steps=${STEPS}#" \
     -e "s#trainer.experiment_name=test_run#trainer.experiment_name=${RUN_NAME}#" \
+    -e "s#^MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=${MODEL_PATH}#" \
     "$TRAIN_SCRIPT" > logs/launch_${ARM}.sh
 # append overrides: ckpt dir + custom agent loop registration (workers load it) + arm flags
 [ -n "${VAL_DUMP_DIR:-}" ] && EXTRA="$EXTRA trainer.validation_data_dir=${VAL_DUMP_DIR}"   # optional: per-val trajectory dumps
