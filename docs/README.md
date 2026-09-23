@@ -2,6 +2,7 @@
 
 | where | what |
 |---|---|
+| `../CLAUDE.md` | agent onboarding: reading order, facts, working rules |
 | `PROTOCOL.md` | **training–inference interaction protocol**: token stream, action grammar, `plugin.protocol` legacy/v2 compatibility setting, training masks, limitations |
 | `PROTOCOL_VERIFICATION.md` | PASS/FAIL/NOT-YET-VERIFIED table for every protocol check, with reproduction commands and trace references |
 | `handoff/QWEN35_HANDOFF.md`, `handoff/NEXT_STEPS.md` | handoff for the Qwen3.5 devbox: objective, repo/commit, environment, commands, gates |
