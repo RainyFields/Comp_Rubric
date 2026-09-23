@@ -73,6 +73,38 @@ def fn_call_names(text: Optional[str]) -> list:
     return FN_NAME.findall(text or "")
 
 
+STRICT_FN = re.compile(r"(?m)^[ \t]*<function=([^>]+)>\s*(.*?)\s*</function>", re.S)
+_ROLE_MARK = re.compile(r"<\[[^\]]+\]>")
+
+
+def extract_fn_calls_strict(text: Optional[str], max_line_gap: int = 4) -> list:
+    """The parser the environment executes (moved here from envs/local_search.py so the agents use the SAME one).
+
+    Rules: a call must start at the beginning of a line and be closed (``</function>``); calls separated by fewer than
+    ``max_line_gap`` newlines form a group; only the LAST group is returned and every call in it is executed, in order.
+    Calls inside ``<think>`` blocks that happen to be line-anchored are accepted here exactly as the environment accepts
+    them. Returns ``[{'function', 'arguments'}, ...]`` (possibly empty).
+    """
+    if not text:
+        return []
+    text = _ROLE_MARK.split(text)[-1].strip()
+    matches = list(STRICT_FN.finditer(text))
+    if not matches:
+        return []
+    groups = [[matches[0]]]
+    for m in matches[1:]:
+        prev = groups[-1][-1]
+        line_gap = text.count("\n", prev.end(), m.start())
+        groups[-1].append(m) if line_gap < max_line_gap else groups.append([m])
+    return [{"function": m.group(1), "arguments": dict(PARAM.findall(m.group(2)))} for m in groups[-1]]
+
+
+def last_strict_call(text: Optional[str]) -> Optional[dict]:
+    """Last call of the executed group (what the environment acts on last), or None."""
+    calls = extract_fn_calls_strict(text)
+    return calls[-1] if calls else None
+
+
 def extract_summary(text: Optional[str]) -> Optional[str]:
     matches = SUMMARY.findall(text or "")
     return matches[-1].strip() if matches else None

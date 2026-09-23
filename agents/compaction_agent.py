@@ -100,9 +100,11 @@ async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn
     seg = Agent(llm_client, seg_prompt, tokenizer, config, prompt_turn=seg_prompt_turn)
     seg.capture_name = "segment"      # renumbered below by the caller
     seg.append({"role": "user", "content": COMPACTION_RESUME_TEMPLATE.format(summary=summary)})
-    for assistant_text, observation_wrapped in tail:
-        seg.append({"role": "assistant", "content": assistant_text})       # completion=None -> mask 0
-        seg.append({"role": "user", "content": observation_wrapped})
+    for assistant_text, observation_wrapped, assistant_ids, observation_ids in tail:
+        # verbatim tail: the previous segment's exact token ids (raw sampled assistant turn incl. its think block, and the
+        # rendered observation), non-trainable — not a re-render through the chat template (audit finding F1)
+        seg.append_tokens({"role": "assistant", "content": assistant_text}, assistant_ids)
+        seg.append_tokens({"role": "user", "content": observation_wrapped}, observation_ids)
     return seg
 
 
@@ -129,7 +131,7 @@ async def run_compaction_rollout(
     seg = Agent(llm_client, user_prompt, tokenizer, config, prompt_turn=prompt_turn)
     seg.capture_name = "seg0"
     segments, seg_info = [seg], [{"summary_tokens": 0, "tail_steps": 0}]
-    steps: list[tuple[str, str]] = []        # (assistant text, wrapped observation) of the current segment
+    steps: list[tuple] = []                  # (assistant text, wrapped observation, assistant ids, observation ids) of the current segment
     session_message: list[dict] = []
     t0, iteration, finished, stop_reason = time.time(), 0, False, "max_turn"
 
@@ -198,9 +200,10 @@ async def run_compaction_rollout(
             finished, stop_reason = True, "finish"
             break
         wrapped = wrap_tool_response(observation)
+        assistant_ids = list(seg.chat_ids[-1])
         seg.append({"role": "user", "content": wrapped})
         session_message.append({"role": "user", "content": observation})
-        steps.append((response, wrapped))
+        steps.append((response, wrapped, assistant_ids, list(seg.chat_ids[-1])))
 
     stats["segments"] = len(segments)
     stats["turns"] = iteration

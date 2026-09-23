@@ -106,11 +106,16 @@ CompactionRL arms are separate, see `docs/traces/2026-09-23_compactiongrpo_*`).
 3. Whether the whitespace normalisation of F1 measurably changes branch behaviour — would need an A/B with raw-id inheritance
    (`Agent` accepting pre-tokenised turns from the parent).
 
-## 3. Suspected bugs and where to fix them
+## 3. Bugs — FIXED 2026-09-23 (same day, after this audit; regression tests in `tests/test_trace_audit_fixes.py`)
 
-| # | location | fix |
+| # | location | fix applied |
 |---|---|---|
-| F4 | `agents/utils.py`, `CallLLM._create_completion`: `max_tokens = min(...)` unused | use it: `max_new_tokens = min(max_new_tokens, turn_max_new_tokens)` (changes rollout behaviour → decide before the next campaign) |
-| F1 | `agents/fold_agent.py` branch creation (`Agent(llm_client, history, …)`) re-tokenises text | inherit the parent's `chat_ids`/`token_mask` for the inherited turns instead of re-rendering (keeps thinks byte-identical) |
-| F3 | `agents/parsing.extract_fn_call` vs `envs/local_search.extract_fn_call` | use one parser for branch detection and execution (the env's), so a lenient `branch` match inside think cannot fork a branch the env would reject |
-| F5 | `agents/utils.Agent.append` | append `\n` after eos for sampled turns if canonical formatting is wanted (must be applied in training and rollout together) |
+| F4 | `agents/utils.py`, `CallLLM._create_completion` | the capped value is now the one sent: `max_new_tokens = min(max_new_tokens, plugin.turn_max_new_tokens)`; turns are cut at 2 048 tokens as configured |
+| F1 | `agents/fold_agent.py` branch creation; `agents/compaction_agent._build_segment` | branches are created with `agent['main'].fork(llm_client)` (exact token ids inherited, all mask 0); compaction tails are carried with `Agent.append_tokens` (the previous segment's raw ids). No turn is re-rendered through the template any more |
+| F3 | `agents/parsing.extract_fn_calls_strict` is the single grammar (moved from `envs/local_search.py`, which now imports it) | `fold_agent` uses it for branch detection, branch `return` detection and the branch-mode `finish`/`branch` guard (previously substring checks / the lenient last-anywhere parser); the environment behaviour is unchanged |
+| F5 | `agents/utils.Agent.append` | sampled turns are stored as generation prompt + raw ids + eos + the template's turn-end newline (non-trained), so `Agent.context()` equals the template's canonical rendering byte-for-byte (tested) |
+
+**These fixes change rollout behaviour for every future run** (per-turn cap active, canonical turn boundaries, branches see the
+exact main context). All results reported before this date — the Qwen3-8B replication, the fix campaign, the compactiongrpo run and
+the E2E study, and this audit's dump — were produced with the old behaviour. The capture job `222c7dd69460d364` also runs the OLD
+code (its tarball predates the fix) and therefore audits the behaviour described in §1.

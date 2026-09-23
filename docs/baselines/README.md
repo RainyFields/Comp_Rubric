@@ -39,6 +39,14 @@ independent implementation on the FoldAgent verl stack.
 prompt group (segments of one rollout are de-duplicated, as FoldGRPO does), the rollout advantage is
 broadcast to all of its segments, and the position correction is applied (identity at γ = λ = 1).
 
+### Rollout-code fixes (2026-09-23, after the GRPO trace audit — `docs/traces/grpo_step50_trace_audit.md` §3)
+
+Four rollout-side defects were fixed the same day; every run listed in this file predates them: (1) `plugin.turn_max_new_tokens`
+was never sent to vLLM (turns up to 6k tokens); (2) branches and compaction tails re-tokenised history from text (`<think>\n</think>`
+became `<think>\n\n</think>`, missing thinks got an empty block inserted) — now exact ids are inherited; (3) the agent's lenient
+`<function=` parser and the environment's strict one disagreed — one grammar now (`agents.parsing.extract_fn_calls_strict`);
+(4) sampled turns lacked the `\n` after `<|im_end|>` — now canonical. Expect small behavioural differences vs the numbers above.
+
 ### Fidelity audit (2026-09-23) — what the finished run is, and what still deviates from the paper
 
 **The arm that trained (`compactiongrpo`) is not CompactionRL.** The paper (§4.2 "Ill-Suited Group-Wise Methods", §6) is a PPO

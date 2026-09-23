@@ -13,7 +13,7 @@ from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
 from .e2e_ledger import build_ledger, write_ledger
-from .parsing import extract_fn_call, extract_summary  # noqa: F401  (re-exported; shared with compaction_agent & scripts)
+from .parsing import extract_fn_call, extract_fn_calls_strict, extract_summary, last_strict_call  # noqa: F401
 
 
 def print_chat(chat):
@@ -143,7 +143,9 @@ async def process_item(
             break
 
         session_message.append({'role': 'assistant', 'content': response})
-        fn_call = extract_fn_call(response)
+        # Same grammar as the environment (line-anchored, closed, last adjacent group): a `branch` that the env would
+        # not execute (unclosed, inside <think>, indented) no longer forks a branch.
+        fn_call = last_strict_call(response)
         if fn_call is not None and fn_call['function'] == 'branch':
             if len(branches) + 1 > max_session:
                 observation = f"You've already reached the limit of {len(branches)} branch calls. Continue working independently."
@@ -156,7 +158,9 @@ async def process_item(
                 branches.append(agent_name)
                 branch_tasks[agent_name] = message_to_branch
                 history = agent['main'].messages()
-                agent[agent_name] = Agent(llm_client, history, tokenizer, config, prompt_turn=prompt_turn)
+                # Inherit the main context's TOKEN IDS (raw sampled assistant turns included) instead of re-tokenising the
+                # history from text, which normalised '<think>\n</think>' and inserted empty think blocks (audit finding F1).
+                agent[agent_name] = agent['main'].fork(llm_client)
                 agent[agent_name].capture_name = agent_name
                 branch_prompt_formatted = branch_prompt.format(message=message_to_branch)
                 agent[agent_name].append({'role': 'user', 'content': branch_prompt_formatted})
@@ -165,16 +169,16 @@ async def process_item(
                     max_turn=max_turn,
                     max_tokens=getattr(config.plugin, "branch_len", None),
                     session_timeout=session_timeout - time.time() + session_start_time,
-                    should_continue=lambda resp: '<function=return>' not in resp,
+                    should_continue=lambda resp: not any(c['function'] == 'return' for c in extract_fn_calls_strict(resp)),
                     safe_finish=lambda
-                        x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if '<function=finish>' in x or '<function=branch>' in x else None,
+                        x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if any(c['function'] in ('finish', 'branch') for c in extract_fn_calls_strict(x)) else None,
                     summary_prompt="The context limit has been exceeded for the branch. Please finish the sub task directly and clearly state the progress made and the pending jobs of the sub task. Only summarize the sub task progress, using the return tool.",
                     observation_prompt=f"* You are now in branch mode: {description}. Conduct the sub task based on instruction, and when you complete the assigned sub task, use return tool to return, do not perform action beyond the assigned sub task.",
                 )
                 iteration += agent_return['iteration']
                 last_response = agent_return['last_response']
                 session_message.extend(agent[agent_name].messages()[len(history):])
-                fn_call = extract_fn_call(last_response)
+                fn_call = last_strict_call(last_response)
                 branch_message = None
                 if fn_call is not None and fn_call['function'] == 'return':
                     if 'message' in fn_call['arguments']:

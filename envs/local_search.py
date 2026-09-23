@@ -334,25 +334,9 @@ def extract_fn_call(text):
             return json_tool
         else:
             print(text)
-    text = re.split(r'<\[[^\]]+\]>', text)[-1].strip()
-    matches = list(re.finditer(r'(?m)^[ \t]*<function=([^>]+)>\s*(.*?)\s*</function>',
-                               text, re.DOTALL))
-    if not matches:
-        return None
-    groups = [[matches[0]]]
-    for m in matches[1:]:
-        prev = groups[-1][-1]
-        line_gap = text.count('\n', prev.end(), m.start())
-        groups[-1].append(m) if line_gap < 4 else groups.append([m])
-    last = groups[-1]
-    return [
-        {
-            'function': m.group(1),  # <-- each call uses its *own* captured fn name
-            'arguments': dict(re.findall(r'<parameter=([^>]+)>(.*?)</parameter>',
-                                         m.group(2), re.DOTALL))
-        }
-        for m in last
-    ]
+    # single source of truth for the <function=...> grammar, shared with the agents (agents/parsing.py)
+    from agents.parsing import extract_fn_calls_strict
+    return extract_fn_calls_strict(text) or None
 
 
 class LocalSearch:

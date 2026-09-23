@@ -20,6 +20,10 @@ tokens per context, lr 1e-6, 100 steps, val every 10 steps (150 test tasks, gree
 Compaction knobs used in the full run: `COMPACTION_THRESHOLD=8192`, `TAIL_STEPS=2`, `SUMMARY_MAX_TOKENS=2048`, `TRAIN_SUMMARY=True`,
 `MASK_UNFINISHED=False` (paper-faithful: budget-exhausted rollouts train with reward 0; the Fold/GRPO arms mask them).
 
+**Rollout-code fixes 2026-09-23** (after the GRPO trace audit, `docs/traces/grpo_step50_trace_audit.md`): per-turn cap now applied,
+branches/compaction tails inherit exact token ids, one call grammar for agent and environment, canonical `<|im_end|>\n` turn ends.
+All numbers in §3 were produced before these fixes.
+
 Infrastructure that is part of the "method": the **Qwen3 chat-template fix** (commit b94b34f) — observations wrapped in
 `<tool_response>` and post-prompt turns rendered standalone, so `<think>` blocks are never stripped and observations never lose
 their header (before the fix 13–21 % of tool calls got no observation and ~80 % of thinks were empty).

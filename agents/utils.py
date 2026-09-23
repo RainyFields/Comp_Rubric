@@ -138,9 +138,10 @@ class CallLLM(LLMClass):  # Call LLM in Verl RL env
         max_len = kwargs.pop('max_len', None) or self.config.prompt_length + self.config.response_length
         max_len = min(max_len, self.config.prompt_length + self.config.response_length)
         max_new_tokens = max_len - len(input_ids)
-        # This is used to avoid repetitive generation.
+        # Per-turn cap (plugin.turn_max_new_tokens). Before 2026-09-23 the capped value was computed into an unused
+        # variable and never sent (audit finding F4: turns up to 6k tokens with a 2048 cap configured).
         if hasattr(self.config, 'plugin') and getattr(self.config.plugin, 'turn_max_new_tokens', -1) > 0:
-            max_tokens = min(max_new_tokens, self.config.plugin.turn_max_new_tokens)
+            max_new_tokens = min(max_new_tokens, self.config.plugin.turn_max_new_tokens)
         if 'max_new_tokens' in kwargs:
             max_new_tokens = min(max_new_tokens, kwargs['max_new_tokens'])
 
@@ -414,6 +415,33 @@ class AgentContext:
                 self.chat_ids[-1].append(self.tokenizer.eos_token_id)
                 self.log_probs[-1].append(0.0)
                 self.token_mask[-1].append(False)
+            # canonical turn terminator is '<|im_end|>\n'; sampled turns stopped at <|im_end|>, so the next turn's
+            # '<|im_start|>' followed it with no newline (audit finding F5). Append the newline as a non-trained token.
+            for t in self._turn_end_newline_ids():
+                self.chat_ids[-1].append(t)
+                self.log_probs[-1].append(0.0)
+                self.token_mask[-1].append(False)
+
+    def _turn_end_newline_ids(self):
+        """Token ids the template puts after the end-of-turn token (a single '\n' for Qwen); [] if the template does not."""
+        if getattr(self, '_nl_ids', None) is None:
+            anchor = self._ANCHOR
+            with_turn = self.tokenizer.apply_chat_template(anchor + [{'role': 'assistant', 'content': 'x'}],
+                                                           add_generation_prompt=False, tokenize=False)
+            eos = self.tokenizer.decode([self.tokenizer.eos_token_id], skip_special_tokens=False)
+            tail = with_turn.rsplit(eos, 1)[-1] if eos in with_turn else ''
+            self._nl_ids = self.tokenizer.encode(tail, add_special_tokens=False) if tail.strip() == '' and tail else []
+        return self._nl_ids
+
+    def append_tokens(self, turn, ids):
+        """Append a turn with PRE-TOKENISED ids (non-trainable): used to carry raw sampled turns into another context
+        (compaction tail, branch history) without re-rendering them through the chat template."""
+        self.chat.append(turn)
+        self.chat_completions.append(None)
+        self.additional_info.append(None)
+        self.chat_ids.append(list(ids))
+        self.log_probs.append([0.0] * len(ids))
+        self.token_mask.append([False] * len(ids))
 
     def rollback(self, k=1):
         self.chat = self.chat[:-k]
@@ -495,6 +523,23 @@ class Agent(AgentContext):
         self.retry_cjk = getattr(config.plugin, "retry_cjk", 0)
         self.info_cache = {}
         self.capture_name = None
+
+    def fork(self, llm_client=None):
+        """A new Agent that inherits this context's exact token ids (all turns non-trainable), e.g. a branch."""
+        new = copy.copy(self)
+        new.llm_client = llm_client if llm_client is not None else self.llm_client
+        new.context_uid = str(uuid.uuid4())
+        new.chat = copy.deepcopy(self.chat)
+        new.chat_ids = [list(t) for t in self.chat_ids]
+        new.chat_completions = [None] * len(self.chat)
+        new.log_probs = [[0.0] * len(t) for t in self.chat_ids]
+        new.token_mask = [[False] * len(t) for t in self.chat_ids]
+        new.additional_info = [None] * len(self.chat)
+        new.init_len = len(self.chat)
+        new.info_cache = {}
+        new.capture_name = None
+        new.metrics = None
+        return new
 
     async def step(self, max_new_tokens=None, retry_cjk=0):
         prompt = self.context()
