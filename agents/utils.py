@@ -263,12 +263,12 @@ def render_prefix_len(tokenizer, msgs):
     """Token length of ``msgs`` as the chat template renders them; templates that refuse a chat without a plain user
     query (Qwen3.5: 'No user query found') are rendered with a trailing anchor query whose tokens are subtracted."""
     try:
-        return len(tokenizer.apply_chat_template(msgs, add_generation_prompt=False, tokenize=True))
+        return len(tokenizer.apply_chat_template(msgs, add_generation_prompt=False, tokenize=True, return_dict=False))
     except Exception as e:
         if 'user query' not in str(e):
             raise
-        full = tokenizer.apply_chat_template(list(msgs) + _ANCHOR_QUERY, add_generation_prompt=False, tokenize=True)
-        return len(full) - len(tokenizer.apply_chat_template(_ANCHOR_QUERY, add_generation_prompt=False, tokenize=True))
+        full = tokenizer.apply_chat_template(list(msgs) + _ANCHOR_QUERY, add_generation_prompt=False, tokenize=True, return_dict=False)
+        return len(full) - len(tokenizer.apply_chat_template(_ANCHOR_QUERY, add_generation_prompt=False, tokenize=True, return_dict=False))
 
 
 def truncate_prompt(chat, prompt_length, tokenizer, prompt_turn):
@@ -351,12 +351,12 @@ class AgentContext:
         if k <= 0:
             return []
         try:
-            return self.tokenizer.apply_chat_template(self.chat[:k], add_generation_prompt=False, tokenize=True)
+            return self.tokenizer.apply_chat_template(self.chat[:k], add_generation_prompt=False, tokenize=True, return_dict=False)
         except Exception as e:  # jinja2 TemplateError from templates that need a user query
             if 'user query' not in str(e):
                 raise
-            full = self.tokenizer.apply_chat_template(self.chat[:k] + self._ANCHOR, add_generation_prompt=False, tokenize=True)
-            tail = self.tokenizer.apply_chat_template(self._ANCHOR, add_generation_prompt=False, tokenize=True)
+            full = self.tokenizer.apply_chat_template(self.chat[:k] + self._ANCHOR, add_generation_prompt=False, tokenize=True, return_dict=False)
+            tail = self.tokenizer.apply_chat_template(self._ANCHOR, add_generation_prompt=False, tokenize=True, return_dict=False)
             assert full[len(full) - len(tail):] == tail, 'chat template does not render the anchor query as a pure append'
             return full[:len(full) - len(tail)]
 
@@ -372,23 +372,23 @@ class AgentContext:
         """
         anchor = self.chat[:1] if self.chat and self.chat[0].get('role') == 'system' else []
         anchor = anchor + self._ANCHOR
-        tokens = self.tokenizer.apply_chat_template(anchor + [turn], add_generation_prompt=False, tokenize=True)
-        prev = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True)
+        tokens = self.tokenizer.apply_chat_template(anchor + [turn], add_generation_prompt=False, tokenize=True, return_dict=False)
+        prev = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True, return_dict=False)
         assert tokens[:len(prev)] == prev, 'chat template does not render turns as a pure append'
         return tokens[len(prev):]
 
     def get_generation_prompt(self):
         if self.generation_prompt is None:
             try:
-                tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=False, tokenize=True)
+                tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=False, tokenize=True, return_dict=False)
                 add_tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=True,
-                                                                tokenize=True)
+                                                                tokenize=True, return_dict=False)
             except Exception as e:  # template needs a plain user query (Qwen3.5) and the chat has none yet
                 if 'user query' not in str(e):
                     raise
                 anchor = (self.chat[:1] if self.chat and self.chat[0].get('role') == 'system' else []) + self._ANCHOR
-                tokens = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True)
-                add_tokens = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=True, tokenize=True)
+                tokens = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True, return_dict=False)
+                add_tokens = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=True, tokenize=True, return_dict=False)
             self.generation_prompt = add_tokens[len(tokens):]
         return self.generation_prompt
 

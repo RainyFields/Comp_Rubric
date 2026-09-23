@@ -107,7 +107,7 @@ class TestRecordedReplay(unittest.TestCase):
             # (Not "== canonical template render": the model wrote '<think>\n</think>' and the template would normalise it to
             # '<think>\n\n</think>\n\n' — raw sampled whitespace is preserved on purpose, see docs/PROTOCOL.md §2.)
             gp = ag.get_generation_prompt(); nl = ag._turn_end_newline_ids()
-            expected = list(TOK.apply_chat_template(CHAT, tokenize=True))
+            expected = list(TOK.apply_chat_template(CHAT, tokenize=True, return_dict=False))
             for turn, comp in zip(ag.chat[2:], ag.chat_completions[2:]):
                 if comp is not None:
                     ids = comp["choices"][0]["message"]["raw_output_ids"]

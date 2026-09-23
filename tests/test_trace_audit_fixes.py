@@ -119,7 +119,7 @@ class TestTurnTerminatorAndFork(unittest.TestCase):
         self.assertFalse(ag.token_mask[-1][-1])
         # the concatenated context now equals the template's canonical rendering of the same chat
         ag.append({"role": "user", "content": "<tool_response>\nOBS\n</tool_response>"})
-        direct = TOK.apply_chat_template(ag.chat, add_generation_prompt=True, tokenize=True)
+        direct = TOK.apply_chat_template(ag.chat, add_generation_prompt=True, tokenize=True, return_dict=False)
         self.assertEqual(ag.context(), direct)
 
     def test_fork_inherits_exact_ids_and_is_non_trainable(self):

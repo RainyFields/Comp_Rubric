@@ -41,14 +41,15 @@ Paths on the devbox (the scripts hard-code them; keep them or edit `SRC`/`XD` in
 |---|---|
 | repo | `/home/tiger/xiaoxuan/Comp_Rubric` |
 | venvs (Qwen3-8B stack) | `~/xiaoxuan/envs/fold_train` (vLLM 0.10.2, transformers 4.57.6, torch 2.8, verl 0.7.0.dev vendored under `verl/`), `~/xiaoxuan/envs/fold_infra` (vLLM 0.11 for search + judge); tarballs `fold-job-assets/fold_train.tar.gz`, `fold_infra.tar.gz` |
-| **Qwen3.5 stack (to build)** | `~/xiaoxuan/envs/fold_train_q35`: verl 0.9.1 (pip), transformers 5.10.x, vLLM ≥ 0.18, `flash-linear-attention==0.5.2`, `causal-conv1d==1.7.0`, prebuilt flash-attn — see the migration plan WP2/WP3 (the vendored verl 0.7 cannot load Qwen3.5) |
+| **Qwen3.5 stack (BUILT 2026-09-23)** | `~/xiaoxuan/envs/fold_train_q35` = `bash infra/build_env_q35.sh`: Python 3.12, torch 2.11.0+cu130, vLLM 0.24.0, transformers 5.9.0, verl 0.9.1 (pip), flash-attn 2.8.3 (verl wheelhouse), flash-linear-attention 0.5.2, tensordict 0.10.0, cupy-cuda13x (= verl 0.9.1's `[vllm]` lock; no `causal-conv1d`: verl's Qwen3.5 forward uses fla, `causal_conv1d_implementation=fla`). Freeze `infra/fold_train_q35.freeze.txt`; tarball `fold-job-assets/fold_train_q35.tar.gz` (+`.md5`, `.commit`). Pods need image `modelchef-gpu:1.0.0.54` (CUDA 13.0 compat for driver R535). The vendored `verl/` 0.7 breaks under transformers 5 — never put the repo root on `sys.path` with this venv until WP3 replaces it |
 | data | `data/bc_train.parquet`, `data/bc_test.parquet` (git-ignored; copy them), `data/bc_test_shakeout.parquet` (18-task subset) |
 | HDFS assets | `/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/`: repo tarball `foldagent-repo.tar.gz` (+`.md5`, `.commit`), venv tarballs, `fold_common_bootstrap.sh`, `fold_*_entrypoint.sh`, `hf_hub/` (Qwen3-8B, Qwen3-Embedding-8B, BC-Plus corpus), `tokenizers/Qwen3.5-9B/`, `tiktoken/` |
 | HDFS outputs | `/mnt/hdfs/mlsys/xiaoxuan/fold_replication/{ckpt_fix,val_dump_fix,train_logs_fix,rollout_dump_fix,results}/` |
 | judge | gpt-oss-120b served on the pod (`/mnt/hdfs/mlsys/users/xiaoxuan/models/gpt-oss-120b`), reached through `infra/judge_shim.py` |
 | W&B | key at `fold-job-assets/../arco-job-assets/wandb.key`; project `context_folding` |
 | jobs | Merlin/Arnold i18n-tt, group 765 ark-eng-algorithm, 8×H100 pods; `merlin-cli --control-plane i18n-tt job-v2 runs create --from-file <spec>`; ledger `infra/jobs/JOBS.tsv`; compliance env vars in every spec (`HAS_TT_DATA=False` etc.) |
-| Qwen3.5 tokenizer (offline) | `~/xiaoxuan/tokenizers/Qwen3.5-9B` (copy from HDFS `fold-job-assets/tokenizers/`) |
+| Qwen3.5 tokenizer (offline) | `~/xiaoxuan/tokenizers/Qwen3.5-9B` (copy from HDFS `fold-job-assets/tokenizers/`); Qwen3-8B tokenizer at `~/xiaoxuan/tokenizers/Qwen3-8B` (from `/mnt/hdfs/mlsys/models/Qwen3-8B`) |
+| Qwen3.5 weights | shared HDFS `/mnt/hdfs/mlsys/models/Qwen3.5-9B` (19 GB, 4 safetensors shards) and `Qwen3.5-4B` (8.8 GB) — no HF download needed; stage to `/tmp/models/` on the pod (SUPO pattern) |
 
 Per-box tooling: merlin-cli (auth with `--bytecloud-auth`), `uv`, `hf` CLI, SSH key registered on GitHub, PATH in `.profile`.
 
@@ -68,6 +69,9 @@ Qwen3.5 specifics (verified on the real `Qwen/Qwen3.5-9B` template, `tests/test_
   segment with `resume_keep_task_prompt=False`): `Agent._render_prefix`/`get_generation_prompt`/`truncate_prompt` handle it;
 - `<think>`, `</think>`, `<tool_response>`, `<tool_call>` are single tokens; eos `<|im_end|>`; terminator newline `\n` (id 198);
 - vocab 248 320 (Qwen3-8B: 151 936) → chunked log-probs (`use_fused_kernels`) at 32k responses; native context 262k.
+- **transformers 5 (the q35 venv)**: `tokenizer.apply_chat_template(..., tokenize=True)` returns a `BatchEncoding` unless
+  `return_dict=False` is passed — every call in `agents/utils.py` / `scripts/audit_rollout_trace.py` / tests does so since 2026-09-23
+  (ids are byte-identical to 4.57). Any new call site must do the same, or use `tokenize=False` + `encode`.
 
 Training-mask semantics (`docs/PROTOCOL.md` §5) are model-independent and tested with both tokenizers.
 
@@ -76,8 +80,9 @@ Training-mask semantics (`docs/PROTOCOL.md` §5) are model-independent and teste
 ```bash
 # 0. tests (91; run with BOTH tokenizers — Qwen3.5 id-replay cases skip by design)
 cd ~/xiaoxuan/Comp_Rubric
-for T in Qwen/Qwen3-8B ~/xiaoxuan/tokenizers/Qwen3.5-9B; do FOLD_TOKENIZER_PATH=$T ~/xiaoxuan/envs/fold_train_q35/bin/python -m unittest discover -s tests -t .; done
-# (until fold_train_q35 exists, use ~/xiaoxuan/envs/fold_train/bin/python — the tests need only transformers + torch)
+for T in ~/xiaoxuan/tokenizers/Qwen3-8B ~/xiaoxuan/tokenizers/Qwen3.5-9B; do FOLD_TOKENIZER_PATH=$T ~/xiaoxuan/envs/fold_train_q35/bin/python -m unittest discover -s tests -t .; done
+# 2026-09-23 status in the q35 venv: the vendored verl/ makes 33/73 error (transformers 5); with verl/ removed from the tree
+# (pip verl 0.9.1) 62/73 pass on both tokenizers — the 11 left are the WP3 items (NEXT_STEPS step 4).
 
 # 1. Qwen3.5 model prep (once the q35 venv exists): download, then seed the HDFS hub cache used by pods
 hf download Qwen/Qwen3.5-9B; hf download Qwen/Qwen3.5-4B

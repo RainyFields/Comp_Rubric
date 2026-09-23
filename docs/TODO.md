@@ -46,12 +46,12 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
 - [ ] D5 no-RL Qwen3.5-9B greedy + T1n4 baseline before any training.
 
 ### C1. Environment (`~/xiaoxuan/envs/fold_train_q35`, then tarball → `fold-job-assets/fold_train_q35.tar.gz` + `.md5`)
-- [ ] Python 3.11 uv venv; `verl==0.9.1`; torch per verl's pin; `vllm` ≥ 0.18 (the version verl 0.9.1's docker uses); prebuilt `flash-attn`;
+- [x] (2026-09-23, `infra/build_env_q35.sh`; Python **3.12** = verl 0.9.1's tested interpreter; vLLM **0.24.0** = verl's pin) Python 3.11 uv venv; `verl==0.9.1`; torch per verl's pin; `vllm` ≥ 0.18 (the version verl 0.9.1's docker uses); prebuilt `flash-attn`;
       **`flash-linear-attention==0.5.2` + `causal-conv1d==1.7.0`** (GDN kernels; without them transformers silently falls back to a slow fp32 path —
       check the trainer log for the fallback warning); `tensordict<=0.10`; `wandb httpx openai ray`.
-- [ ] Smoke on one GPU worker: `Qwen3_5ForCausalLM.from_pretrained("Qwen/Qwen3.5-9B", dtype=bf16)` forward; `vllm serve` 9B TP=1 and TP=8,
+- [ ] (needs a GPU pod; devbox is CPU-only) Smoke on one GPU worker: `Qwen3_5ForCausalLM.from_pretrained("Qwen/Qwen3.5-9B", dtype=bf16)` forward; `vllm serve` 9B TP=1 and TP=8,
       one chat completion with `chat_template_kwargs={"enable_thinking": true}`; check the response has no opening `<think>` (pre-filled).
-- [ ] Download `Qwen/Qwen3.5-9B` (+ `4B`) into the box's HF cache and seed `fold-job-assets/hf_hub/` (`cp -rL`, fuse cannot make symlinks).
+- [x] NOT NEEDED: both are on shared HDFS `/mnt/hdfs/mlsys/models/Qwen3.5-9B` (19 GB) and `Qwen3.5-4B` (8.8 GB); use those paths (stage to /tmp on the pod). Original: Download `Qwen/Qwen3.5-9B` (+ `4B`) into the box's HF cache and seed `fold-job-assets/hf_hub/` (`cp -rL`, fuse cannot make symlinks).
 - [ ] `fold_infra` venv unchanged (search server + gpt-oss-120b judge); `fold_infra.tar.gz` is reusable as is.
 
 ### C2. Port the training stack to verl 0.9.1 (WP3)
@@ -73,6 +73,8 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
       templates that raise "No user query found" (Qwen3.5) for system-only prefixes.
 - [x] Tests parameterised over tokenizers (`tests/tokenizers.py`, `FOLD_TOKENIZER_PATH`); 36/36 pass on Qwen3-8B and Qwen3.5-9B.
 - [x] `MODEL_PATH` / `MODEL_TAG` / `FOLD_MODEL_PATH` through workers, entrypoints, `scripts/train_bc.sh`.
+- [x] transformers 5: `apply_chat_template(tokenize=True)` returns a `BatchEncoding` → `return_dict=False` on every call (agents/utils.py, audit script, tests; 2026-09-23).
+- [ ] `FOLD_VENV` (default `fold_train`) in the entrypoints/workers + `restore_venv fold_train_q35`; Qwen3.5 specs use image `modelchef-gpu:1.0.0.54`.
 - [ ] `analyze_fix_campaign.py` / `render_rollout_traces.py`: add a `--model-tag` and read the model-level HDFS layout
       (`fold_replication/<model_tag>/{ckpt,val_dump,train_logs,rollout_dump}/<arm>`); Qwen3-8B stays under `*_fix/`.
 - [ ] Sampling: RL rollouts T=1.0 top_p 1 (unchanged); the model card recommends `presence_penalty=1.5` in thinking mode for chat —
@@ -89,25 +91,25 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
 
 ## D. Moving the repo to a new dev box — what does NOT travel with `git clone`
 
-- [ ] **`data/bc_train.parquet` (3.9 MB) and `data/bc_test.parquet` (0.9 MB)** are git-ignored — copy them (or regenerate with the authors'
+- [x] (done 2026-09-23: extracted from `fold-job-assets/foldagent-repo.tar.gz`, which contains `data/`) **`data/bc_train.parquet` (3.9 MB) and `data/bc_test.parquet` (0.9 MB)** are git-ignored — copy them (or regenerate with the authors'
       recipe in `README.md`); jobs copy them from `$SRC/data/`.
-- [ ] Venvs: rebuild from `fold-job-assets/fold_train.tar.gz` / `fold_infra.tar.gz` (`tar xzf -C ~/xiaoxuan/envs`) — or build `fold_train_q35` (C1).
+- [x] (q35 built; old `fold_train` not restored locally — 23 GB free on `/`) Venvs: rebuild from `fold-job-assets/fold_train.tar.gz` / `fold_infra.tar.gz` (`tar xzf -C ~/xiaoxuan/envs`) — or build `fold_train_q35` (C1).
       Path `~/xiaoxuan/envs/<name>` is hard-coded in `infra/worker_*.sh` and `fold_common_bootstrap.sh` (`XD=/home/tiger/xiaoxuan`).
-- [ ] Repo location: scripts assume `/home/tiger/xiaoxuan/Comp_Rubric` (`SRC=`) — keep it, or change `SRC`/`XD` in `infra/worker_train.sh`,
+- [x] Repo location: scripts assume `/home/tiger/xiaoxuan/Comp_Rubric` (`SRC=`) — keep it, or change `SRC`/`XD` in `infra/worker_train.sh`,
       `infra/worker_val_selfcontained.sh`, `infra/jobs/fold_common_bootstrap.sh`, `infra/infra_resubmit_loop.sh`, `infra/jobs/status.sh`.
-- [ ] Tokenizers for the CPU tests: `~/xiaoxuan/tokenizers/Qwen3.5-9B` (copy from `fold-job-assets/tokenizers/`) and `Qwen/Qwen3-8B` in the HF cache.
-- [ ] HDFS mounts: `/mnt/hdfs/mlsys` must be mounted (RW) on the box — assets `/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/`, outputs
+- [x] (both under `~/xiaoxuan/tokenizers/`; use `FOLD_TOKENIZER_PATH=~/xiaoxuan/tokenizers/Qwen3-8B` — the HF-cache id is not available offline) Tokenizers for the CPU tests: `~/xiaoxuan/tokenizers/Qwen3.5-9B` (copy from `fold-job-assets/tokenizers/`) and `Qwen/Qwen3-8B` in the HF cache.
+- [x] HDFS mounts: `/mnt/hdfs/mlsys` must be mounted (RW) on the box — assets `/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/`, outputs
       `/mnt/hdfs/mlsys/xiaoxuan/fold_replication/`, W&B key `/mnt/hdfs/mlsys/users/xiaoxuan/arco-job-assets/wandb.key`.
 - [ ] After **any** code change that a job must see: commit, retar to `fold-job-assets/foldagent-repo.tar.gz` (+ `.md5`, verify with `md5sum -c`);
       recipe in the 09-16 hand-off; currently at commit f22260d (= this TODO's commit minus docs).
-- [ ] Tooling per box (see memory notes): merlin-cli (`--control-plane i18n-tt`, IPv6 pin for `ml.tiktok-row.net` if TLS times out), `mlx`,
+- [x] (merlin-cli 0.2.420 authed on i18n-tt, uv 0.9.8, nvcc 13.0 at /usr/local/cuda; `hf` comes with the q35 venv) Tooling per box (see memory notes): merlin-cli (`--control-plane i18n-tt`, IPv6 pin for `ml.tiktok-row.net` if TLS times out), `mlx`,
       `uv`, `hf` CLI, GitHub SSH key registered, lark-cli re-auth; put PATH in `.profile` (non-interactive shells).
 - [ ] `infra/markers/`, `infra/launch_*.log`, `results/` are runtime state (git-ignored) — nothing to carry.
 - [ ] Push the repo to a **new** GitHub remote (origin = authors' repo) once you say go; `docs/reports/paper/` has uncommitted LaTeX edits —
       commit or stash them on the old box first.
 
 ## D2. Push / repository (BLOCKER for the handoff)
-- [ ] Create the GitHub repository `RainyFields/Comp_Rubric` (private) — no `gh` CLI or API token on this box, so it could not be
+- [x] Create the GitHub repository `RainyFields/Comp_Rubric` (private) — no `gh` CLI or API token on this box, so it could not be
       created here; remote `github` is already configured. Then `git push -u github main` (SSH works).
 - [ ] Optional: rename remotes so `origin` = RainyFields/Comp_Rubric and `upstream` = sunnweiwei/FoldAgent.
 
@@ -115,6 +117,10 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
 - [ ] Observation token budget per turn (`max_calls_per_turn=8` only bounds the number of calls).
 - [ ] Consider `max_consecutive_no_call=5` for thinking policies; duplicate-action guard.
 - [ ] Dump one live GPU training batch (response_mask stats) during the next training shakeout to close the "NOT YET VERIFIED on device" row.
+
+## D4. Found while bootstrapping the new box (2026-09-23)
+- [ ] `scripts/e2e_metrics.py` is not in git (fresh clone → `tests/test_e2e_ledger.py` fails to import it): recover from the old box, commit.
+- [ ] Remotes on the new clone: `origin` = RainyFields (docs say `github`); add the authors' upstream by hand if needed.
 
 ## E. Housekeeping
 - [ ] Delete the superseded `report/` (August draft) or leave it; `infra/babysit_infra.sh` is deprecated (no babysitters).

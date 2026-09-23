@@ -87,7 +87,7 @@ class Renderer:
 
     def render_prompt(self, system, user):
         ids = self.tok.apply_chat_template([{"role": "system", "content": system}, {"role": "user", "content": user}],
-                                           add_generation_prompt=False, tokenize=True)
+                                           add_generation_prompt=False, tokenize=True, return_dict=False)
         return ids, self.tok.decode(ids, skip_special_tokens=False), self.tok.decode(ids, skip_special_tokens=True)
 
 

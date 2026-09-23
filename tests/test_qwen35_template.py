@@ -76,13 +76,13 @@ class _Common:
                                          "response_log_probs": [0.0] * len(ids)}}]}
         ag.append({"role": "assistant", "content": text}, comp)
         ag.append(OBS)
-        self.assertEqual(ag.context(), self.tok.apply_chat_template(ag.chat, add_generation_prompt=True, tokenize=True))
+        self.assertEqual(ag.context(), self.tok.apply_chat_template(ag.chat, add_generation_prompt=True, tokenize=True, return_dict=False))
         self.assertEqual(ag._turn_end_newline_ids(), self.tok.encode("\n", add_special_tokens=False))
 
     def test_system_only_prefix_and_generation_prompt_for_a_resumed_segment(self):
         # Qwen3.5 raises 'No user query found' for [system] alone; Agent must still tokenize prompt turns and the gen prompt
         ag = Agent(None, [SYS], self.tok, CFG, prompt_turn=1)
-        self.assertEqual(sum(ag.chat_ids, []), self.tok.apply_chat_template([SYS, {"role": "user", "content": "anchor"}], tokenize=True)[: len(sum(ag.chat_ids, []))])
+        self.assertEqual(sum(ag.chat_ids, []), self.tok.apply_chat_template([SYS, {"role": "user", "content": "anchor"}], tokenize=True, return_dict=False)[: len(sum(ag.chat_ids, []))])
         self.assertTrue(len(ag.get_generation_prompt()) > 0)
 
     def test_special_tokens_are_single_tokens(self):

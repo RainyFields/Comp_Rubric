@@ -63,8 +63,8 @@ _ANCHOR = [{"role": "user", "content": "anchor"}]
 def _render_single_user_turn(tok, content):
     """Reference tokens for one user turn rendered on its own by the template (behind an anchor query, because
     Qwen3.5's template refuses a chat whose only user message is a <tool_response>)."""
-    full = tok.apply_chat_template(_ANCHOR + [{"role": "user", "content": content}], add_generation_prompt=False, tokenize=True)
-    prev = tok.apply_chat_template(_ANCHOR, add_generation_prompt=False, tokenize=True)
+    full = tok.apply_chat_template(_ANCHOR + [{"role": "user", "content": content}], add_generation_prompt=False, tokenize=True, return_dict=False)
+    prev = tok.apply_chat_template(_ANCHOR, add_generation_prompt=False, tokenize=True, return_dict=False)
     assert full[:len(prev)] == prev
     return full[len(prev):]
 
@@ -128,7 +128,7 @@ class TestToolResponseWrapping(unittest.TestCase):
             chat.append({"role": "user", "content": wrap_tool_response(f"[Search Results for q{t}] " + "doc " * 20)})
         ctx = AgentContext(chat, TOK, CFG, prompt_turn=2)
         built = sum(ctx.chat_ids, [])
-        direct = TOK.apply_chat_template(chat, add_generation_prompt=False, tokenize=True)
+        direct = TOK.apply_chat_template(chat, add_generation_prompt=False, tokenize=True, return_dict=False)
         self.assertEqual(built, direct)
 
     def test_unwrapped_observation_is_also_intact(self):
@@ -146,8 +146,8 @@ class TestToolResponseWrapping(unittest.TestCase):
             {"role": "assistant", "content": "<think>\n" + "reason " * 200 + "\n</think>\n\n<function=search><parameter=query>q</parameter></function>"},
             {"role": "user", "content": "[Search Results for q] doc doc doc"},
         ]
-        full = TOK.apply_chat_template(chat, add_generation_prompt=False, tokenize=True)
-        prev = TOK.apply_chat_template(chat[:-1], add_generation_prompt=False, tokenize=True)
+        full = TOK.apply_chat_template(chat, add_generation_prompt=False, tokenize=True, return_dict=False)
+        prev = TOK.apply_chat_template(chat[:-1], add_generation_prompt=False, tokenize=True, return_dict=False)
         self.assertLess(len(full[len(prev):]), len(_render_single_user_turn(TOK, chat[-1]["content"])))
 
     def test_branch_and_summary_prompts_survive_after_think_turns(self):
