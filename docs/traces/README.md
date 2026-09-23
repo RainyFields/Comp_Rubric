@@ -17,6 +17,15 @@ Note: for the fold arms, step 50 (foldgrpo) and step 60 (grpo) in-training dumps
 (val read 0.0); the clean numbers come from val-only re-evals whose dumps live under
 `results/valsc_<arm>_<step>_greedy_sc/dump/`. The steps rendered above are clean in-training vals.
 
+## Trace audit (2026-09-23, GRPO step 50)
+
+`grpo_step50_trace_audit.md` / `.jsonl` (+ `_preamble.md`), produced by `scripts/audit_rollout_trace.py`: per-turn records with
+the generated output, the reconstructed next-step model input (labelled), parser results from BOTH parsers (agent-side lenient vs
+the environment's), executed actions, observation integrity, history-think status, token estimates and anomalies; aggregate
+diagnostics over all 150 rollouts; the four original examples + the two branch-heaviest rollouts in detail. Re-run with
+`--capture <results/valonly_grpo_50_greedy_capture_sc/capture>` once job 222c7dd69460d364 finishes to replace reconstructions
+with captured prompts (main + branch contexts, exact token counts).
+
 ## What the checklist verifies
 
 | check | why it matters |

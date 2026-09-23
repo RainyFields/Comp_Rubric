@@ -6,3 +6,5 @@ infra/launch_*.log
 # local data & experiment outputs (mirrors live on HDFS; report assets are copied into docs/reports/)
 data/
 results/
+# large machine-readable audits live on HDFS (fold_replication/results/trace_audits/)
+docs/traces/*.jsonl

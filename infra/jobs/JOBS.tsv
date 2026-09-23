@@ -53,3 +53,4 @@ date_pdt	sid	name	spec	note
 2026-09-18 04:49	f8e997a4ba6bcdf8	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #11 for arm compactiongrpo (previous b543448713bf8dbf was queued)
 2026-09-18 11:10	7a03227d8f74138d	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #12 for arm compactiongrpo (previous f8e997a4ba6bcdf8 was killed)
 2026-09-18 15:09	34c7099f72908b05	fold-infra-fix-h100	fold-infra-fix-h100.json	infra keep-alive loop resubmit #13 for arm compactiongrpo (previous 7a03227d8f74138d was killed)
+2026-09-23 10:55	222c7dd69460d364	fold_val_grpo_fix_step50_capture_h100	fold_val_grpo_fix_step50_capture_h100.json	TRACE AUDIT diagnostic: grpo ckpt 50 greedy val-only with prompt capture (FOLD_PROMPT_CAPTURE=1, exact policy inputs main+branches), tag _capture; repo tarball 882e410 (Comp_Rubric)

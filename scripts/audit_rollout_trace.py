@@ -36,6 +36,9 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 from agents.parsing import FN_BLOCK, PARAM, extract_fn_call, find_think  # noqa: E402
 from agents.prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT  # noqa: E402
+from envs.local_search import extract_fn_call as env_extract_fn_call  # noqa: E402  (the parser the environment really runs)
+
+TURN_MAX_NEW_TOKENS = 2048   # plugin.turn_max_new_tokens in every script — see finding: not applied by CallLLM
 
 DEFAULT_TOK = "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix/grpo/global_step_50/actor/huggingface"
 QSUM_HEAD = COMPACTION_SUMMARY_PROMPT.split("\n")[0]
@@ -54,8 +57,8 @@ OBS_KIND = OrderedDict([
     ("search", "[Search Results for"),
     ("open_page", "[Opened Page Content]"),
 ])
-EXPECTED_OBS = {"search": "search", "open_page": "open_page", "branch": ("branch_return", "branch_limit"), "return": None,
-                "finish": None}
+EXPECTED_OBS = {"search": ("search",), "open_page": ("open_page",), "branch": ("branch_return", "branch_limit"),
+                "none": ("no_call",), "finish": (), "unsupported": ("other",)}
 
 
 # ---------------------------------------------------------------------------------------------- tokenizer helpers
@@ -125,12 +128,34 @@ def parse_assistant(text):
         calls.append({"name": m.group(1), "arguments": dict(PARAM.findall(m.group(2))), "inside_think": inside,
                       "pos": m.start()})
     names_all = FN_NAME.findall(text)                 # includes unclosed ones
-    executed = extract_fn_call(text)                  # what run_action / the branch logic would act on (last <function=)
+    agent_parse = extract_fn_call(text)               # agents.parsing (fold_agent): lenient, LAST <function=...>...</function> anywhere
+    env_calls = env_extract_fn_call(text) or []       # envs.local_search: line-anchored, LAST adjacent group, ALL calls of it execute
+    if isinstance(env_calls, dict):
+        env_calls = [env_calls]
+    # what actually ran in the rollout (fold_agent.process_item): 'branch' is intercepted by the agent BEFORE the env sees the turn
+    if agent_parse and agent_parse["function"] == "branch":
+        executed_names, executed_by = ["branch"], "agent(branch)"
+    elif env_calls:
+        executed_names, executed_by = [c["function"] for c in env_calls], "env"
+    else:
+        executed_names, executed_by = [], "env(no call detected)"
+    executed = {"function": executed_names[0], "arguments": env_calls[0]["arguments"] if env_calls else agent_parse["arguments"]} if executed_names else None
     exec_inside_think = False
     if executed and span is not None:
-        last_pos = text.rfind(f"<function={executed['function']}>")
-        exec_inside_think = span[0] <= last_pos < span[1]
+        pos = text.rfind(f"<function={executed['function']}>")
+        exec_inside_think = span[0] <= pos < span[1]
+    discrepancies = []
+    if agent_parse and executed_names and agent_parse["function"] != executed_names[-1] and executed_by == "env":
+        discrepancies.append(f"lenient_parse={agent_parse['function']} vs env_executed={executed_names}")
+    if agent_parse and not executed_names:
+        discrepancies.append(f"lenient_parse={agent_parse['function']} but env detected NO call (unclosed / not line-anchored)")
+    if len(executed_names) > 1:
+        discrepancies.append(f"env_executed_{len(executed_names)}_calls_in_one_turn={executed_names}")
+    if len(calls) > len(executed_names) and executed_by == "env" and executed_names:
+        discrepancies.append(f"{len(calls)}_closed_calls_generated_but_{len(executed_names)}_executed")
     d = {
+        "agent_parse": agent_parse, "env_calls": env_calls, "executed_names": executed_names, "executed_by": executed_by,
+        "discrepancies": discrepancies,
         "has_think": reasoning is not None,
         "think_empty": reasoning is not None and reasoning == "",
         "think_text": reasoning,
@@ -171,7 +196,7 @@ def audit_rollout(rec, ridx, R):
     input_text, output = rec["input"], rec["output"]
     system, user = split_prompt(input_text)
     p_ids, p_text_sp, p_text = R.render_prompt(system, user)
-    prompt_verified = (p_text + "\n" + R.tok.decode(R.gen_prompt_ids, skip_special_tokens=True)) == input_text or p_text == input_text.rsplit("\nassistant\n", 1)[0]
+    prompt_verified = p_text.rstrip("\n") == input_text.rsplit("\nassistant\n", 1)[0].rstrip("\n")
     turns, notes = split_turns(output)
     records = []
     serial = p_text_sp                         # reconstructed serialised context (WITH special tokens)
@@ -185,6 +210,7 @@ def audit_rollout(rec, ridx, R):
             a = parse_assistant(content)
             rec_t.update(a)
             rec_t["tokens_est"] = R.n(content) + 1           # + eos, as stored by Agent.append
+            rec_t["exceeds_turn_max_new_tokens"] = rec_t["tokens_est"] > TURN_MAX_NEW_TOKENS
             # What the policy saw before generating this turn = serialised prefix + generation prompt
             model_input = serial + R.gen_prompt_text
             rec_t["model_input_tokens_est"] = main_tokens + len(R.gen_prompt_ids)
@@ -201,7 +227,7 @@ def audit_rollout(rec, ridx, R):
             rec_t["history_think_status"] = st
             # branch view: how this turn would be re-rendered from text when a branch inherits the history
             _, sp, plain = R.render_turn("assistant", content)
-            same = plain == content
+            same = plain[len("assistant\n"):].rstrip("\n") == content.rstrip("\n") and plain.startswith("assistant\n")
             if a["has_think"]:
                 rec_t["branch_view"] = "identical" if same else "modified_whitespace_or_layout"
             else:
@@ -222,14 +248,26 @@ def audit_rollout(rec, ridx, R):
                 anomalies.append("EXECUTED_call_taken_from_inside_think")
             if a["suffix_after_call"]:
                 anomalies.append("text_after_function_call")
+            if rec_t["exceeds_turn_max_new_tokens"]:
+                anomalies.append(f"turn_longer_than_turn_max_new_tokens({TURN_MAX_NEW_TOKENS})")
+            if a["unclosed_call"] and rec_t["tokens_est"] < TURN_MAX_NEW_TOKENS:
+                anomalies.append("unclosed_call_emitted_by_model(short_turn,not_a_cap_cut)")
+            anomalies += a["discrepancies"]
             if not a["has_think"]:
                 anomalies.append("no_think_block")
             if pending_call is not None:
                 anomalies.append("assistant_turn_without_observation_for_previous_call")
             rec_t["anomalies"] = anomalies
             history_thinks.append((t, a["think_text"] if a["has_think"] else None))
-            pending_call = a["executed_call"]["function"] if a["executed_call"] and a["executed_call"]["function"] not in ("finish",) else None
-            if a["executed_call"] and a["executed_call"]["function"] == "branch":
+            if a["executed_names"] and a["executed_names"][0] == "finish":
+                pending_call = None
+            elif not a["executed_names"]:
+                pending_call = "none"
+            elif a["executed_names"][0] in EXPECTED_OBS:
+                pending_call = a["executed_names"][0]
+            else:
+                pending_call = "unsupported"
+            if a["executed_names"] == ["branch"]:
                 branch_calls += 1
             # serialised form of a sampled assistant turn: generation prompt + raw text + eos (no trailing newline: Agent.append)
             serial += R.gen_prompt_text + content + R.eos_text
@@ -245,20 +283,19 @@ def audit_rollout(rec, ridx, R):
             rec_t.update({"kind": kind, "wrapped": is_obs, "intact": intact, "observation": inner, "chars": len(content)})
             ids, sp, plain = R.render_turn("user", content.strip())
             rec_t["tokens_est"] = len(ids)
-            rec_t["rerender_matches_dump"] = plain.strip() == content.strip()
+            rec_t["rerender_matches_dump"] = plain.startswith("user\n") and plain[len("user\n"):].strip() == content.strip()
             anomalies = []
             if not is_obs:
                 anomalies.append(f"user_turn_not_wrapped({kind})")
             if is_obs and not intact:
                 anomalies.append("observation_not_closed" + ("_at_end_of_dump(clipped_to_response_length)" if t == len(turns) - 1 else ""))
             if pending_call is None:
-                anomalies.append("observation_without_preceding_tool_call")
+                anomalies.append("observation_after_finish_or_at_rollout_start")
             else:
-                exp = EXPECTED_OBS.get(pending_call)
-                ok = (kind == exp) if isinstance(exp, str) else (kind in exp if exp else True)
+                exp = EXPECTED_OBS.get(pending_call, ())
                 rec_t["executed_call"] = pending_call
-                if not ok:
-                    anomalies.append(f"observation_kind_mismatch(call={pending_call},obs={kind})")
+                if kind not in exp:
+                    anomalies.append(f"observation_kind_mismatch(executed={pending_call},obs={kind})")
             if not rec_t["rerender_matches_dump"]:
                 anomalies.append("rerender_differs_from_dump")
             rec_t["anomalies"] = anomalies
@@ -266,7 +303,7 @@ def audit_rollout(rec, ridx, R):
             serial += sp
             main_tokens += len(ids)
         records.append(rec_t)
-    finished = any(r["role"] == "assistant" and r["executed_call"] and r["executed_call"]["function"] == "finish" for r in records)
+    finished = any(r["role"] == "assistant" and r["executed_names"][:1] == ["finish"] for r in records)
     summary = {
         "rollout": ridx, "question": question_of(input_text), "score": float(rec["score"]), "finished": finished,
         "n_turns": len(turns), "n_assistant": sum(r["role"] == "assistant" for r in records),
@@ -367,8 +404,8 @@ def render_detail(summary, records, args, R, cap=None):
             out.append(f"### [{t}] assistant — generated output ({r['tokens_est']:,} tokens est.)\n\n")
             flags = ", ".join(r["anomalies"]) or "none"
             think = "none" if not r["has_think"] else ("EMPTY (model-generated: raw sampled ids)" if r["think_empty"] else f"{len(r['think_text']):,} chars")
-            out.append(f"think: **{think}** · executed call: `{r['executed_call']['function'] if r['executed_call'] else None}` · "
-                       f"parsed calls: {[c['name'] + (' (inside think!)' if c['inside_think'] else '') for c in r['calls']]} · anomalies: {flags}\n\n")
+            out.append(f"think: **{think}** · generated closed calls: {[c['name'] + (' (inside think!)' if c['inside_think'] else '') for c in r['calls']]} · "
+                       f"lenient parse (agent): `{r['agent_parse']['function'] if r['agent_parse'] else None}` · **executed: {r['executed_names'] or 'none'}** by {r['executed_by']} · anomalies: {flags}\n\n")
             out.append(_fence(r["text"]))
             hs = r["history_think_status"]
             if hs:
@@ -407,6 +444,7 @@ def main():
     ap.add_argument("--ckpt-chars", type=int, default=3000)
     ap.add_argument("--checkpoints", action="store_true", default=True)
     ap.add_argument("--title", default=None)
+    ap.add_argument("--preamble", default=None, help="markdown file inserted after the header (verified config, findings)")
     args = ap.parse_args()
 
     R = Renderer(args.tokenizer)
@@ -443,14 +481,20 @@ def main():
     agg["turns_whose_EXECUTED_call_came_from_inside_think"] = sum(r["executed_inside_think"] for r in A)
     agg["unclosed_function_tag"] = sum(r["unclosed_call"] for r in A)
     agg["text_after_call"] = sum(bool(r["suffix_after_call"]) for r in A)
-    agg["executed_calls"] = dict(Counter(r["executed_call"]["function"] if r["executed_call"] else "none" for r in A))
+    agg["executed_calls (first of turn)"] = dict(Counter(r["executed_names"][0] if r["executed_names"] else "none" for r in A))
+    agg["executed_by"] = dict(Counter(r["executed_by"] for r in A))
+    agg["turns where env executed >1 call"] = sum(len(r["executed_names"]) > 1 for r in A)
+    agg["turns where the env executed a call sitting inside <think>"] = sum(r["executed_inside_think"] for r in A)
+    agg["generated-vs-executed discrepancies"] = dict(Counter(d.split("=")[0] if "vs" not in d else "lenient_parse_vs_env" for r in A for d in r["discrepancies"]))
+    agg["unclosed calls emitted by the model in short turns"] = sum("unclosed_call_emitted_by_model(short_turn,not_a_cap_cut)" in r["anomalies"] for r in A)
+    agg[f"assistant turns longer than turn_max_new_tokens={TURN_MAX_NEW_TOKENS} (cap not applied)"] = (sum(r["exceeds_turn_max_new_tokens"] for r in A), max(r["tokens_est"] for r in A))
     agg["assistant_turn_ends_with_newline_before_eos"] = sum(r["ends_with_newline"] for r in A)
     agg["user_turns"] = len(U)
     agg["observation kinds"] = dict(Counter(r["kind"] for r in U))
     agg["observations_not_wrapped"] = sum(not r["wrapped"] for r in U)
     agg["observations_not_closed (at end of dump)"] = (sum(r["wrapped"] and not r["intact"] for r in U),
                                                        sum(r["wrapped"] and not r["intact"] and "observation_not_closed_at_end_of_dump(clipped_to_response_length)" in r["anomalies"] for r in U))
-    agg["observation_without_preceding_call"] = sum("observation_without_preceding_tool_call" in r["anomalies"] for r in U)
+    agg["observation_after_finish_or_at_start"] = sum("observation_after_finish_or_at_rollout_start" in r["anomalies"] for r in U)
     agg["observation_kind_mismatch"] = sum(any(a.startswith("observation_kind_mismatch") for a in r["anomalies"]) for r in U)
     agg["user_turn_rerender_matches_dump"] = (sum(r["rerender_matches_dump"] for r in U), len(U))
     agg["prompt_rerender_matches_dump"] = (sum(s["prompt_rerender_matches_dump"] for s in summaries), len(summaries))
@@ -473,6 +517,8 @@ def main():
         return ("single_correct" if s["score"] > 0 else "single_wrong") if s["finished"] else "other"
     if args.detail:
         picks = [int(x) for x in args.detail.split(",")]
+        extra = sorted(summaries, key=lambda s: -s["branch_calls"])[: args.extra_branch_examples]
+        picks += [s["rollout"] for s in extra if s["rollout"] not in picks]
     else:
         picks = []
         want = OrderedDict((k, int(v)) for k, v in (x.split(":") for x in args.select.split(",")))
@@ -503,6 +549,8 @@ def main():
           "## Aggregate diagnostics (all rollouts)\n\n| metric | value |\n|---|---|\n"]
     for k, v in agg.items():
         md.append(f"| {k} | {v} |\n")
+    if args.preamble and os.path.exists(args.preamble):
+        md.append("\n" + open(args.preamble).read() + "\n")
     md.append("\n## Detailed traces\n")
     for p in picks:
         md.append(render_detail(summaries[p], all_records[p], args, R, cap))
