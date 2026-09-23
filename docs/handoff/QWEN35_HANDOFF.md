@@ -24,7 +24,9 @@ Qwen3.5 yet.
 
 - Repository: `git@github.com:RainyFields/Comp_Rubric.git` (remote `github`; **the repo must be created on GitHub first — see
   NEXT_STEPS step 0**; the authors' upstream `origin` = github.com/sunnweiwei/FoldAgent is read-only for us). Branch `main`.
-- Final commit: see `git log -1` after the push; the verified state is the commit named in `docs/PROTOCOL_VERIFICATION.md`.
+- Commits: rollout/training code verified at **d2c169e** (shakeout #3 tarball; identical code in every later commit);
+  deliverables/docs finalised at **77350e6** (+ this line's commit). The HDFS tarball `foldagent-repo.tar.gz.commit` names the
+  commit it was built from.
 - Verified: the training–inference interaction protocol (`docs/PROTOCOL.md`) — token stream, action grammar, branch inheritance,
   compaction boundaries, training masks — with 91 CPU tests on both the Qwen3-8B and Qwen3.5-9B tokenizers and captured
   end-to-end shakeouts on the Qwen3-8B GRPO checkpoint (`docs/PROTOCOL_VERIFICATION.md`, `docs/traces/grpo_fixed_shakeout/`).
