@@ -1,0 +1,20 @@
+{
+ "17": "r17: unclosed think",
+ "52": "r52: unclosed think+unfinished",
+ "54": "r54: unclosed think",
+ "62": "r62: unclosed think + 11 branches",
+ "134": "r134: return-in-main",
+ "119": "r119: return-in-main error",
+ "128": "r128: verify unsupported",
+ "77": "r77: two no-call turns",
+ "18": "r18: 11 branches",
+ "117": "r117: orig correct",
+ "27": "r27: orig correct",
+ "115": "r115: long main ctx 33738",
+ "93": "r93: long main ctx 33701",
+ "68": "r68: long main ctx 33671",
+ "4": "r4: long main ctx 33662",
+ "107": "r107: long main ctx 33644",
+ "8": "r8: clipped observation at end",
+ "14": "r14: clipped observation at end"
+}

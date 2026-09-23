@@ -39,7 +39,8 @@ from verl import DataProto
 from .fold_agent import print_chat
 from .parsing import extract_summary, strip_think
 from .prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT, create_chat
-from .utils import CAPTURE_TAG, Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, run_action, select_env, wrap_tool_response
+from .parsing import parse_actions
+from .utils import CAPTURE_TAG, Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, capture_action, run_action, select_env, wrap_tool_response
 
 
 @dataclass
@@ -116,6 +117,7 @@ async def run_compaction_rollout(
     act: Callable[[str], Awaitable[Optional[str]]],
     cc: CompactionConfig,
     prompt_turn: Optional[int] = None,
+    env=None,
 ) -> dict:
     """Environment-agnostic CompactionRL rollout.
 
@@ -196,6 +198,8 @@ async def run_compaction_rollout(
             break
         session_message.append({"role": "assistant", "content": response})
         observation = await act(response)
+        capture_action(seg, parse_actions(response, turn_id=str(len(seg.chat) - 1)),
+                       getattr(env, "last_action_results", None) if env is not None else None, observation)
         if observation is None:                     # finish tool
             finished, stop_reason = True, "finish"
             break
@@ -294,7 +298,7 @@ async def process_item(item: DataProto, context: TaskContext) -> Union[AgentLoop
     session_start = time.time()
     rollout = await run_compaction_rollout(
         user_prompt, context.llm_client, tokenizer, config,
-        act=lambda response: run_action(env, response), cc=cc,
+        act=lambda response: run_action(env, response), cc=cc, env=env,
     )
     env.stats["session_time"] = time.time() - session_start
 

@@ -13,7 +13,8 @@ from .utils import Agent, select_env, truncate_text, is_weird, TaskContext, run_
 from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY_PROMPT_CODE, SUMMARY_PROMPT_SEARCH
 from .verifier import judge_scope
 from .e2e_ledger import build_ledger, write_ledger
-from .parsing import extract_fn_call, extract_fn_calls_strict, extract_summary, last_strict_call  # noqa: F401
+from .parsing import extract_fn_call, extract_fn_calls_strict, extract_summary, last_strict_call, parse_actions  # noqa: F401
+from .utils import capture_action
 
 
 def print_chat(chat):
@@ -143,10 +144,16 @@ async def process_item(
             break
 
         session_message.append({'role': 'assistant', 'content': response})
-        # Same grammar as the environment (line-anchored, closed, last adjacent group): a `branch` that the env would
-        # not execute (unclosed, inside <think>, indented) no longer forks a branch.
-        fn_call = last_strict_call(response)
-        if fn_call is not None and fn_call['function'] == 'branch':
+        # Shared grammar (agents.parsing.parse_actions): think blocks are never actions; `branch` must be the only call
+        # of the turn; finish/return are terminal-only; several search/open_page calls execute in order.
+        parsed = parse_actions(response, turn_id=str(len(agent['main'].chat) - 1))
+        exec_names = [c['function'] for c in parsed['executable']]
+        fn_call = parsed['executable'][0] if exec_names == ['branch'] else None
+        action_results = None
+        if parsed['error']:
+            observation = f"[Error] {parsed['error']}"
+            action_results = [{'call_id': c['call_id'], 'function': c['function'], 'status': 'rejected', 'observation': observation} for c in parsed['calls']]
+        elif fn_call is not None and fn_call['function'] == 'branch':
             if len(branches) + 1 > max_session:
                 observation = f"You've already reached the limit of {len(branches)} branch calls. Continue working independently."
             else:
@@ -169,36 +176,41 @@ async def process_item(
                     max_turn=max_turn,
                     max_tokens=getattr(config.plugin, "branch_len", None),
                     session_timeout=session_timeout - time.time() + session_start_time,
-                    should_continue=lambda resp: not any(c['function'] == 'return' for c in extract_fn_calls_strict(resp)),
+                    should_continue=lambda resp: not any(c['function'] == 'return' for c in parse_actions(resp)['executable']),
                     safe_finish=lambda
-                        x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if any(c['function'] in ('finish', 'branch') for c in extract_fn_calls_strict(x)) else None,
+                        x: "You are in branch mode and cannot branch task or finish the task. Use the `return` tool to go back to the main agent." if any(c['function'] in ('finish', 'branch') for c in parse_actions(x)['executable']) else None,
+                    env=env,
                     summary_prompt="The context limit has been exceeded for the branch. Please finish the sub task directly and clearly state the progress made and the pending jobs of the sub task. Only summarize the sub task progress, using the return tool.",
                     observation_prompt=f"* You are now in branch mode: {description}. Conduct the sub task based on instruction, and when you complete the assigned sub task, use return tool to return, do not perform action beyond the assigned sub task.",
                 )
                 iteration += agent_return['iteration']
                 last_response = agent_return['last_response']
                 session_message.extend(agent[agent_name].messages()[len(history):])
-                fn_call = last_strict_call(last_response)
+                fn_call_ret = last_strict_call(last_response)
                 branch_message = None
-                if fn_call is not None and fn_call['function'] == 'return':
-                    if 'message' in fn_call['arguments']:
-                        branch_message = fn_call['arguments'].get('message', 'Empty message')
+                if fn_call_ret is not None and fn_call_ret['function'] == 'return':
+                    if 'message' in fn_call_ret['arguments']:
+                        branch_message = fn_call_ret['arguments'].get('message', 'Empty message')
                         branch_message = f'Branch has finished its task, the returned message is:\n\n{branch_message}'
-                elif fn_call is not None and fn_call['function'] == 'finish':
-                    if 'message' in fn_call['arguments']:
-                        branch_message = fn_call['arguments'].get('message', 'Empty message')
+                elif fn_call_ret is not None and fn_call_ret['function'] == 'finish':
+                    if 'message' in fn_call_ret['arguments']:
+                        branch_message = fn_call_ret['arguments'].get('message', 'Empty message')
                         branch_message = f'Branch has finished its task, the returned message is:\n\n{branch_message}'
                 if branch_message is None:
                     branch_message = f'Branch has finished its task. The last message was:\n\n{clean_response(last_response or "")}'
                 observation = branch_message
                 branch_return[agent_name] = observation
-                # print(observation)
+                action_results = [{'call_id': fn_call['call_id'], 'function': 'branch', 'status': 'ok', 'observation': observation,
+                                   'branch_agent': agent_name, 'branch_turns': agent_return['iteration']}]
         else:
             observation = await run_action(env, response)
+            action_results = getattr(env, 'last_action_results', None)
             if observation is None:
+                capture_action(agent['main'], parsed, action_results, None)
                 mask_rollout = False
                 stop_reason = 'finish'
                 break
+        capture_action(agent['main'], parsed, action_results, observation)
 
         if agent['main'].chat[-1]['role'] == 'user':
             print('[ROLE ERROR]')

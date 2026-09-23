@@ -75,32 +75,65 @@ def fn_call_names(text: Optional[str]) -> list:
 
 STRICT_FN = re.compile(r"(?m)^[ \t]*<function=([^>]+)>\s*(.*?)\s*</function>", re.S)
 _ROLE_MARK = re.compile(r"<\[[^\]]+\]>")
+TERMINAL_CALLS = ("finish", "return")     # end the (main | branch) episode; must be the only call of the turn
+SINGLETON_CALLS = ("branch",)             # the prompt says "Branch one task at a time": one branch, alone, per turn
 
 
-def extract_fn_calls_strict(text: Optional[str], max_line_gap: int = 4) -> list:
-    """The parser the environment executes (moved here from envs/local_search.py so the agents use the SAME one).
+def strip_all_think(text: str) -> str:
+    """Remove every think block (tagged, or with the opener pre-filled by the template) from ``text``."""
+    out, guard = text, 0
+    while guard < 32:
+        reasoning, span = find_think(out)
+        if span is None:
+            break
+        out = out[: span[0]] + out[span[1]:]
+        guard += 1
+    return out
 
-    Rules: a call must start at the beginning of a line and be closed (``</function>``); calls separated by fewer than
-    ``max_line_gap`` newlines form a group; only the LAST group is returned and every call in it is executed, in order.
-    Calls inside ``<think>`` blocks that happen to be line-anchored are accepted here exactly as the environment accepts
-    them. Returns ``[{'function', 'arguments'}, ...]`` (possibly empty).
+
+def parse_actions(text: Optional[str], turn_id: Optional[str] = None) -> dict:
+    """The ONE action grammar shared by the agents and the environment (2026-09-23).
+
+    * think blocks are removed first — nothing inside ``<think>…</think>`` is ever an action (no adjacency edge case);
+    * a call must start a line and be closed (``<function=NAME> … </function>``); every such call in the remaining text is
+      parsed **in order** and gets a ``call_id`` (``<turn_id>.<k>``, 1-based);
+    * ``search`` / ``open_page`` may be repeated in one turn (the prompt invites "multiple <function=search> actions");
+    * ``finish`` / ``return`` are terminal and must be the only call of the turn; ``branch`` must be the only call of the
+      turn (the prompt says "Branch one task at a time"). Violations make the whole turn non-executable with ``error`` set
+      (the environment returns ``[Error] …`` and executes nothing) — the calls are still listed for diagnostics.
+
+    Returns ``{'calls': [...], 'executable': [...], 'error': str|None, 'calls_in_think': int, 'unclosed_tags': int}``.
     """
-    if not text:
-        return []
-    text = _ROLE_MARK.split(text)[-1].strip()
-    matches = list(STRICT_FN.finditer(text))
-    if not matches:
-        return []
-    groups = [[matches[0]]]
-    for m in matches[1:]:
-        prev = groups[-1][-1]
-        line_gap = text.count("\n", prev.end(), m.start())
-        groups[-1].append(m) if line_gap < max_line_gap else groups.append([m])
-    return [{"function": m.group(1), "arguments": dict(PARAM.findall(m.group(2)))} for m in groups[-1]]
+    body = text or ""
+    n_think_calls = 0
+    if body:
+        stripped = strip_all_think(body)
+        n_think_calls = len(FN_NAME.findall(body)) - len(FN_NAME.findall(stripped))
+        body = _ROLE_MARK.split(stripped)[-1].strip()
+    calls = []
+    for k, m in enumerate(STRICT_FN.finditer(body), 1):
+        calls.append({"call_id": f"{turn_id}.{k}" if turn_id else f"c{k}", "function": m.group(1),
+                      "arguments": dict(PARAM.findall(m.group(2))), "span": m.span()})
+    names = [c["function"] for c in calls]
+    error = None
+    if any(n in TERMINAL_CALLS for n in names) and len(names) > 1:
+        error = f"a terminal call ({'/'.join(n for n in names if n in TERMINAL_CALLS)}) must be the only function call in the turn; nothing was executed"
+    elif names.count("branch") > 1:
+        error = "only one branch call is allowed per turn; nothing was executed"
+    elif "branch" in names and len(names) > 1:
+        error = "a branch call must be the only function call in the turn; nothing was executed"
+    unclosed = max(0, len(FN_NAME.findall(body)) - len(calls))
+    return {"calls": calls, "executable": [] if error else calls, "error": error,
+            "calls_in_think": n_think_calls, "unclosed_tags": unclosed}
+
+
+def extract_fn_calls_strict(text: Optional[str]) -> list:
+    """Executable calls of a turn under the shared grammar (empty when the turn is malformed). Kept for callers/tests."""
+    return parse_actions(text)["executable"]
 
 
 def last_strict_call(text: Optional[str]) -> Optional[dict]:
-    """Last call of the executed group (what the environment acts on last), or None."""
+    """Last executable call of the turn, or None."""
     calls = extract_fn_calls_strict(text)
     return calls[-1] if calls else None
 

@@ -54,22 +54,20 @@ class TestStrictParser(unittest.TestCase):
         self.assertEqual(extract_fn_calls_strict("text " + self.A), [])          # not at line start
         self.assertEqual(last_strict_call(None), None)
 
-    def test_last_adjacent_group_executes_all_its_calls(self):
-        text = self.A + "\n\n\n\n\n\n" + self.B + "\n" + self.A     # gap >= 4 newlines splits groups
+    def test_all_calls_outside_think_execute_in_order(self):
+        text = self.A + "\n\n\n\n\n\n" + self.B + "\n" + self.A     # gaps no longer split the turn into groups
         calls = extract_fn_calls_strict(text)
-        self.assertEqual([c["function"] for c in calls], ["open_page", "search"])
+        self.assertEqual([c["function"] for c in calls], ["search", "open_page", "search"])
         self.assertEqual(last_strict_call(text)["function"], "search")
-        self.assertEqual(calls[0]["arguments"], {"docid": "7"})
+        self.assertEqual(calls[1]["arguments"], {"docid": "7"})
 
-    def test_call_inside_think_counts_only_when_line_anchored(self):
-        """Documents the environment grammar: a call inside <think> is ignored unless it starts a line; a line-anchored
-        one within 4 newlines of the real call joins its group and is executed too (the env has always done this)."""
+    def test_calls_inside_think_are_excluded_even_when_line_anchored(self):
+        """The old environment grammar accepted a line-anchored call inside <think> that sat within 4 newlines of the
+        real call; the shared grammar strips think blocks first, so this can no longer happen."""
         inside = "<think>\nmaybe " + self.A + "\n</think>\n\n" + self.B
         self.assertEqual([c["function"] for c in extract_fn_calls_strict(inside)], ["open_page"])
-        anchored_inside = "<think>\n" + self.A + "\n</think>\n\n" + self.B      # 3 newlines between the calls -> one group
-        self.assertEqual([c["function"] for c in extract_fn_calls_strict(anchored_inside)], ["search", "open_page"])
-        far_inside = "<think>\n" + self.A + "\n\n\n\n\n</think>\n\n" + self.B     # >= 4 newlines -> separate groups, last wins
-        self.assertEqual([c["function"] for c in extract_fn_calls_strict(far_inside)], ["open_page"])
+        anchored_inside = "<think>\n" + self.A + "\n</think>\n\n" + self.B
+        self.assertEqual([c["function"] for c in extract_fn_calls_strict(anchored_inside)], ["open_page"])
 
     def test_env_uses_the_same_parser(self):
         from envs.local_search import extract_fn_call as env_parse

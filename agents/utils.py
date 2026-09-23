@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from typing import Any, Optional
 import asyncio, httpx
 from envs.local_search import LocalSearch
+from agents.parsing import parse_actions
 from envs.repo_env import GymEnv
 
 
@@ -442,6 +443,8 @@ class AgentContext:
         self.chat_ids.append(list(ids))
         self.log_probs.append([0.0] * len(ids))
         self.token_mask.append([False] * len(ids))
+        capture_event(self, "append_tokens", role=turn.get("role"), turn_index=len(self.chat) - 1, ids_len=len(ids),
+                      ids_sha1=_ids_sha1(ids))
 
     def rollback(self, k=1):
         self.chat = self.chat[:-k]
@@ -492,27 +495,70 @@ import json as _json
 CAPTURE_TAG: contextvars.ContextVar = contextvars.ContextVar("fold_capture_tag", default=None)
 
 
-def _capture_step(agent, prompt, completion, max_len):
+def _capture_write(rec):
     d = os.environ.get("FOLD_PROMPT_CAPTURE_DIR")
     if not d:
         return
     try:
         os.makedirs(d, exist_ok=True)
-        msg = completion["choices"][0]["message"] if completion else {}
-        ids = msg.get("raw_output_ids") or []
-        rec = {
-            "ts": time.time(), "pid": os.getpid(), "tag": CAPTURE_TAG.get(), "agent": getattr(agent, "capture_name", None),
-            "context_uid": agent.context_uid, "turn_index": len(agent.chat) - (1 if completion else 0),
-            "prompt_tokens": len(prompt), "prompt_ids_len": agent.prompt_ids_len, "max_len": max_len,
-            "prompt_text": agent.tokenizer.decode(prompt, skip_special_tokens=False),
-            "completion_tokens": len(ids), "completion_text": msg.get("content"),
-            "completion_text_with_special": agent.tokenizer.decode(ids, skip_special_tokens=False) if ids else None,
-            "completion_none": completion is None,
-        }
+        rec.setdefault("ts", time.time()); rec.setdefault("pid", os.getpid()); rec.setdefault("tag", CAPTURE_TAG.get())
         with open(os.path.join(d, f"capture_{os.getpid()}.jsonl"), "a") as f:
             f.write(_json.dumps(rec, ensure_ascii=False) + "\n")
     except Exception as e:  # never break a rollout because of the audit hook
         print(f"[CAPTURE] failed: {e}")
+
+
+def _ids_sha1(ids):
+    import hashlib
+    return hashlib.sha1(",".join(map(str, ids)).encode()).hexdigest()[:16]
+
+
+def _capture_step(agent, prompt, completion, max_len):
+    """One record per policy call: the EXACT prompt ids (stored as the suffix beyond this agent's previously captured
+    prompt when the prefix is unchanged, else in full — reconstructable exactly), the sampled completion ids, and the
+    stored turn (ids + training mask) after ``Agent.append``."""
+    if not os.environ.get("FOLD_PROMPT_CAPTURE_DIR"):
+        return
+    try:
+        msg = completion["choices"][0]["message"] if completion else {}
+        ids = list(msg.get("raw_output_ids") or [])
+        prev = getattr(agent, "_cap_prev_prompt", None)
+        if prev is not None and len(prompt) >= len(prev) and prompt[: len(prev)] == prev:
+            prompt_ids, mode = prompt[len(prev):], "suffix"
+        else:
+            prompt_ids, mode = list(prompt), "full"
+        agent._cap_prev_prompt = list(prompt)
+        stored_turn = agent.chat_ids[-1] if completion else None
+        rec = {
+            "kind": "step", "agent": getattr(agent, "capture_name", None), "context_uid": agent.context_uid,
+            "turn_index": len(agent.chat) - (1 if completion else 0),
+            "prompt_tokens": len(prompt), "prompt_ids_len": agent.prompt_ids_len, "max_len": max_len,
+            "prompt_sha1": _ids_sha1(prompt), "prompt_ids_mode": mode, "prompt_ids": prompt_ids,
+            "prompt_text": agent.tokenizer.decode(prompt, skip_special_tokens=False),
+            "completion_tokens": len(ids), "completion_ids": ids, "completion_text": msg.get("content"),
+            "completion_text_with_special": agent.tokenizer.decode(ids, skip_special_tokens=False) if ids else None,
+            "completion_none": completion is None,
+            "stored_turn_ids": stored_turn, "stored_turn_mask": [int(m) for m in agent.token_mask[-1]] if completion else None,
+        }
+        _capture_write(rec)
+    except Exception as e:
+        print(f"[CAPTURE] failed: {e}")
+
+
+def capture_action(agent, parsed, results, observation):
+    """After the environment acted on a turn: parsed calls, executed calls with per-call status/observation, and the
+    observation text that will be appended (before wrapping)."""
+    if not os.environ.get("FOLD_PROMPT_CAPTURE_DIR"):
+        return
+    _capture_write({"kind": "action", "agent": getattr(agent, "capture_name", None), "context_uid": agent.context_uid,
+                    "turn_index": len(agent.chat) - 1, "parsed": parsed, "results": results,
+                    "observation": observation, "observation_chars": len(observation) if observation else 0})
+
+
+def capture_event(agent, kind, **extra):
+    if not os.environ.get("FOLD_PROMPT_CAPTURE_DIR"):
+        return
+    _capture_write({"kind": kind, "agent": getattr(agent, "capture_name", None), "context_uid": agent.context_uid, **extra})
 
 
 class Agent(AgentContext):
@@ -539,6 +585,10 @@ class Agent(AgentContext):
         new.info_cache = {}
         new.capture_name = None
         new.metrics = None
+        new._cap_prev_prompt = None
+        inherited = sum(self.chat_ids, [])
+        capture_event(new, "fork", parent_context_uid=self.context_uid, parent_agent=getattr(self, "capture_name", None),
+                      inherited_turns=len(self.chat), inherited_tokens=len(inherited), inherited_sha1=_ids_sha1(inherited))
         return new
 
     async def step(self, max_new_tokens=None, retry_cjk=0):
@@ -557,7 +607,7 @@ class Agent(AgentContext):
         return response
 
     async def react(self, run_action, max_turn=64, max_tokens=None, session_timeout=60 * 60,
-                    should_continue=None, summary_prompt=None, safe_finish=None, observation_prompt=None):
+                    should_continue=None, summary_prompt=None, safe_finish=None, observation_prompt=None, env=None):
         # Run react for max_turn turn
         if should_continue is None:
             should_continue = lambda st: True
@@ -588,8 +638,11 @@ class Agent(AgentContext):
                 break
             if safe_finish is not None and safe_finish(response) is not None:
                 observation = safe_finish(response)
+                capture_action(self, parse_actions(response), [{"call_id": None, "function": "guard", "status": "rejected",
+                                                                 "observation": observation}], observation)
             else:
                 observation = await run_action(response)
+                capture_action(self, parse_actions(response), getattr(env, "last_action_results", None) if env is not None else None, observation)
             if observation is None:
                 break
             if observation_prompt:

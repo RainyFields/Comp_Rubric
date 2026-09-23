@@ -335,8 +335,18 @@ def extract_fn_call(text):
         else:
             print(text)
     # single source of truth for the <function=...> grammar, shared with the agents (agents/parsing.py)
-    from agents.parsing import extract_fn_calls_strict
-    return extract_fn_calls_strict(text) or None
+    return parse_response(text)["executable"] or None
+
+
+def parse_response(text, turn_id=None):
+    """Shared grammar (agents.parsing.parse_actions); the legacy Qwen ``<tool_call>`` JSON form is accepted too."""
+    from agents.parsing import parse_actions
+    if text and ('<tool_call>' in text or '<answer>' in text):
+        json_tool = extract_json_tool(text)
+        if json_tool:
+            calls = [{'call_id': f"{turn_id}.{k}" if turn_id else f"c{k}", **c} for k, c in enumerate(json_tool, 1)]
+            return {'calls': calls, 'executable': calls, 'error': None, 'calls_in_think': 0, 'unclosed_tags': 0, 'json_tool_call': True}
+    return parse_actions(text, turn_id)
 
 
 class LocalSearch:
@@ -376,14 +386,22 @@ class LocalSearch:
 
     async def run_action(self, response):
         self.stats['action'] += 1
-        fn_call = extract_fn_call(response)
-        if fn_call is None or len(fn_call) == 0:
+        parsed = parse_response(response)
+        self.last_parsed = parsed
+        self.last_action_results = []
+        if parsed.get('error'):
+            self.last_action_results = [{'call_id': c['call_id'], 'function': c['function'], 'arguments': c['arguments'],
+                                         'status': 'rejected', 'observation': parsed['error']} for c in parsed['calls']]
+            return {'observation': f"[Error] {parsed['error']}", 'results': self.last_action_results}
+        fn_call = parsed['executable']
+        if not fn_call:
             # Improved message for no function call
-            return {'observation': 'No function call was detected in the model response.'}
+            return {'observation': 'No function call was detected in the model response.', 'results': []}
         else:
             observation = ''
             for fn in fn_call:
                 name = fn['function']
+                _obs_start = len(observation)
                 if name == 'search':
                     self.stats['search'] += 1
                     self.stats['is_search'] = 1
@@ -436,8 +454,8 @@ class LocalSearch:
                             )
                         observation += "\n"
                 elif name == 'finish':
-                    self.stats['is_finish'] = 1
-                    self.is_finish = True
+                    # is_finish is set only when the finish is ACCEPTED (below): a refused finish (empty answer,
+                    # must_search, double_check) used to mark the rollout finished although it continued.
                     answer = fn['arguments'].get('answer', "")
                     explanation = fn['arguments'].get('explanation', None)
                     confidence = fn['arguments'].get('confidence', None)
@@ -491,13 +509,19 @@ Take Corrective Action: If you notice any gaps or unsupported points, revisit th
 Once you’re confident everything is covered and verified, submit the final answer and include enough citations for all supporting evidence."""
                         self.double_check = False
                         return {'observation': observation.strip()}
+                    self.stats['is_finish'] = 1
+                    self.is_finish = True
                     return {'action': 'finish'}
                 else:
-                    # Clearer error for unsupported functions
-                    observation = f'[Error] The function "{name}" is not supported.'
+                    # Clearer error for unsupported functions (+= : an earlier call's output in the same turn is kept)
+                    observation += f'[Error] The function "{name}" is not supported.\n'
+                _seg = observation[_obs_start:]
+                self.last_action_results.append({'call_id': fn.get('call_id'), 'function': name, 'arguments': fn['arguments'],
+                                                 'status': 'error' if _seg.lstrip().startswith('[Error]') else 'ok',
+                                                 'observation': _seg})
             observation += "\n\n* Please reflect on the information we have obtained, and keep searching for additional information if we still can not answer the question. Do not give the answer if the information is still not enough."
 
-        return {'observation': observation.strip()}
+        return {'observation': observation.strip(), 'results': self.last_action_results}
 
     async def get_reward(self, item, messages, context):
         if self.env_fail:  # If env fail, direct return 0 reward

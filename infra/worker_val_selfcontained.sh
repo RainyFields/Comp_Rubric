@@ -118,6 +118,18 @@ case "$ARM" in compactionrl|compactiongrpo)
 ++actor_rollout_ref.rollout.plugin.val_max_compactions=${VAL_MAX_COMPACTIONS:-3}" ;;
 esac
 
+# Shakeout/audit knobs (2026-09-23): FOLD_AGENT=compaction runs the compaction agent (q_sum/summary/resume, raw-id tail) on ANY
+# checkpoint (arm B of the compaction OFF/ON comparison); FOLD_VAL_FILE = a subset parquet under data/ (relative to the checkout).
+if [ "${FOLD_AGENT:-}" = compaction ]; then
+  ARMFLAGS="algorithm.adv_estimator=compaction_grpo actor_rollout_ref.rollout.agent.default_agent_loop=compaction_agent \
+++actor_rollout_ref.rollout.plugin.workflow=${FOLD_WORKFLOW:-search} ++actor_rollout_ref.rollout.plugin.process_reward=none \
+++actor_rollout_ref.rollout.plugin.val_max_compactions=${VAL_MAX_COMPACTIONS:-3} ++actor_rollout_ref.rollout.plugin.compaction_threshold=${COMPACTION_THRESHOLD:-8192} \
+++actor_rollout_ref.rollout.plugin.compaction_tail_steps=${TAIL_STEPS:-2} ++actor_rollout_ref.rollout.plugin.summary_max_tokens=${SUMMARY_MAX_TOKENS:-2048} \
+++actor_rollout_ref.rollout.plugin.mask_unfinished=False ++actor_rollout_ref.rollout.plugin.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT:-True}"
+fi
+VALFILE_SED=""
+[ -n "${FOLD_VAL_FILE:-}" ] && VALFILE_SED="-e s#TEST_DATA_PATH=data/bc_test.parquet#TEST_DATA_PATH=${FOLD_VAL_FILE}#"
+
 # E2E token-usage study (2026-09-17): optional inference-side workflow override (search = no branch tool /
 # no folding; search_branch = training-time prompt with the branch tool) and the per-rollout token ledger
 # (agents/e2e_ledger.py; written by the agent-loop workers into $OUTDIR/ledger, mirrored with the results).
@@ -128,7 +140,7 @@ if [ "${FOLD_E2E_LEDGER:-0}" = 1 ]; then export FOLD_E2E_LEDGER_DIR=$OUTDIR/ledg
 if [ "${FOLD_PROMPT_CAPTURE:-0}" = 1 ]; then export FOLD_PROMPT_CAPTURE_DIR=$OUTDIR/capture; mkdir -p "$FOLD_PROMPT_CAPTURE_DIR"; fi
 
 cd "$CHECKOUT"
-sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" \
+sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" $VALFILE_SED \
     -e "s#actor_rollout_ref.rollout.tensor_model_parallel_size=8#actor_rollout_ref.rollout.tensor_model_parallel_size=4#" \
     -e "s#trainer.n_gpus_per_node=8#trainer.n_gpus_per_node=4#" \
     -e "s#trainer.experiment_name=test_run#trainer.experiment_name=valsc_${TAG}#" \
