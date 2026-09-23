@@ -19,6 +19,10 @@ TAIL_STEPS=${TAIL_STEPS:-2}                      # k recent (assistant, observat
 SUMMARY_MAX_TOKENS=${SUMMARY_MAX_TOKENS:-2048}
 TRAIN_SUMMARY=${TRAIN_SUMMARY:-True}             # False = "w/o summary training" ablation
 MASK_UNFINISHED=${MASK_UNFINISHED:-False}        # paper: budget-exhausted rollouts train with reward 0 (FoldAgent arms mask them; shakeout: 63% of rollouts)
+RESUME_KEEP_TASK_PROMPT=${RESUME_KEEP_TASK_PROMPT:-True}   # False = paper Eq. 9 (system + u_resume + tail; task only via the summary)
+GLOBAL_TOKEN_MEAN=${GLOBAL_TOKEN_MEAN:-True}     # paper's token-level loss: equal weight per optimised token across the mini-batch
+                                                 # (verl's plain token-mean with micro-batch 1 weights every SEGMENT equally; the finished
+                                                 # compactiongrpo run af713ba2 used that)
 
 
 python -m scripts.train_fold \
@@ -33,6 +37,8 @@ python -m scripts.train_fold \
   actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${MAX_LENGTH} \
   actor_rollout_ref.rollout.tensor_model_parallel_size=8 \
   actor_rollout_ref.rollout.n=8 \
+  ++actor_rollout_ref.actor.global_token_mean=${GLOBAL_TOKEN_MEAN} \
+  +actor_rollout_ref.rollout.plugin.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT} \
   actor_rollout_ref.rollout.agent.num_workers=1 \
   actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
   data.train_files=${TRAIN_DATA_PATH} \

@@ -31,6 +31,11 @@ TAIL_STEPS=${TAIL_STEPS:-2}
 SUMMARY_MAX_TOKENS=${SUMMARY_MAX_TOKENS:-2048}
 TRAIN_SUMMARY=${TRAIN_SUMMARY:-True}
 MASK_UNFINISHED=${MASK_UNFINISHED:-False}
+RESUME_KEEP_TASK_PROMPT=${RESUME_KEEP_TASK_PROMPT:-True}   # False = paper Eq. 9 resume context
+GLOBAL_TOKEN_MEAN=${GLOBAL_TOKEN_MEAN:-True}               # paper's token-level loss (compaction arms only)
+if [ "${PAPER_PROTOCOL:-0}" = 1 ]; then ROLLOUT_N=${ROLLOUT_N:-1}; TRAIN_BATCH=${TRAIN_BATCH:-128}; LR=${LR:-2e-6}
+else ROLLOUT_N=${ROLLOUT_N:-8}; TRAIN_BATCH=${TRAIN_BATCH:-32}; LR=${LR:-1e-6}; fi
+PPO_MINI=${PPO_MINI:-128}
 # --- critic (compactionrl only) ---
 CRITIC_LR=${CRITIC_LR:-3e-6}; CRITIC_EPOCHS=${CRITIC_EPOCHS:-2}; CRITIC_WARMUP=${CRITIC_WARMUP:-50}; LAM_ALPHA=${LAM_ALPHA:-1.5}
 
@@ -58,13 +63,16 @@ case "$ARM" in
       +actor_rollout_ref.rollout.plugin.summary_max_tokens=${SUMMARY_MAX_TOKENS}
       +actor_rollout_ref.rollout.plugin.train_summary=${TRAIN_SUMMARY}
       +actor_rollout_ref.rollout.plugin.mask_unfinished=${MASK_UNFINISHED}
+      +actor_rollout_ref.rollout.plugin.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT}
+      ++actor_rollout_ref.actor.global_token_mean=${GLOBAL_TOKEN_MEAN}
       actor_rollout_ref.actor.loss_agg_mode=token-mean"
     if [ "$ARM" = compactionrl ]; then
       ARM_FLAGS="$ARM_FLAGS critic.model.path=${MODEL_PATH} critic.optim.lr=${CRITIC_LR} critic.ppo_epochs=${CRITIC_EPOCHS}
         critic.ppo_micro_batch_size_per_gpu=1 critic.ppo_max_token_len_per_gpu=${MAX_LENGTH}
         critic.forward_max_token_len_per_gpu=${MAX_LENGTH} critic.model.fsdp_config.param_offload=True
         critic.model.fsdp_config.optimizer_offload=True critic.model.enable_gradient_checkpointing=True
-        trainer.critic_warmup=${CRITIC_WARMUP} algorithm.gamma=1.0 algorithm.lam=1.0 ++algorithm.compaction_lam_alpha=${LAM_ALPHA}"
+        trainer.critic_warmup=${CRITIC_WARMUP} algorithm.gamma=1.0 algorithm.lam=1.0 ++algorithm.compaction_lam_alpha=${LAM_ALPHA}
+        ++critic.global_token_mean=${GLOBAL_TOKEN_MEAN}"
     fi ;;
   *) echo "unknown ARM=$ARM" >&2; exit 2 ;;
 esac
@@ -80,16 +88,17 @@ python -m scripts.train_fold \
   actor_rollout_ref.rollout.response_length=${RESPONSE_LENGTH} \
   actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${MAX_LENGTH} \
   actor_rollout_ref.rollout.tensor_model_parallel_size=${TP} \
-  actor_rollout_ref.rollout.n=8 \
+  actor_rollout_ref.rollout.n=${ROLLOUT_N} \
+  actor_rollout_ref.actor.optim.lr=${LR} \
   actor_rollout_ref.rollout.agent.num_workers=1 \
   actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
   data.train_files=${TRAIN_DATA_PATH} \
   data.val_files=${TEST_DATA_PATH} \
-  data.train_batch_size=32 \
+  data.train_batch_size=${TRAIN_BATCH} \
   data.max_prompt_length=${PROMPT_LENGTH} \
   data.max_response_length=${RESPONSE_LENGTH} \
   data.return_raw_chat=True \
-  actor_rollout_ref.actor.ppo_mini_batch_size=128 \
+  actor_rollout_ref.actor.ppo_mini_batch_size=${PPO_MINI} \
   actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
   actor_rollout_ref.actor.fsdp_config.param_offload=True \
   actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \

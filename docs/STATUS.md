@@ -12,8 +12,8 @@ Latest hand-off: `~/xiaoxuan/handoffs/2026-09-16_compactionrl-baseline_HANDOFF.m
 | `norl` | single-thread ReAct (search / open_page / finish) | none (32k window) | – | evaluated (base model) |
 | `grpo` | FoldAgent scaffold **with** the branch tool | folding available at inference, not rewarded | GRPO (group of 8), outcome reward only, seq-mean-token-mean | trained (fix campaign, 59 real steps) |
 | `foldgrpo` | FoldAgent scaffold | learned folding (branch/return), process rewards (flat + scope) | FoldGRPO (paper) | trained (fix campaign, 46 real steps) |
-| `compactiongrpo` | single-thread ReAct, no branch tool (`agents/compaction_agent.py`) | **trainable context compaction** (CompactionRL, Li et al. arXiv:2607.05378): `q_sum` → policy writes `<summary>` → new segment = task prompt + resume template + last 2 steps verbatim; ≤3 compactions (×4 budget) | rollout-level group-relative advantage broadcast to every segment (critic-free), token-mean loss, position factor (γλ)^tokens_after (identity at γ=λ=1) | **trained, 100/100 steps DONE 2026-09-18** |
-| `compactionrl` | same compaction rollout | same | paper optimiser: PPO + critic, cross-trajectory GAE with length-adaptive λ (`compaction_gae`), critic warm-up 50 | implemented + CPU-tested, **never launched** |
+| `compactiongrpo` | single-thread ReAct, no branch tool (`agents/compaction_agent.py`) | **trainable context compaction** (rollout side of CompactionRL, Li et al. arXiv:2607.05378): `q_sum` → policy writes `<summary>` → new segment = task prompt + resume template + last 2 steps verbatim; ≤3 compactions (×4 budget) | rollout-level GRPO advantage broadcast to every segment (critic-free; position factor identity at γ=λ=1; per-segment loss weighting) | **trained, 100/100 steps DONE 2026-09-18 — an ABLATION, not the paper's method** (see audit in `docs/baselines/README.md`) |
+| `compactionrl` | same compaction rollout | same (+ paper Eq. 9 resume context via `RESUME_KEEP_TASK_PROMPT=False`) | **= CompactionRL**: PPO + critic, cross-trajectory GAE with length-adaptive λ (`compaction_gae`), critic warm-up 50, 2 critic epochs, **global token-level loss** (`global_token_mean`, added 2026-09-23) | implemented + CPU-tested, **never launched**; shakeout spec ready |
 
 Shared setup (all arms): authors' `train_bc_qwen3_8b.sh` budget — 32 prompts × 8 samples per step, prompt 8 192 / response 32 768
 tokens per context, lr 1e-6, 100 steps, val every 10 steps (150 test tasks, greedy, in-process), ckpt every 10 steps to HDFS.
@@ -47,7 +47,7 @@ Statistical tie; Fold branches 3.6/traj vs 2.5, overlong@T1 24–32 % vs 13–18
 E2E token study (Sep 17, `docs/reports/2026-09-17_foldagent_e2e_token_usage_report.pdf`): folding does not reduce peak active
 context for RL'd policies; FoldGRPO spends +60 % end-to-end tokens vs GRPO for a non-significant gain.
 
-### 3.2 CompactionGRPO full run (arm `af713ba2cbb770f9`, Sep 16 17:08 → Sep 18 18:12 PDT)
+### 3.2 CompactionGRPO full run (arm `af713ba2cbb770f9`, Sep 16 17:08 → Sep 18 18:12 PDT) — critic-free ablation, NOT CompactionRL
 
 Greedy in-training val (150 tasks):
 
@@ -93,6 +93,10 @@ torch 2.8, `fold_infra` = vllm 0.11.0; repo tarball = commit b1f445c — **retar
 
 ## 5. Open items
 
+0. **Replicate the paper's actual method**: shakeout `compactionrl` (`infra/jobs/fold-train-compactionrl-shakeout-h100.json`, 3 steps,
+   critic warm-up 1, rollout dumps) → full 100-step run (`fold-train-compactionrl-h100.json`, warm-up 50). Decide `PAPER_PROTOCOL`
+   (group size 1 / batch 128 / lr 2e-6 vs FoldAgent parity 32×8) and `RESUME_KEEP_TASK_PROMPT` (paper Eq. 9 = False). Report
+   compactiongrpo as the GRPO ablation.
 1. compactiongrpo: re-eval steps 20/40; T1 n=4 + single-window evals of ckpt 70 and 100 (val-only jobs); extend
    `analyze_fix_campaign.py` with compaction stats (finish rate, compactions/rollout, summary length) and add the arm to the report.
 2. Optional arms: `compactionrl` (PPO + critic, ~1.5–2× step time), `TRAIN_SUMMARY=False` ablation, single-window eval of GRPO.

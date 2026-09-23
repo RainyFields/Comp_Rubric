@@ -443,6 +443,20 @@ def compute_foldgrpo_advantage(
     return scores, scores
 
 
+def global_token_mean_scale(micro_tokens, global_tokens, dp_size: int = 1) -> float:
+    """Scale factor turning a per-micro-batch ``token-mean`` loss into its share of the *global* token mean.
+
+    verl's ``token-mean`` normalises inside each micro-batch and the trainer then scales by
+    ``1/gradient_accumulation`` (or ``micro_bs/mini_bs``), i.e. every micro-batch — with
+    ``ppo_micro_batch_size_per_gpu=1`` every *sample* — gets the same weight regardless of its length.
+    CompactionRL (arXiv:2607.05378, §4.2 "token-level loss") requires every optimised token in the
+    mini-batch to get equal weight: multiply the micro-batch token-mean by ``micro_tokens / global_tokens``
+    (× ``dp_size`` because the data-parallel gradient average divides by ``dp_size``), so the sum over all
+    micro-batches on all ranks equals ``Σ token losses / global_tokens``.
+    """
+    return float(micro_tokens) / max(float(global_tokens), 1.0) * float(dp_size)
+
+
 def compaction_position_discount(gamma, lam, tokens_after: torch.Tensor) -> torch.Tensor:
     """CompactionRL trajectory-position correction (arXiv:2607.05378, Eq. 14): (gamma*lam)^{N_>s}.
 

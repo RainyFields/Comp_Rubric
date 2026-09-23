@@ -1,5 +1,5 @@
 {
- "name": "fold-train-compactionrl-h100",
+ "name": "fold-train-compactionrl-shakeout-h100",
  "namespace": "/user/xiaoxuan.lei",
  "job_type": "train",
  "attachments": [
@@ -29,12 +29,16 @@
    },
    "env_map": {
     "FOLD_ARM": "compactionrl",
-    "FOLD_STEPS": "100",
+    "FOLD_STEPS": "3",
     "MERLIN_JOB_INSTANCE_TYPE": "Train",
     "HAS_TT_DATA": "False",
     "ML_FRAMEWORK": "pytorch",
     "STORAGE_TYPE": "HDFS",
-    "FOLD_WANDB_RUN_ID": "fold_compactionrl_2026-09",
+    "FOLD_WANDB_RUN_ID": "fold_compactionrl_shakeout_2026-09",
+    "FOLD_OUT_TAG": "compactionrl_shakeout",
+    "FOLD_RUN_SUFFIX": "_shakeout",
+    "FOLD_ROLLOUT_DUMP": "1",
+    "CRITIC_WARMUP": "1",
     "GLOBAL_TOKEN_MEAN": "True",
     "RESUME_KEEP_TASK_PROMPT": "True"
    },

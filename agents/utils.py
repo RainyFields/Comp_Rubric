@@ -251,15 +251,30 @@ class CallAPI(LLMClass):  # Call external API (OpenAI)
         return None
 
 
+_ANCHOR_QUERY = [{'role': 'user', 'content': 'anchor'}]
+
+
+def render_prefix_len(tokenizer, msgs):
+    """Token length of ``msgs`` as the chat template renders them; templates that refuse a chat without a plain user
+    query (Qwen3.5: 'No user query found') are rendered with a trailing anchor query whose tokens are subtracted."""
+    try:
+        return len(tokenizer.apply_chat_template(msgs, add_generation_prompt=False, tokenize=True))
+    except Exception as e:
+        if 'user query' not in str(e):
+            raise
+        full = tokenizer.apply_chat_template(list(msgs) + _ANCHOR_QUERY, add_generation_prompt=False, tokenize=True)
+        return len(full) - len(tokenizer.apply_chat_template(_ANCHOR_QUERY, add_generation_prompt=False, tokenize=True))
+
+
 def truncate_prompt(chat, prompt_length, tokenizer, prompt_turn):
-    exceed_len = len(tokenizer.apply_chat_template(chat[:prompt_turn])) + 8 - prompt_length
+    exceed_len = render_prefix_len(tokenizer, chat[:prompt_turn]) + 8 - prompt_length
     _cut_idx = 0
     while exceed_len > 0:  # truncate long user prompt
         print('[PROMPT] now exceed', exceed_len, 'work on cut turn', _cut_idx)
         chat[_cut_idx]['content'] = tokenizer.decode(
             tokenizer.encode(chat[_cut_idx]['content'], add_special_tokens=False)[
                 exceed_len + 4:], add_special_tokens=False)
-        exceed_len = len(tokenizer.apply_chat_template(chat[:prompt_turn])) + 8 - prompt_length
+        exceed_len = render_prefix_len(tokenizer, chat[:prompt_turn]) + 8 - prompt_length
         _cut_idx = _cut_idx + 1
         if _cut_idx >= prompt_turn:
             break
@@ -316,7 +331,7 @@ class AgentContext:
         turn_tokens = tokens[len(prev):]
         return turn_tokens
 
-    _ANCHOR = [{'role': 'user', 'content': 'anchor'}]
+    _ANCHOR = _ANCHOR_QUERY
 
     def _render_prefix(self, k):
         """Token ids of ``chat[:k]`` (prompt turns only) as the template renders them.
@@ -357,9 +372,16 @@ class AgentContext:
 
     def get_generation_prompt(self):
         if self.generation_prompt is None:
-            tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=False, tokenize=True)
-            add_tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=True,
-                                                            tokenize=True)
+            try:
+                tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=False, tokenize=True)
+                add_tokens = self.tokenizer.apply_chat_template(self.chat, add_generation_prompt=True,
+                                                                tokenize=True)
+            except Exception as e:  # template needs a plain user query (Qwen3.5) and the chat has none yet
+                if 'user query' not in str(e):
+                    raise
+                anchor = (self.chat[:1] if self.chat and self.chat[0].get('role') == 'system' else []) + self._ANCHOR
+                tokens = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=False, tokenize=True)
+                add_tokens = self.tokenizer.apply_chat_template(anchor, add_generation_prompt=True, tokenize=True)
             self.generation_prompt = add_tokens[len(tokens):]
         return self.generation_prompt
 

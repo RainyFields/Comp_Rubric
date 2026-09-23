@@ -217,6 +217,16 @@ class DataParallelPPOCritic(BasePPOCritic):
 
                 self.critic_optimizer.zero_grad()
 
+                global_token_mean = bool(self.config.get("global_token_mean", False)) and \
+                    self.config.loss_agg_mode == "token-mean"
+                if global_token_mean:
+                    global_tokens = mini_batch.batch["response_mask"].sum().float().to(get_device_id())
+                    dp_size = 1
+                    if torch.distributed.is_initialized():
+                        torch.distributed.all_reduce(global_tokens, op=torch.distributed.ReduceOp.SUM)
+                        dp_size = torch.distributed.get_world_size() // self.ulysses_sequence_parallel_size
+                    global_tokens = global_tokens.item()
+
                 for micro_batch in micro_batches:
                     micro_batch = micro_batch.to(get_device_id())
                     micro_batch_metrics = {}
@@ -234,7 +244,10 @@ class DataParallelPPOCritic(BasePPOCritic):
                         cliprange_value=self.config.cliprange_value,
                         loss_agg_mode=self.config.loss_agg_mode,
                     )
-                    if self.config.use_dynamic_bsz:
+                    if global_token_mean:
+                        loss_scale_factor = core_algos.global_token_mean_scale(response_mask.sum().item(), global_tokens, dp_size)
+                        loss = vf_loss * loss_scale_factor
+                    elif self.config.use_dynamic_bsz:
                         # relative to the dynamic bsz
                         loss_scale_factor = response_mask.shape[0] / self.config.ppo_mini_batch_size
                         loss = vf_loss * loss_scale_factor

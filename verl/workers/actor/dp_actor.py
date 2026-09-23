@@ -27,6 +27,7 @@ from torch.distributed.tensor import DTensor
 
 import verl.utils.torch_functional as verl_F
 from verl import DataProto
+from verl.trainer.ppo import core_algos
 from verl.trainer.ppo.core_algos import agg_loss, get_policy_loss_fn, kl_penalty
 from verl.utils.attention_utils import index_first_axis, pad_input, rearrange, unpad_input
 from verl.utils.device import get_device_id, get_device_name
@@ -446,6 +447,20 @@ class DataParallelPPOActor(BasePPOActor):
 
                 self.actor_optimizer.zero_grad()
 
+                global_token_mean = bool(getattr(self.config, "global_token_mean", False)) and \
+                    self.config.loss_agg_mode == "token-mean"
+                if global_token_mean:
+                    # tokens that actually carry loss in this mini-batch, summed over all data-parallel ranks
+                    mb_mask = mini_batch.batch["response_mask"]
+                    if "overlong_mask" in mini_batch.batch.keys():
+                        mb_mask = mb_mask * mini_batch.batch["overlong_mask"].view(-1, 1).to(mb_mask.dtype)
+                    global_tokens = mb_mask.sum().float().to(get_device_id())
+                    dp_size = 1
+                    if torch.distributed.is_initialized():
+                        torch.distributed.all_reduce(global_tokens, op=torch.distributed.ReduceOp.SUM)
+                        dp_size = torch.distributed.get_world_size() // self.ulysses_sequence_parallel_size
+                    global_tokens = global_tokens.item()
+
                 for micro_batch in micro_batches:
                     micro_batch = micro_batch.to(get_device_id())
                     micro_batch_metrics = {}
@@ -460,7 +475,11 @@ class DataParallelPPOActor(BasePPOActor):
 
                     calculate_entropy = self.config.calculate_entropy or (entropy_coeff != 0)
 
-                    if self.config.use_dynamic_bsz:
+                    if global_token_mean:
+                        eff = response_mask if overlong_mask is None else \
+                            response_mask * overlong_mask.view(-1, 1).to(response_mask.dtype)
+                        loss_scale_factor = core_algos.global_token_mean_scale(eff.sum().item(), global_tokens, dp_size)
+                    elif self.config.use_dynamic_bsz:
                         loss_scale_factor = response_mask.shape[0] / self.config.ppo_mini_batch_size
                     else:
                         loss_scale_factor = 1 / self.gradient_accumulation

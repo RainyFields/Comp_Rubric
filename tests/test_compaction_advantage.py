@@ -68,6 +68,23 @@ class TestCompactionGAE(unittest.TestCase):
         self.assertTrue(torch.all(adv[mask == 0] == 0))
 
 
+class TestGlobalTokenMean(unittest.TestCase):
+    def test_micro_batch_scales_sum_to_global_token_mean(self):
+        # mini-batch of 3 segments with very different lengths on 2 DP ranks; per-token losses all ones except one segment
+        torch.manual_seed(0)
+        lengths = [5, 50, 500]
+        losses = [torch.rand(n) for n in lengths]
+        global_tokens = sum(lengths)
+        expected = torch.cat(losses).sum() / global_tokens                       # paper: every token weighs the same
+        # verl computes micro-batch token-mean, then multiplies by the scale; DP averaging divides by dp_size
+        for dp_size in (1, 4):
+            total = sum(l.mean() * core_algos.global_token_mean_scale(len(l), global_tokens, dp_size) for l in losses) / dp_size
+            self.assertAlmostEqual(total.item(), expected.item(), places=6)
+        # the old scheme (1/grad_accum) weighs every segment equally -> differs whenever lengths differ
+        old = sum(l.mean() for l in losses) / len(losses)
+        self.assertNotAlmostEqual(old.item(), expected.item(), places=3)
+
+
 class TestCompactionGRPO(unittest.TestCase):
     def test_rollout_level_groups_and_broadcast(self):
         # prompt p1: rollout a (2 segments, reward 1), rollout b (1 segment, reward 0)

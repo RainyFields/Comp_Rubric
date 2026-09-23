@@ -132,6 +132,29 @@ class TestCompactionRollout(unittest.TestCase):
         self.assertEqual(len(out["segments"]), 2)
         self.assertEqual(out["stop_reason"], "budget_exhausted")
 
+    def test_paper_resume_context_drops_the_task_prompt(self):
+        """resume_keep_task_prompt=False = paper Eq. 9: (system) + u_resume + tail; the question lives in the summary."""
+        from agents.compaction_agent import _segment_outputs
+        out, _, cfg = _run({"resume_keep_task_prompt": False})
+        self.assertGreaterEqual(len(out["segments"]), 2)
+        seg0, seg1 = out["segments"][0], out["segments"][1]
+        self.assertEqual(seg1.prompt_turn, 1, "only the system turn is a prompt turn in a resumed segment")
+        self.assertEqual(seg1.chat[0]["role"], "system")
+        self.assertEqual(seg1.chat[1]["role"], "user")
+        self.assertTrue(seg1.chat[1]["content"].startswith("Your context window was compacted"))
+        self.assertNotIn(PROMPT[1]["content"], TOK.decode(seg1.context()), "user instruction is not re-inserted")
+        self.assertIn(PROMPT[0]["content"], TOK.decode(seg1.context()), "system prompt is kept")
+        outs = asyncio.run(_segment_outputs(out, 1.0, False, {}, True))
+        self.assertEqual(outs[1].prompt_ids, seg1.chat_ids[0])
+        # budget accounting uses each segment's own prompt length
+        from agents.compaction_agent import _generated_tokens
+        for seg in out["segments"]:
+            self.assertLessEqual(_generated_tokens(seg), cfg.response_length)
+        # default keeps the task prompt
+        out2, _, _ = _run({})
+        self.assertEqual(out2["segments"][1].prompt_turn, 2)
+        self.assertIn(PROMPT[1]["content"], TOK.decode(out2["segments"][1].context()))
+
     def test_eval_returns_last_segment_only(self):
         from agents.compaction_agent import _segment_outputs
         out, _, _ = _run({})

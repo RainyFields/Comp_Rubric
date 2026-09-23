@@ -20,6 +20,19 @@ TAIL_STEPS=${TAIL_STEPS:-2}                      # k recent (assistant, observat
 SUMMARY_MAX_TOKENS=${SUMMARY_MAX_TOKENS:-2048}
 TRAIN_SUMMARY=${TRAIN_SUMMARY:-True}             # False = "w/o summary training" ablation
 MASK_UNFINISHED=${MASK_UNFINISHED:-False}        # paper: budget-exhausted rollouts train with reward 0 (FoldAgent arms mask them; shakeout: 63% of rollouts)
+RESUME_KEEP_TASK_PROMPT=${RESUME_KEEP_TASK_PROMPT:-True}   # False = paper Eq. 9 (system + u_resume + tail; task only via the summary)
+GLOBAL_TOKEN_MEAN=${GLOBAL_TOKEN_MEAN:-True}     # paper's token-level loss: equal weight per optimised token across the mini-batch
+                                                 # (verl's plain token-mean with micro-batch 1 weights every SEGMENT equally; the finished
+                                                 # compactiongrpo run af713ba2 used that)
+
+# --- sampling protocol: FoldAgent parity by default (32 prompts x 8 samples, lr 1e-6); PAPER_PROTOCOL=1 = paper §5.1
+#     (group size 1, global batch 128, policy lr 2e-6; critic lr 3e-6 below is the paper's in both cases)
+if [ "${PAPER_PROTOCOL:-0}" = 1 ]; then
+  ROLLOUT_N=${ROLLOUT_N:-1}; TRAIN_BATCH=${TRAIN_BATCH:-128}; LR=${LR:-2e-6}
+else
+  ROLLOUT_N=${ROLLOUT_N:-8}; TRAIN_BATCH=${TRAIN_BATCH:-32}; LR=${LR:-1e-6}
+fi
+PPO_MINI=${PPO_MINI:-128}                        # one policy update per batch (paper); 32x8 = 256 rollouts -> 2 mini-batches of segments
 
 # --- critic (paper: critic initialised from the policy, lr 3e-6, two critic updates per policy update, value pre-training) ---
 CRITIC_LR=${CRITIC_LR:-3e-6}
@@ -39,16 +52,20 @@ python -m scripts.train_fold \
   actor_rollout_ref.rollout.response_length=${RESPONSE_LENGTH} \
   actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${MAX_LENGTH} \
   actor_rollout_ref.rollout.tensor_model_parallel_size=8 \
-  actor_rollout_ref.rollout.n=8 \
+  actor_rollout_ref.rollout.n=${ROLLOUT_N} \
+  actor_rollout_ref.actor.optim.lr=${LR} \
+  ++actor_rollout_ref.actor.global_token_mean=${GLOBAL_TOKEN_MEAN} \
+  ++critic.global_token_mean=${GLOBAL_TOKEN_MEAN} \
+  +actor_rollout_ref.rollout.plugin.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT} \
   actor_rollout_ref.rollout.agent.num_workers=1 \
   actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
   data.train_files=${TRAIN_DATA_PATH} \
   data.val_files=${TEST_DATA_PATH} \
-  data.train_batch_size=32 \
+  data.train_batch_size=${TRAIN_BATCH} \
   data.max_prompt_length=${PROMPT_LENGTH} \
   data.max_response_length=${RESPONSE_LENGTH} \
   data.return_raw_chat=True \
-  actor_rollout_ref.actor.ppo_mini_batch_size=128 \
+  actor_rollout_ref.actor.ppo_mini_batch_size=${PPO_MINI} \
   actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
   actor_rollout_ref.actor.fsdp_config.param_offload=True \
   actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \

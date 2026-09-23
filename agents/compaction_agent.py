@@ -53,6 +53,8 @@ class CompactionConfig:
     max_turn: int = 100               # total assistant turns across all segments
     session_timeout: float = 3600.0
     mask_unfinished: bool = True      # FoldAgent convention: unfinished zero-reward rollouts carry no gradient
+    resume_keep_task_prompt: bool = True   # True: resumed segment = (system + task) + u_resume + tail (FoldAgent runs so far);
+                                           # False: paper Eq. 9, (system) + u_resume + tail — the task survives only via the summary
 
     @classmethod
     def from_plugin(cls, plugin: Any, is_train: bool) -> "CompactionConfig":
@@ -69,6 +71,7 @@ class CompactionConfig:
             max_turn=int(g("val_max_turn", g("max_turn", cls.max_turn)) if not is_train else g("max_turn", cls.max_turn)),
             session_timeout=float(g("session_timeout", cls.session_timeout)),
             mask_unfinished=bool(g("mask_unfinished", cls.mask_unfinished)),
+            resume_keep_task_prompt=bool(g("resume_keep_task_prompt", cls.resume_keep_task_prompt)),
         )
 
 
@@ -77,9 +80,24 @@ def _summary_from_response(response: str) -> str:
     return extract_summary(response) or strip_think(response)
 
 
-async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary, tail):
-    """(prompt) + u_resume(S) + tail steps, all as non-trainable turns."""
-    seg = Agent(llm_client, user_prompt, tokenizer, config, prompt_turn=prompt_turn)
+def _generated_tokens(seg: Agent) -> int:
+    """Tokens of the segment that count against the generated-side budget: everything after the prompt turns
+    (resume turn, tail, generated turns, summary) excluding the pending generation prompt."""
+    return len(seg.context()) - seg.prompt_ids_len - len(seg.get_generation_prompt())
+
+
+async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary, tail, keep_task_prompt=True):
+    """Resumed context: (prompt) + u_resume(S) + tail steps, all as non-trainable turns.
+
+    ``keep_task_prompt=False`` follows the paper's Eq. 9 literally — only the system prompt precedes
+    ``u_resume``; the user instruction is expected to be carried by the summary (q_sum item 1).
+    """
+    if keep_task_prompt:
+        seg_prompt, seg_prompt_turn = user_prompt, prompt_turn
+    else:
+        seg_prompt = [t for t in user_prompt[:prompt_turn] if t.get("role") == "system"] + list(user_prompt[prompt_turn:])
+        seg_prompt_turn = sum(1 for t in user_prompt[:prompt_turn] if t.get("role") == "system")
+    seg = Agent(llm_client, seg_prompt, tokenizer, config, prompt_turn=seg_prompt_turn)
     seg.append({"role": "user", "content": COMPACTION_RESUME_TEMPLATE.format(summary=summary)})
     for assistant_text, observation_wrapped in tail:
         seg.append({"role": "assistant", "content": assistant_text})       # completion=None -> mask 0
@@ -108,14 +126,12 @@ async def run_compaction_rollout(
     budget = config.response_length
     stats: collections.Counter = collections.Counter()
     seg = Agent(llm_client, user_prompt, tokenizer, config, prompt_turn=prompt_turn)
-    base_len = len(seg.context())            # prompt + generation prompt; identical for every segment
     segments, seg_info = [seg], [{"summary_tokens": 0, "tail_steps": 0}]
     steps: list[tuple[str, str]] = []        # (assistant text, wrapped observation) of the current segment
     session_message: list[dict] = []
     t0, iteration, finished, stop_reason = time.time(), 0, False, "max_turn"
 
-    def used(s):
-        return len(s.context()) - base_len
+    used = _generated_tokens                 # per segment: its own prompt length is subtracted (prompts may differ)
 
     while iteration < cc.max_turn:
         if time.time() - t0 > cc.session_timeout:
@@ -155,7 +171,8 @@ async def run_compaction_rollout(
             # reconstruct: shrink the tail until the new context leaves at least T_comp of budget
             k = len(tail)
             while True:
-                new_seg = await _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary, tail[len(tail) - k:])
+                new_seg = await _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary,
+                                               tail[len(tail) - k:], keep_task_prompt=cc.resume_keep_task_prompt)
                 if budget - used(new_seg) >= cc.threshold or k == 0:
                     break
                 k -= 1

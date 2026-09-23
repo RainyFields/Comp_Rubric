@@ -11,8 +11,8 @@ val-only path `infra/worker_val_selfcontained.sh` / `infra/jobs/fold_val_*.json`
 | `norl` | single-thread ReAct, no training | – | val-only | base model |
 | `grpo` | fold agent scaffold (branch tool available), outcome reward only | GRPO (group of 8), token-mean | `scripts/train_bc_qwen3_8b.sh` ± 2 flags | Shao et al. 2024 |
 | `foldgrpo` | fold agent, process rewards (flat + scope) | FoldGRPO | `scripts/train_bc_qwen3_8b.sh` | Sun et al. 2025 (arXiv:2510.11967) |
-| `compactionrl` | single-thread ReAct with trainable context compaction (`agents/compaction_agent.py`) | PPO + critic, cross-trajectory GAE with length-adaptive λ, token-mean | `scripts/train_bc_compactionrl.sh` | Li et al. 2026 (arXiv:2607.05378), paper-faithful optimiser |
-| `compactiongrpo` | same compaction rollout | rollout-level group-relative advantage broadcast to every segment, token-mean | `scripts/train_bc_compactiongrpo.sh` | protocol-matched (critic-free) variant |
+| `compactionrl` | single-thread ReAct with trainable context compaction (`agents/compaction_agent.py`) | **PPO + critic, cross-trajectory GAE with length-adaptive λ, global token-level loss** | `scripts/train_bc_compactionrl.sh` | **= CompactionRL** (Li et al. 2026, arXiv:2607.05378). Implemented + CPU-tested; **not yet run on GPU** (shakeout spec `infra/jobs/fold-train-compactionrl-shakeout-h100.json`) |
+| `compactiongrpo` | same compaction rollout | rollout-level GRPO advantage broadcast to every segment (no critic, no cross-segment discount at γ=λ=1) | `scripts/train_bc_compactiongrpo.sh` | **NOT the paper's method** — a critic-free ablation ("compaction rollout + GRPO"); §4.2 of the paper argues explicitly against group-wise estimators for compacted rollouts. The 100-step run af713ba2 (val .353) is this ablation. |
 
 ## CompactionRL (`compactionrl`, `compactiongrpo`)
 
@@ -38,6 +38,33 @@ independent implementation on the FoldAgent verl stack.
 (`core_algos.compute_compaction_grpo_advantage`): rewards are normalised once per rollout inside the
 prompt group (segments of one rollout are de-duplicated, as FoldGRPO does), the rollout advantage is
 broadcast to all of its segments, and the position correction is applied (identity at γ = λ = 1).
+
+### Fidelity audit (2026-09-23) — what the finished run is, and what still deviates from the paper
+
+**The arm that trained (`compactiongrpo`) is not CompactionRL.** The paper (§4.2 "Ill-Suited Group-Wise Methods", §6) is a PPO
+method: critic initialised from the policy, 50 value-pretraining steps, two critic updates per policy update, cross-trajectory GAE.
+`compactiongrpo` normalises rewards within a group of 8 rollouts of the same prompt (de-duplicated by rollout), broadcasts one
+advantage to every segment, and its position factor is the identity at γ = λ = 1 — so neither of the paper's two optimisation
+contributions (cross-trajectory GAE, and — see next point — token-level loss) was active. Its result (0.353 greedy) is the
+"compaction rollout + GRPO" ablation, to be reported as such. The paper-faithful arm is `compactionrl`.
+
+Deviations found by re-reading the paper against the code, and their status:
+
+| # | paper | what the code did | status |
+|---|---|---|---|
+| 1 | PPO + critic, cross-trajectory GAE (Eqs. 13–15) | `compactiongrpo` ran GRPO; `compactionrl` implements the paper but was never launched | shakeout spec ready; **run `compactionrl`** |
+| 2 | token-level loss: every optimised token in the batch has equal weight (§4.2; the ablation that hurt most, −6.8 pts) | verl's `token-mean` averages **inside each micro-batch** and scales by 1/grad-accum; with `ppo_micro_batch_size_per_gpu=1` every *segment* got equal weight (= seq-mean-token-mean) | **fixed**: `actor.global_token_mean=True` / `critic.global_token_mean=True` (mini-batch token count all-reduced over DP; `core_algos.global_token_mean_scale`, unit-tested). Default on in the compaction scripts (`GLOBAL_TOKEN_MEAN`). The finished compactiongrpo run used the per-segment weighting. |
+| 3 | resume context Eq. 9 = (s) ⊕ u_resume(S_t) ⊕ tail — system prompt only, the task lives in the summary | (system + task prompt) ⊕ u_resume ⊕ tail; every segment keeps the original question as its prompt | knob `plugin.resume_keep_task_prompt` (`RESUME_KEEP_TASK_PROMPT`); default True (what ran); False = paper. Tested. Decide per run. |
+| 4 | group size 1, global batch 128, policy lr 2e-6, critic lr 3e-6 | 32 prompts × 8 samples, lr 1e-6 (FoldAgent parity) | `PAPER_PROTOCOL=1` preset in `train_bc_compactionrl.sh` / `train_bc.sh` (`ROLLOUT_N`, `TRAIN_BATCH`, `LR`, `PPO_MINI`) |
+| 5 | window 64k, T_comp 10 240, per-response cap 10 240, ≤3 compactions, k = 2 | window 32k (+8k prompt), T_comp 8 192, per-turn cap 2 048, summary cap 2 048, ≤3, k = 2 | documented scaling; summary cap binds for ≈3 % of summaries (median 806 tokens incl. think) |
+| 6 | length-adaptive λ = 1 − 1/(αl), α = 1.5 (VAPO) and Eq. 14 uses λ in (γλ)^{N>s} | λ_s from the segment's own optimised length, and the same λ_s in the exponent | paper is ambiguous about which λ enters Eq. 14 when λ is per-sample; kept per-segment |
+| 7 | reward 0 for budget-exhausted rollouts, all segments trained | `mask_unfinished=False` since the shakeout decision | matches |
+| 8 | summary tokens trained, tail re-rendered as context | mask 1 on summary, mask 0 on resume + tail | matches (traces in `docs/traces/`) |
+| 9 | model GLM-4.7-Flash / GLM-4.5-Air on SWE-Dev, Terminus scaffold, SWE-bench Verified / Terminal-Bench | Qwen3-8B on BC-Plus | different domain by design; absolute numbers are not comparable, only the Single(×1) vs Compacted(×4) and w/o-summary-training contrasts |
+
+Behaviour of the finished `compactiongrpo` run (from the per-rollout `[COMPACTION]` lines, 256 rollouts/step): finish rate 63 % →
+87–96 %, compactions per rollout 1.7 → 0.7 (steps 21–30) → 1.2 (91–100), budget-exhausted 36 % → 4–13 %, summary ≈1.0k → 1.26k tokens,
+0.3 rollbacks per rollout. The policy first learned to finish within one window, then used compaction again as reward rose.
 
 ### Budget accounting
 

@@ -140,6 +140,9 @@ class ActorConfig(BaseConfig):
     policy_loss: PolicyLossConfig = field(default_factory=PolicyLossConfig)
     clip_ratio_c: float = 3.0
     loss_agg_mode: str = "token-mean"
+    # token-mean over the whole mini-batch (all DP ranks) instead of per micro-batch: every optimised token gets
+    # equal weight (CompactionRL "token-level loss", arXiv:2607.05378 §4.2). Only affects loss_agg_mode=token-mean.
+    global_token_mean: bool = False
     loss_scale_factor: Optional[int] = None
     entropy_coeff: float = 0
     calculate_entropy: bool = False
