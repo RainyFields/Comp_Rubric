@@ -37,74 +37,86 @@
   "tail_checks": [
    {
     "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
     "role": "user",
-    "ids_len": 816,
+    "ids_len": 5174,
+    "offset": 6973,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 55,
+    "offset": 6918,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 5174,
+    "ids_len": 816,
+    "offset": 6102,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 61,
+    "ids_len": 31,
+    "offset": 6071,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 793,
+    "offset": 11040,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 11009,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4869,
+    "offset": 6140,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 793,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 793,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 59,
+    "ids_len": 61,
+    "offset": 6079,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5747,
+    "offset": 6963,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 59,
+    "offset": 6904,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 793,
+    "offset": 6111,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 6080,
     "exact": true
    }
   ],
@@ -155,74 +167,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 4931,
+    "offset": 11328,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
+    "ids_len": 47,
+    "offset": 11281,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5320,
+    "offset": 5961,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 47,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4931,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 47,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4989,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 42,
+    "ids_len": 31,
+    "offset": 5930,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4441,
+    "offset": 11004,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 45,
+    "ids_len": 42,
+    "offset": 10962,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 5144,
+    "ids_len": 4989,
+    "offset": 5973,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 43,
+    "ids_len": 47,
+    "offset": 5926,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4370,
+    "offset": 11331,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 43,
+    "offset": 11288,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 5144,
+    "offset": 6144,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 45,
+    "offset": 6099,
     "exact": true
    }
   ],
@@ -273,74 +297,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 5251,
+    "offset": 13419,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
-    "ids_len": 47,
+    "ids_len": 31,
+    "offset": 13388,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 7527,
+    "offset": 5861,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
+    "ids_len": 47,
+    "offset": 5814,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5251,
+    "offset": 12483,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 31,
+    "offset": 12452,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 6578,
+    "offset": 5874,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 5251,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 5251,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 46,
+    "offset": 5843,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5077,
+    "offset": 11168,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 46,
+    "offset": 11122,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 5251,
+    "offset": 5871,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 5840,
     "exact": true
    }
   ],
@@ -391,74 +427,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 8573,
+    "offset": 10316,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
-    "ids_len": 49,
+    "ids_len": 31,
+    "offset": 10285,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4236,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 8573,
+    "offset": 6049,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 49,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4613,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 30,
+    "offset": 6000,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5472,
+    "offset": 10728,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
+    "ids_len": 30,
+    "offset": 10698,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 454,
+    "ids_len": 4613,
+    "offset": 6085,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 49,
+    "offset": 6036,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4370,
+    "offset": 6635,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 49,
+    "offset": 6586,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 454,
+    "offset": 6132,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 6101,
     "exact": true
    }
   ],
@@ -509,74 +557,86 @@
   "tail_checks": [
    {
     "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
     "role": "user",
-    "ids_len": 1213,
+    "ids_len": 4535,
+    "offset": 7238,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 39,
+    "offset": 7199,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 4535,
+    "ids_len": 1213,
+    "offset": 5986,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 40,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4483,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 40,
+    "ids_len": 31,
+    "offset": 5955,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4569,
+    "offset": 10943,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 40,
+    "offset": 10903,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 5587,
+    "ids_len": 4483,
+    "offset": 6420,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 40,
+    "offset": 6380,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5372,
+    "offset": 12057,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 40,
+    "offset": 12017,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 5587,
+    "offset": 6430,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 40,
+    "offset": 6390,
     "exact": true
    }
   ],
@@ -627,74 +687,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 9250,
+    "offset": 13763,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 521,
+    "offset": 13242,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 7013,
+    "offset": 6229,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
     "ids_len": 456,
+    "offset": 5773,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 7013,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 521,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 9250,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 521,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 9250,
+    "offset": 16047,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 512,
+    "offset": 15535,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 7013,
+    "ids_len": 9250,
+    "offset": 6285,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 512,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 7013,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 525,
+    "ids_len": 521,
+    "offset": 5764,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 10195,
+    "offset": 13853,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 525,
+    "offset": 13328,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 7013,
+    "offset": 6315,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 512,
+    "offset": 5803,
     "exact": true
    }
   ],
@@ -745,74 +817,86 @@
   "tail_checks": [
    {
     "segment": "segment",
-    "role": "assistant",
-    "ids_len": 58,
-    "exact": true
-   },
-   {
-    "segment": "segment",
     "role": "user",
-    "ids_len": 4464,
+    "ids_len": 5307,
+    "offset": 10398,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 47,
+    "offset": 10351,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 5307,
+    "ids_len": 4464,
+    "offset": 5887,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 6644,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 30,
+    "ids_len": 58,
+    "offset": 5829,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5098,
+    "offset": 12758,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 51,
+    "ids_len": 30,
+    "offset": 12728,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 4003,
+    "ids_len": 6644,
+    "offset": 6084,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 64,
+    "ids_len": 31,
+    "offset": 6053,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 3893,
+    "offset": 10144,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 64,
+    "offset": 10080,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 4003,
+    "offset": 6077,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 51,
+    "offset": 6026,
     "exact": true
    }
   ],
@@ -864,14 +948,16 @@
   "tail_checks": [
    {
     "segment": "segment",
-    "role": "assistant",
-    "ids_len": 493,
+    "role": "user",
+    "ids_len": 18330,
+    "offset": 6206,
     "exact": true
    },
    {
     "segment": "segment",
-    "role": "user",
-    "ids_len": 18330,
+    "role": "assistant",
+    "ids_len": 493,
+    "offset": 5713,
     "exact": true
    }
   ],
@@ -930,74 +1016,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 2206,
+    "offset": 10264,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
-    "ids_len": 36,
+    "ids_len": 31,
+    "offset": 10233,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4485,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 2206,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 2629,
+    "offset": 5748,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 36,
+    "offset": 5712,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5795,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 2206,
+    "offset": 8417,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 36,
+    "offset": 8381,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 2629,
+    "offset": 5752,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 5721,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5507,
+    "offset": 8080,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 36,
+    "offset": 8044,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 2206,
+    "offset": 5838,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 5807,
     "exact": true
    }
   ],
@@ -1048,74 +1146,86 @@
   "tail_checks": [
    {
     "segment": "segment",
-    "role": "assistant",
-    "ids_len": 941,
-    "exact": true
-   },
-   {
-    "segment": "segment",
     "role": "user",
-    "ids_len": 5139,
+    "ids_len": 7141,
+    "offset": 12584,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 734,
+    "offset": 11850,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 7141,
+    "ids_len": 5139,
+    "offset": 6711,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 1248,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 45,
+    "ids_len": 941,
+    "offset": 5770,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4535,
+    "offset": 7291,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 45,
+    "offset": 7246,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 1248,
+    "offset": 5998,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 7141,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 44,
+    "offset": 5967,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4195,
+    "offset": 13229,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 44,
+    "offset": 13185,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 7141,
+    "offset": 6044,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 6013,
     "exact": true
    }
   ],
@@ -1167,50 +1277,58 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 4215,
+    "offset": 11306,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
+    "ids_len": 52,
+    "offset": 11254,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5557,
+    "offset": 5697,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 52,
+    "ids_len": 31,
+    "offset": 5666,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 4215,
+    "ids_len": 5557,
+    "offset": 10711,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 52,
+    "ids_len": 31,
+    "offset": 10680,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4962,
+    "offset": 5718,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 5557,
+    "ids_len": 52,
+    "offset": 5666,
     "exact": true
    }
   ],
@@ -1265,74 +1383,86 @@
   "tail_checks": [
    {
     "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
     "role": "user",
-    "ids_len": 5444,
+    "ids_len": 8398,
+    "offset": 11227,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 49,
+    "offset": 11178,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 8398,
+    "ids_len": 5444,
+    "offset": 5734,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 60,
+    "ids_len": 31,
+    "offset": 5703,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 1454,
+    "offset": 14291,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 30,
+    "offset": 14261,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 8348,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 30,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 1454,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 30,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 1454,
+    "offset": 5913,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 60,
+    "offset": 5853,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 9559,
+    "offset": 7410,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 60,
+    "offset": 7350,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 1454,
+    "offset": 5896,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 30,
+    "offset": 5866,
     "exact": true
    }
   ],
@@ -1384,74 +1514,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 9341,
+    "offset": 14272,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
     "ids_len": 72,
+    "offset": 14200,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 7901,
+    "offset": 6299,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 72,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 9341,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 72,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 9341,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 72,
+    "offset": 6227,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 10005,
+    "offset": 15802,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 72,
+    "offset": 15730,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 10005,
+    "ids_len": 9341,
+    "offset": 6389,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 72,
+    "offset": 6317,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 10297,
+    "offset": 16466,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 72,
+    "offset": 16394,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 10005,
+    "offset": 6389,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 72,
+    "offset": 6317,
     "exact": true
    }
   ],
@@ -1504,74 +1646,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 5546,
+    "offset": 11122,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
     "ids_len": 83,
+    "offset": 11039,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 5013,
+    "offset": 6026,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 83,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 5546,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 83,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 5885,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 83,
+    "offset": 5943,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 6239,
+    "offset": 12034,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 83,
+    "offset": 11951,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 6490,
+    "ids_len": 5885,
+    "offset": 6066,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 83,
+    "offset": 5983,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 6285,
+    "offset": 12639,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 83,
+    "offset": 12556,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 6490,
+    "offset": 6066,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 83,
+    "offset": 5983,
     "exact": true
    }
   ],
@@ -1626,74 +1780,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 3576,
+    "offset": 10355,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
-    "ids_len": 40,
+    "ids_len": 38,
+    "offset": 10317,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4328,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 38,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 3576,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 42,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4070,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 39,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4425,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 38,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 4906,
+    "offset": 5989,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 40,
+    "offset": 5949,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 4425,
+    "offset": 10106,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 39,
+    "offset": 10067,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 4070,
+    "offset": 5997,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 42,
+    "offset": 5955,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 4864,
+    "offset": 11006,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 40,
+    "offset": 10966,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 4906,
+    "offset": 6060,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 38,
+    "offset": 6022,
     "exact": true
    }
   ],
@@ -1743,74 +1909,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 8768,
+    "offset": 14560,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
     "ids_len": 73,
+    "offset": 14487,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 8505,
+    "offset": 5982,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 73,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 8768,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 73,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 8768,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 73,
+    "offset": 5909,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 9411,
+    "offset": 14923,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 73,
+    "offset": 14850,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 9411,
+    "ids_len": 8768,
+    "offset": 6082,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 73,
+    "offset": 6009,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 9611,
+    "offset": 15567,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 73,
+    "offset": 15494,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 9411,
+    "offset": 6083,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 73,
+    "offset": 6010,
     "exact": true
    }
   ],
@@ -1861,74 +2039,86 @@
   "tail_checks": [
    {
     "segment": "segment",
+    "role": "user",
+    "ids_len": 9092,
+    "offset": 14630,
+    "exact": true
+   },
+   {
+    "segment": "segment",
     "role": "assistant",
     "ids_len": 56,
+    "offset": 14574,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 8966,
+    "offset": 5608,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 56,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 9092,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "user",
-    "ids_len": 1429,
-    "exact": true
-   },
-   {
-    "segment": "segment",
-    "role": "assistant",
-    "ids_len": 31,
+    "offset": 5552,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 3176,
+    "offset": 7171,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
     "ids_len": 31,
+    "offset": 7140,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
-    "ids_len": 2849,
+    "ids_len": 1429,
+    "offset": 5711,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "assistant",
-    "ids_len": 50,
+    "ids_len": 31,
+    "offset": 5680,
     "exact": true
    },
    {
     "segment": "segment",
     "role": "user",
     "ids_len": 8463,
+    "offset": 8614,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 50,
+    "offset": 8564,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "user",
+    "ids_len": 2849,
+    "offset": 5715,
+    "exact": true
+   },
+   {
+    "segment": "segment",
+    "role": "assistant",
+    "ids_len": 31,
+    "offset": 5684,
     "exact": true
    }
   ],

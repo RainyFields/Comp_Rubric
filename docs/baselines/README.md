@@ -39,6 +39,12 @@ independent implementation on the FoldAgent verl stack.
 prompt group (segments of one rollout are de-duplicated, as FoldGRPO does), the rollout advantage is
 broadcast to all of its segments, and the position correction is applied (identity at γ = λ = 1).
 
+### Protocol setting (2026-09-23)
+
+Every run in this file was collected with the pre-3f697bf harness = `plugin.protocol=legacy` (see `docs/PROTOCOL.md` §4). New
+training runs and their evaluations must use `protocol=v2` (`PROTOCOL=v2` in the scripts, `FOLD_PROTOCOL=v2` in job specs);
+evaluate the checkpoints listed here with `legacy` if you want the training-time format.
+
 ### Rollout-code fixes (2026-09-23, after the GRPO trace audit — `docs/traces/grpo_step50_trace_audit.md` §3)
 
 Four rollout-side defects were fixed the same day; every run listed in this file predates them: (1) `plugin.turn_max_new_tokens`

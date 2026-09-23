@@ -63,3 +63,6 @@ date_pdt	sid	name	spec	note
 2026-09-23 13:23	abec53a537251edc	fold_full_grpo50_A_branch_h100	fold_full_grpo50_A_branch_h100.json	GRPO fixed-code FULL 150-task run (greedy, capture, session 2h), tag _fx_full_*; tarball 7c04e37 (shakeout #2 passed)
 2026-09-23 13:23	a2339ece197b992f	fold_full_grpo50_A_nobranch_h100	fold_full_grpo50_A_nobranch_h100.json	GRPO fixed-code FULL 150-task run (greedy, capture, session 2h), tag _fx_full_*; tarball 7c04e37 (shakeout #2 passed)
 2026-09-23 13:23	7f8f41600dda264f	fold_full_grpo50_B_compact_h100	fold_full_grpo50_B_compact_h100.json	GRPO fixed-code FULL 150-task run (greedy, capture, session 2h), tag _fx_full_*; tarball 7c04e37 (shakeout #2 passed)
+2026-09-23 15:03	60f8638e8608e2d7	fold_shk3_grpo50_A_branch_v2_h100	fold_shk3_grpo50_A_branch_v2_h100.json	protocol SHAKEOUT #3 (v2 vs legacy compat), 18 tasks, capture; tarball d2c169e
+2026-09-23 15:03	1842fe34b1dda346	fold_shk3_grpo50_A_branch_legacy_h100	fold_shk3_grpo50_A_branch_legacy_h100.json	protocol SHAKEOUT #3 (v2 vs legacy compat), 18 tasks, capture; tarball d2c169e
+2026-09-23 15:04	5ae457b591d5e855	fold_shk3_grpo50_B_compact_v2_h100	fold_shk3_grpo50_B_compact_v2_h100.json	protocol SHAKEOUT #3 (v2 vs legacy compat), 18 tasks, capture; tarball d2c169e

@@ -106,6 +106,16 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
 - [ ] Push the repo to a **new** GitHub remote (origin = authors' repo) once you say go; `docs/reports/paper/` has uncommitted LaTeX edits —
       commit or stash them on the old box first.
 
+## D2. Push / repository (BLOCKER for the handoff)
+- [ ] Create the GitHub repository `RainyFields/Comp_Rubric` (private) — no `gh` CLI or API token on this box, so it could not be
+      created here; remote `github` is already configured. Then `git push -u github main` (SSH works).
+- [ ] Optional: rename remotes so `origin` = RainyFields/Comp_Rubric and `upstream` = sunnweiwei/FoldAgent.
+
+## D3. Protocol follow-ups (nonblocking)
+- [ ] Observation token budget per turn (`max_calls_per_turn=8` only bounds the number of calls).
+- [ ] Consider `max_consecutive_no_call=5` for thinking policies; duplicate-action guard.
+- [ ] Dump one live GPU training batch (response_mask stats) during the next training shakeout to close the "NOT YET VERIFIED on device" row.
+
 ## E. Housekeeping
 - [ ] Delete the superseded `report/` (August draft) or leave it; `infra/babysit_infra.sh` is deprecated (no babysitters).
 - [ ] `docs/reports/paper_fix/` and the E2E report need the compaction arms added once A is done.
