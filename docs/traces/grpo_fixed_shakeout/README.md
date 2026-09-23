@@ -35,7 +35,7 @@ Capture (`agents/utils._capture_step/capture_action/capture_event`, env `FOLD_PR
 ## Commands
 
 ```bash
-# tests (54; both tokenizers)
+# tests (58; both tokenizers)
 for T in Qwen/Qwen3-8B ~/xiaoxuan/tokenizers/Qwen3.5-9B; do FOLD_TOKENIZER_PATH=$T ~/xiaoxuan/envs/fold_train/bin/python -m unittest discover -s tests -t .; done
 # jobs (from infra/jobs; log sids in JOBS.tsv)
 merlin-cli --control-plane i18n-tt job-v2 runs create --from-file fold_shk_grpo50_A_branch_h100.json     # + A_nobranch, B_compact; fold_full_* after the shakeout
@@ -51,5 +51,5 @@ $P scripts/shakeout_audit.py compare --metrics docs/traces/grpo_fixed_shakeout/w
 |---|---|
 | `summary.md` | completion criteria with evidence, confirmed bugs, OFF/ON comparison, trajectory-quality audit, costs, uncertainties, recommendations, full-set section |
 | `readable_traces.md` | complete traces (model text in full, observations truncated with a marker, captured input tails) for the selected rollouts of each arm + the shakeout-#1 loop evidence |
-| `trace_audit.jsonl` | per-rollout and per-turn records (raw token references = capture file:line + sha1, model input tail, output, think checks, parsed/executed calls with ids, observation, masks, compaction/fork/tail checks, costs); `run` ∈ shakeout2, shakeout1_regression_evidence |
+| `trace_audit.jsonl` (git-ignored, 20 MB; copy at `/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/trace_audits/grpo_fixed_shakeout/`) | per-rollout and per-turn records (raw token references = capture file:line + sha1, model input tail, output, think checks, parsed/executed calls with ids, observation, masks, compaction/fork/tail checks, costs); `run` ∈ shakeout2, shakeout1_regression_evidence |
 | `work/` | per-arm `_metrics.json`, `_rollouts.json`, `_readable.md`, `_trace_audit.jsonl`, `comparison.md`, `extra_stats.json`; `work/shakeout1/` the pre-fix run; `work/OLD_branch_18_*` the old-code run restricted to the 18 tasks |
