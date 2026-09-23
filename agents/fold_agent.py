@@ -14,7 +14,7 @@ from .prompts import create_chat, BRANCH_MESSAGE_SEARCH, BRANCH_MESSAGE, SUMMARY
 from .verifier import judge_scope
 from .e2e_ledger import build_ledger, write_ledger
 from .parsing import extract_fn_call, extract_fn_calls_strict, extract_summary, last_strict_call, parse_actions  # noqa: F401
-from .utils import capture_action
+from .utils import capture_action, capture_event
 
 
 def print_chat(chat):
@@ -267,6 +267,8 @@ async def process_item(
         mask_rollout = False
 
     is_finish = getattr(env, 'is_finish', False) or getattr(env, 'finish', False)
+    capture_event(agent['main'], 'rollout_end', stop_reason=stop_reason, score=float(score[1]), is_finish=bool(is_finish),
+                  iterations=iteration, n_branches=len(branches), branch_names=list(branches), session_time=env.stats.get('session_time'))
     if getattr(config.plugin, "must_finish", None):
         if not is_finish:
             score = ('', 0)

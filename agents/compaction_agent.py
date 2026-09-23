@@ -40,7 +40,7 @@ from .fold_agent import print_chat
 from .parsing import extract_summary, strip_think
 from .prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT, create_chat
 from .parsing import parse_actions
-from .utils import CAPTURE_TAG, Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, capture_action, run_action, select_env, wrap_tool_response
+from .utils import CAPTURE_TAG, Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, capture_action, capture_event, run_action, select_env, wrap_tool_response
 
 
 @dataclass
@@ -326,6 +326,8 @@ async def process_item(item: DataProto, context: TaskContext) -> Union[AgentLoop
         "main_len": min(len(rollout["segments"][-1].context()), config.response_length),
         "total_token": len(tokenizer.encode(print_chat(user_prompt + rollout["session_message"]))),
     })
+    capture_event(rollout["segments"][-1], "rollout_end", stop_reason=rollout["stop_reason"], score=float(score[1]), is_finish=bool(is_finish),
+                  iterations=st["turns"], n_compactions=st["compactions"], segments=st["segments"], session_time=env.stats.get("session_time"))
     print(f"[COMPACTION] uid={uid} gen_uid={gen_uid} stop={rollout['stop_reason']} finished={int(is_finish)} "
           f"score={score[1]} segments={st['segments']} compactions={st['compactions']} turns={st['turns']} "
           f"summary_tokens={st['summary_tokens_generated']} rollback={st['rollback_before_summary']} mask_rollout={int(mask_rollout)}")
