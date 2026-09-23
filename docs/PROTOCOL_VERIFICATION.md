@@ -8,7 +8,7 @@ Verified commit: see §0. Code under test for the captured shakeouts: `d2c169e` 
 | item | value |
 |---|---|
 | repository | `git@github.com:RainyFields/Comp_Rubric.git` (remote `github`), branch `main` |
-| verified commit | filled in at the end of this document (`git log -1`) |
+| verified commit | rollout/training code under test = **d2c169e** (shakeout #3 ran this tarball; `git diff d2c169e..HEAD -- agents envs verl scripts infra` touches only the audit tool); final repository commit = the commit that adds this line (see `git log -1`, recorded below in §4) |
 | push | **NOT YET VERIFIED — BLOCKED**: the GitHub repository does not exist and this devbox has no `gh` CLI or API token to create it (SSH auth to GitHub works). Create the repo, then `git push -u github main`. |
 | HDFS tarball / entrypoints | `fold-job-assets/foldagent-repo.tar.gz` (md5-verified) with `.commit` = the tarball's commit; `fold_common_bootstrap.sh`, `fold_val_entrypoint.sh`, `fold_train_entrypoint.sh` copied from the same commit |
 
@@ -38,15 +38,15 @@ Shakeout #3 (`d2c169e`): protocol `v2` (A branch, B compaction) and `legacy` (A 
 
 | id | check | evidence (shakeout #2 / full) | shakeout #3 (v2 A / v2 B / legacy A) |
 |---|---|---|---|
-| E1 | actual model-input ids == expected serialised prompt (sha1 replay of suffix-chained prompt ids) | 681/681; 6 308/6 308 | PASS 336/336 / PENDING / PASS 377/377 |
-| E2 | history preserved: every earlier completion contiguous in every later prompt; prefix continuity except designed rollbacks | 0 unexpected misses / 0 breaks (both) | PASS 0 unexpected (22 designed rollbacks) / PENDING / PASS 0 unexpected (30 designed) |
+| E1 | actual model-input ids == expected serialised prompt (sha1 replay of suffix-chained prompt ids) | 681/681; 6 308/6 308 | PASS 336/336 / PASS 289/289 / PASS 377/377 |
+| E2 | history preserved: every earlier completion contiguous in every later prompt; prefix continuity except designed rollbacks | 0 unexpected misses / 0 breaks (both) | PASS 0 unexpected (22 designed rollbacks) / PASS 0 unexpected (1 designed rollback) / PASS 0 unexpected (30 designed) |
 | E3 | branch inheritance exact (fork sha1) | 25/25; 353/353 | PASS 39/39 / n/a / n/a (legacy re-renders: 196 prompts with template-normalised empty thinks, as designed) |
-| E4 | compaction tail exact (sha1 at the computed offset), resume prompt, next input | 190/190; 1 190/1 190 | n/a / PENDING / n/a |
-| E5 | parsed = executed = observation mapping (per-call results, concatenation) | 584/584; 5 497/5 500 (3 = guard/branch-limit artefacts) | PASS 291/291, obs 271/271 / PENDING / PASS 327/328 (1 = branch-guard rejection of a `branch` call inside a branch, expected) |
-| E6 | no think-block call executed | 0 (calls in think seen 26 / 161) | PASS (3 think-internal calls seen, 0 executed) / PENDING / n/a in legacy (0 seen) |
-| E7 | 2 048 cap real (`cap_over` 0), cap hits are think cuts | 0 over; 43–51 hits/arm | PASS `cap_over` 0, 6 cap hits / PENDING / by design NOT enforced: 6 completions > 2 048 (max 3 505) |
-| E8 | masks valid on every stored turn | 658/658; 6 165/6 165 | PASS 330/330 / PENDING / PASS 374/374 (stored turn ends at the trained eos) |
-| E9 | termination + accounting: `rollout_end` per task, stop reasons, tokens by category | 54/54; 450/450 | PASS 18/18 rollout_end (finish 12, window 6), tokens by category / PENDING / PASS 18/18 (finish 15, window 3) |
+| E4 | compaction tail exact (sha1 at the computed offset), resume prompt, next input | 190/190; 1 190/1 190 | n/a / PASS 188/188 tails exact at the computed offsets; resume prompt + next input replayed sha1-exact / n/a |
+| E5 | parsed = executed = observation mapping (per-call results, concatenation) | 584/584; 5 497/5 500 (3 = guard/branch-limit artefacts) | PASS 291/291, obs 271/271 / PASS 241/241, obs 234/234 / PASS 327/328 (1 = branch-guard rejection of a `branch` call inside a branch, expected) |
+| E6 | no think-block call executed | 0 (calls in think seen 26 / 161) | PASS (3 think-internal calls seen, 0 executed) / PASS (15 think-internal calls seen, 0 executed) / n/a in legacy (0 seen) |
+| E7 | 2 048 cap real (`cap_over` 0), cap hits are think cuts | 0 over; 43–51 hits/arm | PASS `cap_over` 0, 6 cap hits / PASS `cap_over` 0, 2 cap hits / by design NOT enforced: 6 completions > 2 048 (max 3 505) |
+| E8 | masks valid on every stored turn | 658/658; 6 165/6 165 | PASS 330/330 / PASS 289/289 / PASS 374/374 (stored turn ends at the trained eos) |
+| E9 | termination + accounting: `rollout_end` per task, stop reasons, tokens by category | 54/54; 450/450 | PASS 18/18 rollout_end (finish 12, window 6), tokens by category / PASS 18/18 rollout_end (finish 4, budget exhausted 14), main/summary tokens 3 297 / 2 152 per task / PASS 18/18 (finish 15, window 3) |
 | E10 | legacy protocol reproduces the training-time format: glued `<|im_end|><|im_start|>`, no cap, re-rendered branch history | — | — / — / **PASS**: 310/377 prompts carry the glued `<|im_end|><|im_start|>` boundary, cap not applied, no fork events (history re-tokenised), all 46 branch ends via the substring `return` rule |
 | E11 | live GPU training batch (response_mask statistics from a real training step) | not dumped in any run | **NOT YET VERIFIED** (do in the next training shakeout; `docs/handoff/NEXT_STEPS.md` step 6) |
 
@@ -60,3 +60,11 @@ $P scripts/shakeout_audit.py audit --results $R/valonly_grpo_50_greedy_fx_shk3_A
 $P scripts/shakeout_audit.py audit --results $R/valonly_grpo_50_greedy_fx_shk3_B_compact_v2_sc    --arm shk3_B_v2     --out docs/traces/grpo_fixed_shakeout/work
 # raw traces: $R/<run>/capture/capture_<pid>.jsonl (prompt/completion ids, masks, action/fork/append_tokens/rollout_end events)
 ```
+
+## 4. Final state
+
+- All E-rows PASS for protocol v2 on both scaffolds (branch, compaction) and the legacy protocol reproduces the training-time
+  format (E10). Open: E11 (live GPU batch dump) — NOT YET VERIFIED, nonblocking for inference, to be closed in the first Qwen3.5
+  training shakeout. Push: BLOCKED on the GitHub repository creation (§0).
+- Final commit SHA: written by the last commit of the session (`git log -1 --format=%H`); the HDFS tarball `.commit` file names
+  the same SHA.

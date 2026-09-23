@@ -10,4 +10,4 @@ results/
 docs/traces/*.jsonl
 # per-arm audit intermediates (regenerable from the HDFS captures with scripts/shakeout_audit.py)
 docs/traces/**/*.jsonl
-docs/traces/grpo_fixed_shakeout/work/*_readable.md
+docs/traces/grpo_fixed_shakeout/work/**/*_readable.md
