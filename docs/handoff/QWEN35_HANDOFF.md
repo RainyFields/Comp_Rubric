@@ -22,8 +22,7 @@ Qwen3.5 yet.
 
 ## 2. Repository, branch, commit, verified status
 
-- Repository: `git@github.com:RainyFields/Comp_Rubric.git` (remote `github`; **the repo must be created on GitHub first — see
-  NEXT_STEPS step 0**; the authors' upstream `origin` = github.com/sunnweiwei/FoldAgent is read-only for us). Branch `main`.
+- Repository: `git@github.com:RainyFields/Comp_Rubric.git` (remote `github`, pushed 2026-09-23; the authors' upstream `origin` = github.com/sunnweiwei/FoldAgent is read-only for us). Branch `main`.
 - Commits: rollout/training code verified at **d2c169e** (shakeout #3 tarball; identical code in every later commit);
   deliverables/docs finalised at **77350e6** (+ this line's commit). The HDFS tarball `foldagent-repo.tar.gz.commit` names the
   commit it was built from.

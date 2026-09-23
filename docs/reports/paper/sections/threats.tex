@@ -10,6 +10,16 @@ verbatim.
 \paragraph{Effective steps.} \grpo{} trained 98 effective steps of 100
 (\cref{sec:results}); \foldgrpo{} trained 100.
 
+\paragraph{Synchronous training.} The paper trains with asynchronous rollout, allowing up to
+five steps of off-policy staleness between generation and update. The released
+re-implementation does not include that pipeline: both of our arms train on-policy with a full
+per-step barrier---generation, reward, advantage, and update run sequentially, and every step
+waits for all 256 trajectories (including judge calls) to complete. Trajectory execution
+\emph{within} the generation phase is concurrent, so tool and judge latency overlaps
+generation across trajectories. Both arms share this property, so the comparison is
+unaffected, but per-step wall-clock time is dominated by straggler trajectories and is not
+comparable to the paper's throughput.
+
 \paragraph{Judge substitution.} \judgemodel{} replaces the paper's proprietary judges in all
 three roles, so absolute numbers are not comparable to the paper's; within-study comparisons
 use one fixed judge, audited manually on 49 calls.

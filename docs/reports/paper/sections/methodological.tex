@@ -23,7 +23,7 @@ re-templating; the base model is unaffected.}
 \end{table}
 
 Our first evaluation attempt served checkpoints behind a standard \texttt{/chat/completions}
-endpoint and produced catastrophically low scores for the RL'd models while leaving the base
+endpoint and produced catastrophically low scores for the RL'd\fredaauto{``RL'd'' is informal; prefer ``RL-trained'' (three occurrences in this section, incl.\ the Table 4 caption).} models while leaving the base
 model unaffected (\cref{tab:serving}). The cause is that per-turn chat re-templating drops
 prior-turn reasoning content that token-level continuation preserves; the RL'd policies come to
 depend on it. Outputs remain locally coherent, but trajectories shorten from $\approx$17 to

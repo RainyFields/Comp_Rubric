@@ -8,7 +8,7 @@ using the authors' open-source re-implementation, substituting \qwen{} for the o
 identical data and hyperparameters---no-RL, \grpo{}, and \foldgrpo{}---we find that the
 \emph{mechanism} replicates clearly: reinforcement learning lifts pass@1 from 0.167 to the
 0.25--0.29 band in both RL arms, and \foldgrpo{} learns markedly better context management than
-\grpo{} (context-blowout rate 0.04 vs.\ 0.25; 37\% shorter main thread at equal branching).
+\grpo{} (context-blowout rate 0.04 vs.\ 0.25; 37\% less generated text at equal branching).
 However, the paper's \emph{scoring} advantage of \foldgrpo{} over \grpo{} (+7.7 points at 36B)
 does not reproduce at 8B: the two arms are statistically tied at both greedy and sampled
 decoding. We further contribute two methodological findings: folded-context RL policies

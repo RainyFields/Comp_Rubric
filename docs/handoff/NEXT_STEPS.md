@@ -2,9 +2,9 @@
 
 Tick in order. Commands assume the paths in `QWEN35_HANDOFF.md` §3.
 
-0. [ ] **GitHub** (blocker inherited from the previous devbox): create the private repo `RainyFields/Comp_Rubric`, then on the old box
-       `cd ~/xiaoxuan/Comp_Rubric && git push -u github main` (remote `github` is configured; no API token was available there).
-       Record the pushed commit SHA in `docs/PROTOCOL_VERIFICATION.md` §0.
+0. [x] **GitHub**: `RainyFields/Comp_Rubric` created and `main` pushed 2026-09-23 (`a25f8a4`; see `docs/PROTOCOL_VERIFICATION.md` §0).
+       Note: the old box's clone was shallow (grafted at the authors' commit); it was unshallowed with `git fetch --unshallow origin`
+       before the push. Fresh clones from `github` are full-history and need nothing.
 1. [ ] **Clone + bootstrap** on the new box: `git clone git@github.com:RainyFields/Comp_Rubric.git ~/xiaoxuan/Comp_Rubric`;
        copy `data/bc_train.parquet`, `data/bc_test.parquet`, `data/bc_test_shakeout.parquet` (git-ignored; from the old box or
        regenerate per README); copy `~/xiaoxuan/tokenizers/Qwen3.5-9B` from HDFS `fold-job-assets/tokenizers/`; make sure

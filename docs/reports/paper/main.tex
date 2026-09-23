@@ -12,6 +12,12 @@
 \usepackage{caption}
 \usepackage[hidelinks]{hyperref}
 \usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{todonotes}
+\usepackage{tcolorbox}
+\newcommand{\note}[4][]{\todo[author=#2,color=#3,size=\scriptsize,fancyline,caption={},#1]{#4}}
+\definecolor{tticblue}{RGB}{0, 94, 184}
+\newcommand{\fredaauto}[2][]{\note[#1]{Freda via Erich Review Bot}{tticblue!20}{#2}}
+\newcommand{\Fredaauto}[2][]{\fredaauto[inline,#1]{#2}\noindent}
 
 % Recurring-name macros (house style)
 \newcommand{\foldgrpo}{FoldGRPO}

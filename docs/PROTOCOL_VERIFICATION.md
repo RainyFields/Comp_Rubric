@@ -9,7 +9,7 @@ Verified commit: see §0. Code under test for the captured shakeouts: `d2c169e` 
 |---|---|
 | repository | `git@github.com:RainyFields/Comp_Rubric.git` (remote `github`), branch `main` |
 | verified commit | rollout/training code under test = **d2c169e** (shakeout #3 ran this tarball; `git diff d2c169e..HEAD -- agents envs verl scripts infra` touches only the audit tool); final repository commit = the commit that adds this line (see `git log -1`, recorded below in §4) |
-| push | **NOT YET VERIFIED — BLOCKED**: the GitHub repository does not exist and this devbox has no `gh` CLI or API token to create it (SSH auth to GitHub works). Create the repo, then `git push -u github main`. |
+| push | **PASS** (2026-09-23): `git push -u github main` → remote `refs/heads/main` = `a25f8a4317cb94c0492a1255ba210ec76ec48c82` (docs-only commit on top of 77350e6; code = d2c169e). The clone had to be unshallowed from the authors' upstream first (GitHub rejects shallow roots); commit SHAs unchanged. |
 | HDFS tarball / entrypoints | `fold-job-assets/foldagent-repo.tar.gz` (md5-verified) with `.commit` = the tarball's commit; `fold_common_bootstrap.sh`, `fold_val_entrypoint.sh`, `fold_train_entrypoint.sh` copied from the same commit |
 
 ## 1. Unit / deterministic checks (CPU, recorded outputs; no vLLM)
@@ -65,6 +65,6 @@ $P scripts/shakeout_audit.py audit --results $R/valonly_grpo_50_greedy_fx_shk3_B
 
 - All E-rows PASS for protocol v2 on both scaffolds (branch, compaction) and the legacy protocol reproduces the training-time
   format (E10). Open: E11 (live GPU batch dump) — NOT YET VERIFIED, nonblocking for inference, to be closed in the first Qwen3.5
-  training shakeout. Push: BLOCKED on the GitHub repository creation (§0).
+  training shakeout. Push: done (§0).
 - Final commit SHA: written by the last commit of the session (`git log -1 --format=%H`); the HDFS tarball `.commit` file names
   the same SHA.
