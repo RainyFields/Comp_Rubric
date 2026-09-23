@@ -13,9 +13,10 @@ export TAGSUF=${FOLD_TAGSUF:-_fix}
 ARM=${FOLD_ARM:-norl}; STEP=${FOLD_STEP:-base}
 [ -n "${FOLD_MODEL_PATH:-}" ] && export MODEL_PATH=$FOLD_MODEL_PATH   # policy family (default Qwen/Qwen3-8B in worker_val_selfcontained.sh)
 export CKPT_ROOT=${FOLD_CKPT_ROOT:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt}
+export TRAIN_VENV=${FOLD_VENV:-fold_train}   # fold_train = Qwen3-8B stack | fold_train_q35 = Qwen3.5 stack (image 1.0.0.54); read by worker_val_selfcontained.sh
 log() { echo "[foldjob $(date '+%m-%d %H:%M:%S')] $*"; }
 
-log "node=$(hostname) arm=$ARM step=$STEP modes='$MODES' tagsuf=$TAGSUF"
+log "node=$(hostname) arm=$ARM step=$STEP modes='$MODES' tagsuf=$TAGSUF venv=$TRAIN_VENV model=${MODEL_PATH:-Qwen/Qwen3-8B}"
 ls "$ASSETS" >/dev/null 2>&1 || { log "FATAL: HDFS fuse not available"; exit 41; }
 df -h /tmp | tail -1; nproc; free -g | head -2
 mkdir -p "$XD/envs" /tmp/fold_tmp /tmp/models
@@ -29,7 +30,7 @@ restore_venv() {  # $1 = venv name
   tar xzf "$t" -C "$XD/envs" && rm -f "$t"
 }
 restore_venv fold_infra || exit 43
-restore_venv fold_train || exit 43
+restore_venv "$TRAIN_VENV" || exit 43
 log "restoring repo ..."
 rm -rf "$SRC"; tar xzf "$ASSETS/foldagent-repo.tar.gz" -C "$XD" || exit 44
 ( cd "$SRC" && git log --oneline -1 )
@@ -50,12 +51,12 @@ if [ ! -f "$JUDGE/config.json" ]; then
 fi
 export JUDGE_MODEL=$JUDGE
 
-"$XD/envs/fold_train/bin/python" - <<'PYEOF' || { echo "[foldjob] preflight failed, exit 42"; exit 42; }
+"$XD/envs/$TRAIN_VENV/bin/python" - <<'PYEOF' || { echo "[foldjob] preflight failed, exit 42"; exit 42; }
 import sys, socket, torch
 n = torch.cuda.device_count()
 if n < 8: sys.exit(f"preflight FAILED: only {n} GPUs")
 torch.zeros(1, device="cuda:0")
-print(f"[foldjob] preflight OK: {n} GPUs on {socket.gethostname()}, torch {torch.__version__}", flush=True)
+print(f"[foldjob] preflight OK: {n} GPUs on {socket.gethostname()}, torch {torch.__version__} (cuda {torch.version.cuda}) from {sys.executable}", flush=True)
 PYEOF
 
 mkdir -p "$HDFS_OUT"

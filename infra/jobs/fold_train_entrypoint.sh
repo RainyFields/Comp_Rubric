@@ -18,9 +18,9 @@ export VAL_DUMP_DIR=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/val_dump_fix/$OUT
 HDFS_LOGS=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/train_logs_fix/$OUT
 LOCAL_CKPT=/tmp/fold_ckpt/$ARM
 mkdir -p "$MARK" "$HDFS_CKPT" "$VAL_DUMP_DIR" "$HDFS_LOGS" "$LOCAL_CKPT"
-log "train job arm=$ARM steps=$STEPS node=$(hostname) MARK=$MARK HDFS_CKPT=$HDFS_CKPT"
+log "train job arm=$ARM steps=$STEPS venv=$TRAIN_VENV model=${MODEL_PATH:-Qwen/Qwen3-8B} node=$(hostname) MARK=$MARK HDFS_CKPT=$HDFS_CKPT"
 restore_venv fold_infra || exit 43
-restore_venv fold_train || exit 43
+restore_venv "$TRAIN_VENV" || exit 43   # FOLD_VENV (fold_train | fold_train_q35), see fold_common_bootstrap.sh
 restore_repo || exit 44
 gpu_preflight || { log "preflight failed, exit 42"; exit 42; }
 [ -f /mnt/hdfs/mlsys/users/xiaoxuan/arco-job-assets/wandb.key ] && export WANDB_API_KEY=$(cat /mnt/hdfs/mlsys/users/xiaoxuan/arco-job-assets/wandb.key)

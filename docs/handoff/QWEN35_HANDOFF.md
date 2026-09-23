@@ -47,6 +47,7 @@ Paths on the devbox (the scripts hard-code them; keep them or edit `SRC`/`XD` in
 | HDFS outputs | `/mnt/hdfs/mlsys/xiaoxuan/fold_replication/{ckpt_fix,val_dump_fix,train_logs_fix,rollout_dump_fix,results}/` |
 | judge | gpt-oss-120b served on the pod (`/mnt/hdfs/mlsys/users/xiaoxuan/models/gpt-oss-120b`), reached through `infra/judge_shim.py` |
 | W&B | key at `fold-job-assets/../arco-job-assets/wandb.key`; project `context_folding` |
+| venv selection in jobs | `FOLD_VENV` in the spec's `env_map` (`fold_train` default = Qwen3-8B stack, image 1.0.0.38; `fold_train_q35` = Qwen3.5 stack, image 1.0.0.54): entrypoints restore `fold-job-assets/$FOLD_VENV.tar.gz` and export `TRAIN_VENV` to the workers |
 | jobs | Merlin/Arnold i18n-tt, group 765 ark-eng-algorithm, 8×H100 pods; `merlin-cli --control-plane i18n-tt job-v2 runs create --from-file <spec>`; ledger `infra/jobs/JOBS.tsv`; compliance env vars in every spec (`HAS_TT_DATA=False` etc.) |
 | Qwen3.5 tokenizer (offline) | `~/xiaoxuan/tokenizers/Qwen3.5-9B` (copy from HDFS `fold-job-assets/tokenizers/`); Qwen3-8B tokenizer at `~/xiaoxuan/tokenizers/Qwen3-8B` (from `/mnt/hdfs/mlsys/models/Qwen3-8B`) |
 | Qwen3.5 weights | shared HDFS `/mnt/hdfs/mlsys/models/Qwen3.5-9B` (19 GB, 4 safetensors shards) and `Qwen3.5-4B` (8.8 GB) — no HF download needed; stage to `/tmp/models/` on the pod (SUPO pattern) |

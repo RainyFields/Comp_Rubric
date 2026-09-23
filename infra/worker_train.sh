@@ -13,7 +13,7 @@ MODEL_PATH=${MODEL_PATH:-Qwen/Qwen3-8B}                                     # po
 MODEL_TAG=${MODEL_TAG:-$(basename "$MODEL_PATH" | tr 'A-Z' 'a-z')}          # qwen3-8b | qwen3.5-9b | ... (run names)
 SRC=/home/tiger/xiaoxuan/Comp_Rubric
 CHECKOUT=/home/tiger/xiaoxuan/fold_arms/$ARM
-VENV=/home/tiger/xiaoxuan/envs/fold_train
+VENV=/home/tiger/xiaoxuan/envs/${TRAIN_VENV:-fold_train}                     # TRAIN_VENV from the entrypoint (job env FOLD_VENV); fold_train_q35 = Qwen3.5 stack
 MARK=${MARK:-$SRC/infra/markers}                                            # batch jobs: shared HDFS dir
 HDFS_CKPT=${HDFS_CKPT:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt/$ARM}
 KEEP_LOCAL=${KEEP_LOCAL:-2}                                                 # verified-uploaded ckpts to keep on /tmp
@@ -52,7 +52,10 @@ cp -n "$SRC/data/bc_train.parquet" "$SRC/data/bc_test.parquet" "$CHECKOUT/data/"
 # --- training venv (vllm 0.10.2 + prebuilt flash-attn; NEVER source-build) ---
 export HF_HOME=/tmp/fold_train_hf
 export TMPDIR=/tmp/fold_tmp && mkdir -p "$TMPDIR"   # short, existing tmp for vLLM zmq ipc sockets
-if [ ! -f "$VENV/ok" ]; then
+if [ ! -f "$VENV/ok" ] && [ "${TRAIN_VENV:-fold_train}" != fold_train ]; then
+  fail "venv $VENV missing (non-default TRAIN_VENV is restored from its HDFS tarball, never built here; see infra/build_env_q35.sh)"
+fi
+if [ ! -f "$VENV/ok" ]; then   # Qwen3-8B stack only (vllm 0.10.2 + prebuilt flash-attn)
   uv venv "$VENV" --python 3.11 || fail "uv venv"
   source "$VENV/bin/activate"
   uv pip install "vllm==0.10.2" || fail "vllm install"

@@ -3,6 +3,9 @@
 # Restores the devbox venvs + repo from md5-verified HDFS tarballs at the same absolute paths.
 ASSETS=/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets
 XD=/home/tiger/xiaoxuan
+# Training/rollout venv: FOLD_VENV in the job env_map (fold_train = Qwen3-8B stack, default; fold_train_q35 = Qwen3.5 stack,
+# needs image modelchef-gpu:1.0.0.54). Exported as TRAIN_VENV for worker_train.sh / worker_val_selfcontained.sh.
+export TRAIN_VENV=${FOLD_VENV:-fold_train}
 SRC=$XD/Comp_Rubric   # repo dir inside foldagent-repo.tar.gz (renamed from FoldAgent 2026-09-23)
 log() { echo "[foldjob $(date '+%m-%d %H:%M:%S')] $*"; }
 ls "$ASSETS" >/dev/null 2>&1 || { log "FATAL: HDFS fuse not available"; exit 41; }
@@ -30,11 +33,11 @@ copy_judge() {  # HDFS snapshot -> /tmp/models/gpt-oss-120b (top-level files onl
   log "judge copy done in $(( $(date +%s) - t0 )) s"; export JUDGE_MODEL=$JUDGE
 }
 gpu_preflight() {
-  "$XD/envs/fold_train/bin/python" - <<'PYEOF'
+  "$XD/envs/${TRAIN_VENV:-fold_train}/bin/python" - <<'PYEOF'
 import sys, socket, torch
 n = torch.cuda.device_count()
 if n < 8: sys.exit(f"preflight FAILED: only {n} GPUs")
 torch.zeros(1, device="cuda:0")
-print(f"[foldjob] preflight OK: {n} GPUs on {socket.gethostname()}, torch {torch.__version__}", flush=True)
+print(f"[foldjob] preflight OK: {n} GPUs on {socket.gethostname()}, torch {torch.__version__} (cuda {torch.version.cuda}) from {sys.executable}", flush=True)
 PYEOF
 }

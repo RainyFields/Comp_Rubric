@@ -8,13 +8,14 @@ set -uo pipefail
 
 ARM=${ARM:?}; STEP=${STEP:?}; MODE=${MODE:?}
 SRC=/home/tiger/xiaoxuan/Comp_Rubric
-VENVT=/home/tiger/xiaoxuan/envs/fold_train
+VENVT=/home/tiger/xiaoxuan/envs/${TRAIN_VENV:-fold_train}   # TRAIN_VENV from fold_val_entrypoint.sh (job env FOLD_VENV); fold_train_q35 = Qwen3.5 stack
 VENVI=/home/tiger/xiaoxuan/envs/fold_infra
 MARK=$SRC/infra/markers
 TAG=${ARM}_${STEP}_${MODE}${TAGSUF:-}_sc
 OUTDIR=$SRC/results/valonly_$TAG
 CHECKOUT=/home/tiger/xiaoxuan/fold_arms/valsc_${TAG}
 log() { echo "[valsc:$TAG $(date +%H:%M:%S)] $*"; }
+[ -x "$VENVT/bin/python" ] || { echo "[valsc:$TAG] FAILED: training venv $VENVT missing"; exit 1; }
 fail() { log "FAILED: $*"; touch "$MARK/VALONLY_${TAG}_FAILED"; exit 1; }
 [ -f "$MARK/VALONLY_${TAG}_DONE" ] && { log "already done, skipping"; exit 0; }
 rm -f "$MARK/VALONLY_${TAG}_FAILED"; mkdir -p "$OUTDIR"

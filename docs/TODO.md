@@ -74,7 +74,7 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
 - [x] Tests parameterised over tokenizers (`tests/tokenizers.py`, `FOLD_TOKENIZER_PATH`); 36/36 pass on Qwen3-8B and Qwen3.5-9B.
 - [x] `MODEL_PATH` / `MODEL_TAG` / `FOLD_MODEL_PATH` through workers, entrypoints, `scripts/train_bc.sh`.
 - [x] transformers 5: `apply_chat_template(tokenize=True)` returns a `BatchEncoding` → `return_dict=False` on every call (agents/utils.py, audit script, tests; 2026-09-23).
-- [ ] `FOLD_VENV` (default `fold_train`) in the entrypoints/workers + `restore_venv fold_train_q35`; Qwen3.5 specs use image `modelchef-gpu:1.0.0.54`.
+- [x] `FOLD_VENV` (default `fold_train`) in the entrypoints/workers + `restore_venv fold_train_q35` (2026-09-23); Qwen3.5 specs use image `modelchef-gpu:1.0.0.54`.
 - [ ] `analyze_fix_campaign.py` / `render_rollout_traces.py`: add a `--model-tag` and read the model-level HDFS layout
       (`fold_replication/<model_tag>/{ckpt,val_dump,train_logs,rollout_dump}/<arm>`); Qwen3-8B stays under `*_fix/`.
 - [ ] Sampling: RL rollouts T=1.0 top_p 1 (unchanged); the model card recommends `presence_penalty=1.5` in thinking mode for chat —

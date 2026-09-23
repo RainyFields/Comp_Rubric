@@ -28,9 +28,11 @@ Tick in order. Commands assume the paths in `QWEN35_HANDOFF.md` §3.
        verl's packed Qwen3.5 forward uses fla for the conv: set `causal_conv1d_implementation=fla` in the engine config).
        **Pods**: cu130 needs image `aliyun-va-hub.byted.org/arnold/modelchef-gpu:1.0.0.54` (ships the CUDA 13.0 compat libcuda for the
        R535 driver; the Qwen3-8B specs use 1.0.0.38 which only has 12.9 compat) — every Qwen3.5 spec sets it.
-       STILL OPEN from this step: (a) the GPU smoke (no GPU on the devbox) — `Qwen3_5ForCausalLM` load, `vllm serve` TP=1/8, one
-       completion with `enable_thinking`; (b) `restore_venv fold_train_q35` + a `FOLD_VENV` switch in `fold_val_entrypoint.sh` /
-       `fold_train_entrypoint.sh` / `worker_*.sh` (`VENV=/home/tiger/xiaoxuan/envs/fold_train`), then re-copy the entrypoints to HDFS.
+       STILL OPEN from this step: the GPU smoke (no GPU on the devbox) — `Qwen3_5ForCausalLM` load, `vllm serve` TP=1/8, one
+       completion with `enable_thinking`. DONE (same day, pushed): `FOLD_VENV` job env (default `fold_train`) → `TRAIN_VENV` in
+       `fold_common_bootstrap.sh` / `fold_val_entrypoint.sh` / `fold_train_entrypoint.sh` (restore_venv + preflight python) →
+       `VENV`/`VENVT` in `worker_train.sh` / `worker_val_selfcontained.sh` (a non-default venv is never built on the pod; it must
+       come from `fold-job-assets/<name>.tar.gz`). Entrypoints + bootstrap re-copied to HDFS and the repo tarball re-tarred.
        Original text: verl 0.9.1, transformers 5.10.x, vLLM ≥ 0.18,
        flash-linear-attention 0.5.2, causal-conv1d 1.7.0, flash-attn wheel. Smoke: load `Qwen3_5ForCausalLM` 9B bf16; `vllm serve` 9B
        TP=1 and TP=8; one chat completion with `enable_thinking=true`; confirm the completion has no `<think>` opener. Tarball it to
