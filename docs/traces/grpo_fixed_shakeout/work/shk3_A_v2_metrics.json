@@ -1,0 +1,121 @@
+{
+ "rollouts": 18,
+ "correct": 5,
+ "finished": 12,
+ "unfinished": 6,
+ "stop_reasons": {
+  "finish": 12,
+  "llm_none": 6
+ },
+ "accuracy": 0.278,
+ "n_main_turns": {
+  "mean": 5.8,
+  "median": 6,
+  "max": 11
+ },
+ "n_branches": {
+  "mean": 2.2,
+  "median": 2,
+  "max": 8
+ },
+ "n_compactions": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_main": {
+  "mean": 3073.7,
+  "median": 3154,
+  "max": 6020
+ },
+ "gen_branch": {
+  "mean": 1322.1,
+  "median": 1193,
+  "max": 3960
+ },
+ "gen_summary": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_total": {
+  "mean": 4395.7,
+  "median": 4239,
+  "max": 9092
+ },
+ "prefill_tokens": {
+  "mean": 391937.2,
+  "median": 188375,
+  "max": 1435284
+ },
+ "peak_context": {
+  "mean": 35181.3,
+  "median": 36609,
+  "max": 45741
+ },
+ "peak_context_main": {
+  "mean": 24100.7,
+  "median": 21920,
+  "max": 45741
+ },
+ "wall_s": {
+  "mean": 48.3,
+  "median": 43.9,
+  "max": 93.3
+ },
+ "calls_by_type": {
+  "search": 144,
+  "branch": 39,
+  "finish": 12,
+  "open_page": 93,
+  "return": 25
+ },
+ "multi_call_turns": 3,
+ "malformed_turns": 24,
+ "calls_in_think": 3,
+ "unsupported_calls": 0,
+ "duplicate_queries": 43,
+ "duplicate_branch_prompts": 0,
+ "long_observations": 4,
+ "cap_hits": 6,
+ "cap_over": 0,
+ "history_missing_turns": 0,
+ "prefix_breaks": 0,
+ "fork_checks": {
+  "exact": 39
+ },
+ "tail_checks": {},
+ "other_checks": {
+  "fork_ok": 39,
+  "designed_rollback": 22,
+  "history_missing_after_rollback": 9
+ },
+ "steps_total": 336,
+ "turns_with_glued_boundary": 0,
+ "prompts_with_double_newline_empty_think": 22,
+ "think": {
+  "present": 46,
+  "empty": 277,
+  "none": 13
+ },
+ "mask_checked": 330,
+ "mask_ok": 330,
+ "prompt_sha1_ok": [
+  336,
+  336
+ ],
+ "exec_subset_ok": [
+  291,
+  291
+ ],
+ "obs_concat_ok": [
+  271,
+  271
+ ],
+ "citations": {
+  "rollouts_with_citations": 7,
+  "unseen_citation_rollouts": 0
+ },
+ "arm": "shk3_A_v2",
+ "results_dir": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_grpo_50_greedy_fx_shk3_A_branch_v2_sc"
+}

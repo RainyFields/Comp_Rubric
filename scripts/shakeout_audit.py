@@ -196,7 +196,12 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
                 n_train = sum(m)
                 t["mask_trainable"] = n_train
                 t["mask_total"] = len(m)
-                t["check_mask"] = (n_train == len(comp)) and (gp_len is None or not any(m[:gp_len])) and (not m[-1])
+                # trainable == sampled ids (incl. eos); generation prompt untrained; anything stored after the sampled ids
+                # (v2: the terminator newline) untrained. In legacy protocol the stored turn ends at the trained eos.
+                stored = r.get("stored_turn_ids") or []
+                gp_ok = gp_len is None or not any(m[:gp_len])
+                tail_ok = (not any(m[(gp_len or 0) + len(comp):])) if len(stored) > (gp_len or 0) + len(comp) else bool(m[-1])
+                t["check_mask"] = (n_train == len(comp)) and gp_ok and tail_ok
                 if not t["check_mask"]:
                     checks["mask_mismatch"] += 1
             # history checks on ids

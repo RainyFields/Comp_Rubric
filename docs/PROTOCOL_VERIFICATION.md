@@ -38,16 +38,16 @@ Shakeout #3 (`d2c169e`): protocol `v2` (A branch, B compaction) and `legacy` (A 
 
 | id | check | evidence (shakeout #2 / full) | shakeout #3 (v2 A / v2 B / legacy A) |
 |---|---|---|---|
-| E1 | actual model-input ids == expected serialised prompt (sha1 replay of suffix-chained prompt ids) | 681/681; 6 308/6 308 | PENDING |
-| E2 | history preserved: every earlier completion contiguous in every later prompt; prefix continuity except designed rollbacks | 0 unexpected misses / 0 breaks (both) | PENDING |
-| E3 | branch inheritance exact (fork sha1) | 25/25; 353/353 | PENDING |
-| E4 | compaction tail exact (sha1 at the computed offset), resume prompt, next input | 190/190; 1 190/1 190 | PENDING |
-| E5 | parsed = executed = observation mapping (per-call results, concatenation) | 584/584; 5 497/5 500 (3 = guard/branch-limit artefacts) | PENDING |
-| E6 | no think-block call executed | 0 (calls in think seen 26 / 161) | PENDING |
-| E7 | 2 048 cap real (`cap_over` 0), cap hits are think cuts | 0 over; 43–51 hits/arm | PENDING |
-| E8 | masks valid on every stored turn | 658/658; 6 165/6 165 | PENDING |
-| E9 | termination + accounting: `rollout_end` per task, stop reasons, tokens by category | 54/54; 450/450 | PENDING |
-| E10 | legacy protocol reproduces the training-time format: glued `<|im_end|><|im_start|>`, no cap, re-rendered branch history | — | PENDING |
+| E1 | actual model-input ids == expected serialised prompt (sha1 replay of suffix-chained prompt ids) | 681/681; 6 308/6 308 | PASS 336/336 / PENDING / PASS 377/377 |
+| E2 | history preserved: every earlier completion contiguous in every later prompt; prefix continuity except designed rollbacks | 0 unexpected misses / 0 breaks (both) | PASS 0 unexpected (22 designed rollbacks) / PENDING / PASS 0 unexpected (30 designed) |
+| E3 | branch inheritance exact (fork sha1) | 25/25; 353/353 | PASS 39/39 / n/a / n/a (legacy re-renders: 196 prompts with template-normalised empty thinks, as designed) |
+| E4 | compaction tail exact (sha1 at the computed offset), resume prompt, next input | 190/190; 1 190/1 190 | n/a / PENDING / n/a |
+| E5 | parsed = executed = observation mapping (per-call results, concatenation) | 584/584; 5 497/5 500 (3 = guard/branch-limit artefacts) | PASS 291/291, obs 271/271 / PENDING / PASS 327/328 (1 = branch-guard rejection of a `branch` call inside a branch, expected) |
+| E6 | no think-block call executed | 0 (calls in think seen 26 / 161) | PASS (3 think-internal calls seen, 0 executed) / PENDING / n/a in legacy (0 seen) |
+| E7 | 2 048 cap real (`cap_over` 0), cap hits are think cuts | 0 over; 43–51 hits/arm | PASS `cap_over` 0, 6 cap hits / PENDING / by design NOT enforced: 6 completions > 2 048 (max 3 505) |
+| E8 | masks valid on every stored turn | 658/658; 6 165/6 165 | PASS 330/330 / PENDING / PASS 374/374 (stored turn ends at the trained eos) |
+| E9 | termination + accounting: `rollout_end` per task, stop reasons, tokens by category | 54/54; 450/450 | PASS 18/18 rollout_end (finish 12, window 6), tokens by category / PENDING / PASS 18/18 (finish 15, window 3) |
+| E10 | legacy protocol reproduces the training-time format: glued `<|im_end|><|im_start|>`, no cap, re-rendered branch history | — | — / — / **PASS**: 310/377 prompts carry the glued `<|im_end|><|im_start|>` boundary, cap not applied, no fork events (history re-tokenised), all 46 branch ends via the substring `return` rule |
 | E11 | live GPU training batch (response_mask statistics from a real training step) | not dumped in any run | **NOT YET VERIFIED** (do in the next training shakeout; `docs/handoff/NEXT_STEPS.md` step 6) |
 
 ## 3. Reproduction
