@@ -149,3 +149,19 @@ class TestEnvironmentExecution(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCallCap(unittest.TestCase):
+    def test_calls_beyond_the_per_turn_cap_are_not_executed(self):
+        many = "\n".join(OP for _ in range(12))
+        p = parse_actions(many)
+        self.assertEqual(len(p["calls"]), 12)
+        self.assertEqual(len(p["executable"]), 8)
+        self.assertEqual(p["truncated_calls"], 4)
+        self.assertEqual(len(parse_actions(many, max_calls=3)["executable"]), 3)
+        self.assertEqual(len(parse_actions(many, max_calls=0)["executable"]), 12)      # 0 = no cap
+        env = _env()
+        env.config.plugin.max_calls_per_turn = 2
+        ret = asyncio.run(env.run_action(many))
+        self.assertEqual(len(env.last_action_results), 2)
+        self.assertIn("Only the first 2 function calls", ret["observation"])

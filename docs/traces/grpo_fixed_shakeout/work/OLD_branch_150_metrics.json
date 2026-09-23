@@ -1,0 +1,117 @@
+{
+ "rollouts": 150,
+ "correct": 0,
+ "finished": 0,
+ "unfinished": 150,
+ "stop_reasons": {
+  "context_exhausted(llm_none)": 30,
+  "unknown(timeout_or_budget)": 120
+ },
+ "accuracy": 0.0,
+ "n_main_turns": {
+  "mean": 5.9,
+  "median": 5,
+  "max": 16
+ },
+ "n_branches": {
+  "mean": 2.7,
+  "median": 2,
+  "max": 10
+ },
+ "n_compactions": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_main": {
+  "mean": 2694.4,
+  "median": 2448,
+  "max": 9005
+ },
+ "gen_branch": {
+  "mean": 1709.3,
+  "median": 1088,
+  "max": 8031
+ },
+ "gen_summary": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_total": {
+  "mean": 4403.7,
+  "median": 3833,
+  "max": 12563
+ },
+ "prefill_tokens": {
+  "mean": 498628.3,
+  "median": 315483,
+  "max": 2266277
+ },
+ "peak_context": {
+  "mean": 33150.0,
+  "median": 36244,
+  "max": 46570
+ },
+ "peak_context_main": {
+  "mean": 19656.5,
+  "median": 15719,
+  "max": 46570
+ },
+ "wall_s": {
+  "mean": 469.6,
+  "median": 441.3,
+  "max": 920.3
+ },
+ "calls_by_type": {
+  "search": 1425,
+  "open_page": 1130,
+  "finish": 120,
+  "branch": 423,
+  "return": 208
+ },
+ "multi_call_turns": 0,
+ "malformed_turns": 285,
+ "calls_in_think": 26,
+ "unsupported_calls": 0,
+ "duplicate_queries": 486,
+ "duplicate_branch_prompts": 15,
+ "long_observations": 0,
+ "cap_hits": 30,
+ "cap_over": 30,
+ "history_missing_turns": 0,
+ "prefix_breaks": 0,
+ "fork_checks": {},
+ "tail_checks": {},
+ "other_checks": {
+  "glued_boundary_prompts": 2994
+ },
+ "steps_total": 3569,
+ "turns_with_glued_boundary": 2994,
+ "template_inserted_empty_think_prompts": 2040,
+ "think": {
+  "present": 390,
+  "none": 62,
+  "empty": 3117
+ },
+ "mask_checked": 0,
+ "mask_ok": 0,
+ "prompt_sha1_ok": [
+  0,
+  0
+ ],
+ "exec_subset_ok": [
+  0,
+  0
+ ],
+ "obs_concat_ok": [
+  0,
+  0
+ ],
+ "citations": {
+  "rollouts_with_citations": 58,
+  "unseen_citation_rollouts": 58
+ },
+ "arm": "OLD_branch_150",
+ "results_dir": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_grpo_50_greedy_capture_sc"
+}

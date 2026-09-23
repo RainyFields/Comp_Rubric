@@ -46,25 +46,15 @@ def sha1(ids):
     return hashlib.sha1(",".join(map(str, ids)).encode()).hexdigest()[:16]
 
 
-def contains(seq, sub):
-    """True if list ``sub`` occurs contiguously in list ``seq``."""
-    n, m = len(seq), len(sub)
-    if m == 0:
+def ids_str(ids):
+    return "," + ",".join(map(str, ids)) + ","
+
+
+def contains(seq, sub, seq_str=None, sub_str=None):
+    """True if list ``sub`` occurs contiguously in list ``seq`` (delimited-string search; C speed)."""
+    if not sub:
         return True
-    if m > n:
-        return False
-    first = sub[0]
-    i = 0
-    while True:
-        try:
-            i = seq.index(first, i)
-        except ValueError:
-            return False
-        if seq[i:i + m] == sub:
-            return True
-        i += 1
-        if i + m > n:
-            return False
+    return (sub_str or ids_str(sub)) in (seq_str or ids_str(seq))
 
 
 # ------------------------------------------------------------------------------------------------- loading
@@ -229,8 +219,9 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
                             prefix_break += 1
                             checks["prefix_break_UNEXPECTED"] += 1
                 miss = []
-                for (ti, cids) in completions_by_agent[agent_name]:
-                    if not contains(P, cids):
+                P_str = ids_str(P)
+                for (ti, cids, cstr) in completions_by_agent[agent_name]:
+                    if cstr not in P_str:
                         miss.append(ti)
                 t["history_completions_missing"] = miss
                 if miss:
@@ -242,7 +233,7 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
                         hist_missing += 1
                         checks["history_completion_missing_UNEXPECTED"] += 1
                 if comp:
-                    completions_by_agent[agent_name].append((r["turn_index"], list(comp)))
+                    completions_by_agent[agent_name].append((r["turn_index"], list(comp), ids_str(comp)))
             prev = r
             turns_out.append(t)
     # fork checks (branch inheritance)
@@ -256,14 +247,27 @@ def audit_rollout(key, rows, dump_rec, judge_recs, args, tok):
             checks["fork_ok" if ok else "fork_MISMATCH"] += 1
     # tail checks (compaction)
     tail_checks = []
+    by_ctx = defaultdict(list)
     for e in tails:
-        seg = [r for r in steps if r["context_uid"] == e["context_uid"]]
-        if seg and seg[0].get("_prompt") is not None:
-            P = seg[0]["_prompt"]
-            # the exact ids are not stored in the event (sha1 + len); locate by sha1 over all windows of that length
-            L = e["ids_len"]
-            ok = any(sha1(P[i:i + L]) == e["ids_sha1"] for i in range(0, max(1, len(P) - L + 1)))
-            tail_checks.append({"segment": e.get("agent"), "role": e.get("role"), "ids_len": L, "exact": ok})
+        by_ctx[e["context_uid"]].append(e)
+    for ctx, evs in by_ctx.items():
+        seg = [r for r in steps if r["context_uid"] == ctx]
+        if not seg or seg[0].get("_prompt") is None:
+            continue
+        P = seg[0]["_prompt"]
+        # resumed segment = task prompt + resume turn + tail turns (in event order) + generation prompt:
+        # the tail ids end exactly gp_len before the end of the first prompt, so every event has a known offset
+        end = len(P) - (gp_len or 0)
+        offsets = []
+        for e in reversed(evs):
+            end -= e["ids_len"]
+            offsets.append(end)
+        for e, off in zip(reversed(evs), offsets):
+            ok = off >= 0 and sha1(P[off:off + e["ids_len"]]) == e["ids_sha1"]
+            if not ok:   # fall back to a bounded scan near the expected offset (robust to an unexpected extra turn)
+                L = e["ids_len"]
+                ok = any(sha1(P[i:i + L]) == e["ids_sha1"] for i in range(max(0, off - 64), min(len(P) - L, off + 64) + 1))
+            tail_checks.append({"segment": e.get("agent"), "role": e.get("role"), "ids_len": e["ids_len"], "offset": off, "exact": ok})
             checks["tail_ok" if ok else "tail_MISMATCH"] += 1
     # compaction events (segments)
     seg_names = [a for a in agents if str(a).startswith("seg")]

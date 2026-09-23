@@ -91,7 +91,10 @@ def strip_all_think(text: str) -> str:
     return out
 
 
-def parse_actions(text: Optional[str], turn_id: Optional[str] = None) -> dict:
+MAX_CALLS_PER_TURN_DEFAULT = 8
+
+
+def parse_actions(text: Optional[str], turn_id: Optional[str] = None, max_calls: Optional[int] = None) -> dict:
     """The ONE action grammar shared by the agents and the environment (2026-09-23).
 
     * think blocks are removed first — nothing inside ``<think>…</think>`` is ever an action (no adjacency edge case);
@@ -122,6 +125,13 @@ def parse_actions(text: Optional[str], turn_id: Optional[str] = None) -> dict:
         error = "only one branch call is allowed per turn; nothing was executed"
     elif "branch" in names and len(names) > 1:
         error = "a branch call must be the only function call in the turn; nothing was executed"
+    truncated_calls = 0
+    limit = MAX_CALLS_PER_TURN_DEFAULT if max_calls is None else max_calls
+    if not error and limit and len(calls) > limit:
+        # full 150-task run: a single-window policy emitted up to 92 open_page calls in one turn (930k-char observation,
+        # 234k-token prompt). Execute the first `limit` calls; the rest are reported, not executed.
+        truncated_calls = len(calls) - limit
+        error = None
     unclosed = max(0, len(FN_NAME.findall(body)) - len(calls))
     # A line-anchored terminal opener (finish/return) with no closing tag after the last closed call: not executable, but
     # the harness may treat it as a malformed terminal attempt (the checkpoint trained under the old lenient harness
@@ -132,7 +142,8 @@ def parse_actions(text: Optional[str], turn_id: Optional[str] = None) -> dict:
     if openers and openers[-1].start() >= last_closed_end and openers[-1].group(1) in TERMINAL_CALLS:
         unclosed_terminal = openers[-1].group(1)
         unclosed_terminal_args = dict(PARAM.findall(body[openers[-1].end():]))
-    return {"calls": calls, "executable": [] if error else calls, "error": error,
+    executable = [] if error else (calls[:limit] if (limit and len(calls) > limit) else calls)
+    return {"calls": calls, "executable": executable, "error": error, "truncated_calls": truncated_calls,
             "calls_in_think": n_think_calls, "unclosed_tags": unclosed,
             "unclosed_terminal": unclosed_terminal, "unclosed_terminal_args": unclosed_terminal_args}
 

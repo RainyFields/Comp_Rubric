@@ -4,7 +4,7 @@
 
 | item | value |
 |---|---|
-| repo / commit | `~/xiaoxuan/Comp_Rubric`. Shakeout #1 ran **83a3070** (shared grammar + raw-id capture on top of 3f697bf, the four audit fixes); it exposed the branch-loop regression (summary §2). Shakeout #2 and the full runs ran **7c04e37** (malformed-terminal handling + loop protection). Audit tooling: `scripts/shakeout_audit.py` |
+| repo / commit | `~/xiaoxuan/Comp_Rubric`. Shakeout #1 ran **83a3070** (shared grammar + raw-id capture on top of 3f697bf, the four audit fixes); it exposed the branch-loop regression (summary §2). Shakeout #2 and the full runs ran **7c04e37** (malformed-terminal handling + loop protection). Audit tooling: `scripts/shakeout_audit.py`. After the full runs: `plugin.max_calls_per_turn` (default 8) was added (finding F-full-1) — not active in any run reported here |
 | checkpoint | `/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix/grpo/global_step_50/actor` — GRPO arm of the fix campaign, **Qwen3-8B** (`Qwen3ForCausalLM`, `model_type=qwen3`, chat template sha1 `b066ba71c1b5` == base Qwen/Qwen3-8B), thinking mode on, no `<think>` prefill; merged to HF with `verl.model_merger` inside the job |
 | dataset | BrowseComp-Plus test split, `data/bc_test.parquet` (150 tasks); shakeout subset `data/bc_test_shakeout.parquet` (18 tasks: the rollouts with unclosed think blocks, `return`/`verify` in the main context, no-call turns, 11-branch rollouts, the 5 longest main contexts and 2 clipped-observation cases of the step-50 dump, plus 2 previously-correct controls; row map in `data/bc_test_shakeout_picks.json`) |
 | generation | greedy (`val_kwargs.do_sample=False`, n=1), per-turn cap `plugin.turn_max_new_tokens=2048` (now enforced), `max_turn=100`, session timeout 7 200 s, judge gpt-oss-120b via the shim, retriever Qwen3-Embedding-8B, one 8×H100 pod per arm (`infra/worker_val_selfcontained.sh`) |
@@ -35,7 +35,7 @@ Capture (`agents/utils._capture_step/capture_action/capture_event`, env `FOLD_PR
 ## Commands
 
 ```bash
-# tests (58; both tokenizers)
+# tests (59; both tokenizers)
 for T in Qwen/Qwen3-8B ~/xiaoxuan/tokenizers/Qwen3.5-9B; do FOLD_TOKENIZER_PATH=$T ~/xiaoxuan/envs/fold_train/bin/python -m unittest discover -s tests -t .; done
 # jobs (from infra/jobs; log sids in JOBS.tsv)
 merlin-cli --control-plane i18n-tt job-v2 runs create --from-file fold_shk_grpo50_A_branch_h100.json     # + A_nobranch, B_compact; fold_full_* after the shakeout

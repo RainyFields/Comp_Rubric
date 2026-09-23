@@ -338,7 +338,7 @@ def extract_fn_call(text):
     return parse_response(text)["executable"] or None
 
 
-def parse_response(text, turn_id=None):
+def parse_response(text, turn_id=None, max_calls=None):
     """Shared grammar (agents.parsing.parse_actions); the legacy Qwen ``<tool_call>`` JSON form is accepted too."""
     from agents.parsing import parse_actions
     if text and ('<tool_call>' in text or '<answer>' in text):
@@ -346,7 +346,7 @@ def parse_response(text, turn_id=None):
         if json_tool:
             calls = [{'call_id': f"{turn_id}.{k}" if turn_id else f"c{k}", **c} for k, c in enumerate(json_tool, 1)]
             return {'calls': calls, 'executable': calls, 'error': None, 'calls_in_think': 0, 'unclosed_tags': 0, 'json_tool_call': True}
-    return parse_actions(text, turn_id)
+    return parse_actions(text, turn_id, max_calls=max_calls)
 
 
 class LocalSearch:
@@ -386,7 +386,7 @@ class LocalSearch:
 
     async def run_action(self, response):
         self.stats['action'] += 1
-        parsed = parse_response(response)
+        parsed = parse_response(response, max_calls=getattr(self.config.plugin, 'max_calls_per_turn', None))
         self.last_parsed = parsed
         self.last_action_results = []
         if parsed.get('error'):
@@ -521,6 +521,9 @@ Once you’re confident everything is covered and verified, submit the final ans
                 self.last_action_results.append({'call_id': fn.get('call_id'), 'function': name, 'arguments': fn['arguments'],
                                                  'status': 'error' if _seg.lstrip().startswith('[Error]') else 'ok',
                                                  'observation': _seg})
+            if parsed.get('truncated_calls'):
+                observation += (f"\n[Note] Only the first {len(fn_call)} function calls of this turn were executed; "
+                                f"{parsed['truncated_calls']} further call(s) were ignored. Issue at most {len(fn_call)} calls per turn.")
             observation += "\n\n* Please reflect on the information we have obtained, and keep searching for additional information if we still can not answer the question. Do not give the answer if the information is still not enough."
 
         return {'observation': observation.strip(), 'results': self.last_action_results}

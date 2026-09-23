@@ -118,8 +118,84 @@ tokens) while finishing fewer tasks.
    read as "inference-time compaction on a branch-trained policy". The mechanism itself (trigger, summary, exact tail, resume) is verified.
 6. Judge/ground truth: one ambiguous case type to watch in the full set — answers correct in substance but in a different unit/format.
 
-## 7. Full 150-task runs
+## 7. Full 150-task runs (compaction OFF vs ON, same GRPO step-50 checkpoint, code 7c04e37)
 
-Jobs `abec53a537251edc` (A), `a2339ece197b992f` (A'), `7f8f41600dda264f` (B), submitted 2026-09-23 12:58 PDT with tarball 7c04e37; results
-under `results/valonly_grpo_50_greedy_fx_full_{A_branch,A_nobranch,B_compact}_sc/`. This section is filled in when they finish
-(`scripts/shakeout_audit.py audit … --arm full_<arm>` + `compare`).
+Jobs `abec53a537251edc` (A), `a2339ece197b992f` (A'), `7f8f41600dda264f` (B); greedy; 150-way concurrency per pod; results under
+`results/valonly_grpo_50_greedy_fx_full_{A_branch,A_nobranch,B_compact}_sc/`; per-arm audits `work/full_*`, table `work/comparison_full.md`.
+Integrity on captured ids (A / A' / B): prompt sha1 replay 3 186/3 186, 1 061/1 061, 2 061/2 061; masks 3 168/3 168, 936/936, 2 061/2 061;
+fork exact 353/353; compaction tails exact 1 190/1 190; executed-vs-parsed identical 2 813/2 816 (the 3 are branch-guard / branch-limit
+turns, i.e. tool artefacts), 936/936, 1 748/1 748; observation = concatenation of per-call observations 2 575/2 575, 865/866, 1 631/1 631;
+`cap_over` 0 everywhere; no unexpected history loss or prefix break; `rollout_end` 150/150 per arm. **All completion criteria hold on 450 rollouts.**
+
+### 7.1 Outcomes and stopping
+
+| | A branch (OFF) | A' no-branch (OFF) | B compaction (ON) | old code, A branch (reference) |
+|---|---|---|---|---|
+| **correct** (of 150) | **55 (0.367)** | 13 (0.087) | 36 (0.240) | 51 (0.340) |
+| finished / unfinished | 132 / 18 | 24 / 126 | 65 / 85 | — |
+| stop reasons | finish 132, window exhausted 18 | window exhausted 125, finish 24, no-call loop 1 | budget exhausted (3 compactions) 83, finish 65, no-call loop 2 | — |
+| wrong but finished | 77 | 11 | 29 | — |
+| main turns (mean) / branches / compactions | 5.3 / 2.4 / – | 7.1 / – / – | 5.7 / – / 2.1 | – / ~2.8 / – |
+| tasks that used 0 / 1 / 2 / 3 compactions | – | – | 28 / 22 / 9 / 91 | – |
+
+Paired outcomes (same task, same checkpoint):
+- **A vs B**: both correct 29, only A 26, only B 7, both wrong 88 → compaction ON is 19 tasks worse than the branch scaffold.
+- **A' vs B**: both 8, only B 28, only A' 5 → compaction ON is 23 tasks better than the same single-thread agent without compaction.
+- **A vs A'**: only A 43, only A' 1, both 12.
+
+Reading: for this checkpoint the ordering is *branch scaffold (trained) > compaction > single window*. Compaction rescues the
+single-thread agent from window exhaustion (A' dies at the window in 125/150; B never exceeds the window, `prompts_over_window` 0) and
+finishes 65 tasks, but it does not reach the branch scaffold, because the policy repeats itself after a reset: **60 % of the searches issued
+after a compaction repeat a query already run in that rollout (335/554), versus 12 % inside the first segment (56/480)** and 22–31 % in
+the OFF arms. Accuracy falls with the number of compactions used: 17/28 with none, 10/22 with one, 4/9 with two, **5/91 with three** —
+the 91 tasks that used all three compactions are essentially the tasks the policy could not solve, and 83 of them end by budget exhaustion.
+Summaries are well-formed (313/313 tagged, median 763 tokens, 1 hit the cap) and the resume context is exact; the loss is behavioural
+(a policy never trained to act on a summary), not mechanical.
+
+### 7.2 Cost and behaviour
+
+| per task (mean) | A | A' | B |
+|---|---|---|---|
+| generated: main / branch / summary / **total** | 2 757 / 1 537 / – / **4 293** | 2 848 / – / – / **2 848** | 3 420 / – / 1 690 / **5 110** |
+| prefill (sum of prompt ids over steps) | 424 k | 164 k | 285 k |
+| peak active context (mean / max) | 31.5 k / 45.8 k | 42.0 k / **234.3 k** | 31.2 k / 36.9 k |
+| wall-clock per task (throughput-bound, 150-way) | 396 s | 112 s | 476 s |
+| tool calls: search / open_page / branch / finish | 1 165 / 1 105 / 355 / 133 | 597 / 570 / – / 25 | 1 034 / 744 / – / 66 |
+| duplicate searches | 364 (31 %) | 131 (22 %) | 391 (38 %) |
+| multi-call turns / max calls in one turn | 35 / 5 | 45 / **92** | 51 / 24 |
+| observations > 30 k chars | 290 | 234 | 304 |
+| prompts beyond the 40 960 window | 11 | 70 | 0 |
+| turns at the 2 048 cap (all think cuts) | 43 | 51 (38) | 50 (45) |
+| "No function call" observations | 108 | 46 | 52 |
+| branch endings: proper return / malformed return / forced | 161 / 190 / 1 | – | – |
+| think: present / empty / none | 351 / 2 759 / 76 | 333 / 547 / 181 | 485 / 1 519 / 57 |
+| correct answers with citations / fabricated-docid rollouts | 31 of 55 / 2 | 13 of 13 / 1 | 29 of 36 / 0 |
+
+Per correct answer, B costs 21 k generated tokens (A: 11.7 k, A': 33 k) and 1.19 M prefill tokens (A: 1.16 M, A': 1.9 M) — compaction is
+not cheaper than branching for this policy; its summaries alone are 33 % of B's generated tokens.
+
+### 7.3 New findings from the full set
+
+- **F-full-1 — unbounded multi-call turns blow the window.** With every parsed call now executed, the no-branch policy emitted turns with
+  up to **92 `open_page` calls** (A' rollouts 1195, 885: 930 k / 780 k-char observations, prompt 234 k tokens → `llm_none`). 70 A' prompts and
+  11 A prompts exceed the 40 960 window; every such rollout dies at the next step. Old code executed at most the last adjacent group and so
+  hid this. Fix applied after these runs (commit below): `plugin.max_calls_per_turn` (default 8; the rest are rejected with an explicit
+  error text); an observation token budget per turn remains recommended.
+- **F-full-2 — malformed `return` is the majority ending of branches** (190/352): the flagged malformed-return path is load-bearing for this
+  checkpoint.
+- **F-full-3 — fabricated citations**: 3 wrong rollouts cite placeholder docids (`[12345]`, `[1234]`, `[123]`) that never appeared in any
+  observation; all other cited docids were observed. Grounding is otherwise honest.
+- **F-full-4 — cap cuts are think cuts**: 43–51 turns per arm are thinks cut at 2 048 tokens with no action (≈1.5–5 % of steps); loop
+  protection then fired only 3 times in 450 rollouts.
+- **F-full-5 — repetition dominates failures** in every arm: 22–38 % of searches are exact repeats; `no_call_loop` and window exhaustion,
+  not reasoning stops, account for 145 of the 229 unfinished rollouts.
+- Old-code reference (same checkpoint, run 222c7dd69460d364): 51/150 with 30 turns over the (dead) cap and every turn boundary glued;
+  the new harness reaches 55/150 with the cap enforced. Given the greedy nondeterminism measured in §6.1, the two are indistinguishable.
+
+### 7.4 Answer to the audit question
+
+The GRPO trajectories are *behaviourally* sensible when they succeed (search → verify → grounded finish) and *mechanically* clean
+throughout (history, masks, boundaries, compaction reconstruction all exact). Their failures are repetition and budget exhaustion, not
+corrupted context. Inference-time compaction on this branch-trained checkpoint changes the outcome distribution (−19 tasks vs the branch
+scaffold, +23 vs single window), the stopping profile (budget exhaustion replaces window exhaustion), search behaviour (repeat rate 12 % →
+60 % after a reset) and cost (+19 % generated tokens, +33 % summaries); it does not change accuracy through history corruption.

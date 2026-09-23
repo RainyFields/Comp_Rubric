@@ -1,0 +1,120 @@
+{
+ "rollouts": 150,
+ "correct": 36,
+ "finished": 65,
+ "unfinished": 85,
+ "stop_reasons": {
+  "budget_exhausted": 83,
+  "finish": 65,
+  "no_call_loop": 2
+ },
+ "accuracy": 0.24,
+ "n_main_turns": {
+  "mean": 5.7,
+  "median": 5,
+  "max": 22
+ },
+ "n_branches": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "n_compactions": {
+  "mean": 2.1,
+  "median": 3,
+  "max": 3
+ },
+ "gen_main": {
+  "mean": 3419.5,
+  "median": 3237,
+  "max": 8223
+ },
+ "gen_branch": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_summary": {
+  "mean": 1690.2,
+  "median": 1965,
+  "max": 4209
+ },
+ "gen_total": {
+  "mean": 5109.7,
+  "median": 5012,
+  "max": 11060
+ },
+ "prefill_tokens": {
+  "mean": 285483.1,
+  "median": 281323,
+  "max": 905721
+ },
+ "peak_context": {
+  "mean": 31224.3,
+  "median": 33756,
+  "max": 36915
+ },
+ "peak_context_main": {
+  "mean": 29862.0,
+  "median": 32227,
+  "max": 36915
+ },
+ "wall_s": {
+  "mean": 476.4,
+  "median": 568.6,
+  "max": 745.7
+ },
+ "calls_by_type": {
+  "search": 1034,
+  "open_page": 744,
+  "finish": 66
+ },
+ "multi_call_turns": 51,
+ "malformed_turns": 60,
+ "calls_in_think": 61,
+ "unsupported_calls": 0,
+ "duplicate_queries": 391,
+ "duplicate_branch_prompts": 0,
+ "long_observations": 55,
+ "cap_hits": 50,
+ "cap_over": 0,
+ "history_missing_turns": 0,
+ "prefix_breaks": 0,
+ "fork_checks": {},
+ "tail_checks": {
+  "exact": 1190
+ },
+ "other_checks": {
+  "tail_ok": 1190,
+  "designed_rollback": 37,
+  "history_missing_after_rollback": 20
+ },
+ "steps_total": 2061,
+ "turns_with_glued_boundary": 0,
+ "prompts_with_double_newline_empty_think": 0,
+ "think": {
+  "present": 485,
+  "none": 57,
+  "empty": 1519
+ },
+ "mask_checked": 2061,
+ "mask_ok": 2061,
+ "prompt_sha1_ok": [
+  2061,
+  2061
+ ],
+ "exec_subset_ok": [
+  1748,
+  1748
+ ],
+ "obs_concat_ok": [
+  1631,
+  1631
+ ],
+ "citations": {
+  "rollouts_with_citations": 56,
+  "unseen_citation_rollouts": 0
+ },
+ "arm": "full_B_compact",
+ "results_dir": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_grpo_50_greedy_fx_full_B_compact_sc"
+}

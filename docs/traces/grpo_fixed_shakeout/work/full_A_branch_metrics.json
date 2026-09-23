@@ -1,0 +1,122 @@
+{
+ "rollouts": 150,
+ "correct": 55,
+ "finished": 132,
+ "unfinished": 18,
+ "stop_reasons": {
+  "llm_none": 18,
+  "finish": 132
+ },
+ "accuracy": 0.367,
+ "n_main_turns": {
+  "mean": 5.3,
+  "median": 5,
+  "max": 12
+ },
+ "n_branches": {
+  "mean": 2.4,
+  "median": 1,
+  "max": 10
+ },
+ "n_compactions": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_main": {
+  "mean": 2756.6,
+  "median": 2391,
+  "max": 7719
+ },
+ "gen_branch": {
+  "mean": 1536.7,
+  "median": 896,
+  "max": 7484
+ },
+ "gen_summary": {
+  "mean": 0.0,
+  "median": 0,
+  "max": 0
+ },
+ "gen_total": {
+  "mean": 4293.3,
+  "median": 4085,
+  "max": 10683
+ },
+ "prefill_tokens": {
+  "mean": 424435.3,
+  "median": 226286,
+  "max": 2202157
+ },
+ "peak_context": {
+  "mean": 31458.6,
+  "median": 35783,
+  "max": 45787
+ },
+ "peak_context_main": {
+  "mean": 17328.0,
+  "median": 13621,
+  "max": 45787
+ },
+ "wall_s": {
+  "mean": 396.4,
+  "median": 376.6,
+  "max": 766.4
+ },
+ "calls_by_type": {
+  "search": 1165,
+  "branch": 355,
+  "finish": 133,
+  "open_page": 1105,
+  "return": 160
+ },
+ "multi_call_turns": 35,
+ "malformed_turns": 294,
+ "calls_in_think": 16,
+ "unsupported_calls": 0,
+ "duplicate_queries": 364,
+ "duplicate_branch_prompts": 10,
+ "long_observations": 43,
+ "cap_hits": 43,
+ "cap_over": 0,
+ "history_missing_turns": 0,
+ "prefix_breaks": 0,
+ "fork_checks": {
+  "exact": 353
+ },
+ "tail_checks": {},
+ "other_checks": {
+  "fork_ok": 353,
+  "designed_rollback": 228,
+  "history_missing_after_rollback": 83,
+  "exec_not_subset": 3
+ },
+ "steps_total": 3186,
+ "turns_with_glued_boundary": 0,
+ "prompts_with_double_newline_empty_think": 228,
+ "think": {
+  "present": 351,
+  "empty": 2759,
+  "none": 76
+ },
+ "mask_checked": 3168,
+ "mask_ok": 3168,
+ "prompt_sha1_ok": [
+  3186,
+  3186
+ ],
+ "exec_subset_ok": [
+  2813,
+  2816
+ ],
+ "obs_concat_ok": [
+  2575,
+  2575
+ ],
+ "citations": {
+  "rollouts_with_citations": 67,
+  "unseen_citation_rollouts": 2
+ },
+ "arm": "full_A_branch",
+ "results_dir": "/mnt/hdfs/mlsys/xiaoxuan/fold_replication/results/valonly_grpo_50_greedy_fx_full_A_branch_sc"
+}
