@@ -91,7 +91,7 @@ some turns ("NO suffix" rule) — harmless for scoring.
 Job assets on HDFS: `/mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/` (venv tarballs `fold_train` = vllm 0.10.2 / transformers 4.57.6 /
 torch 2.8, `fold_infra` = vllm 0.11.0; repo tarball = commit b1f445c — **retar after any code change that must run in a job**).
 
-## 5. Open items
+## 5. Open items (tracked in `docs/TODO.md`)
 
 0. **Replicate the paper's actual method**: shakeout `compactionrl` (`infra/jobs/fold-train-compactionrl-shakeout-h100.json`, 3 steps,
    critic warm-up 1, rollout dumps) → full 100-step run (`fold-train-compactionrl-h100.json`, warm-up 50). Decide `PAPER_PROTOCOL`
