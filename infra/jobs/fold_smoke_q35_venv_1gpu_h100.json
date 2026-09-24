@@ -1,0 +1,64 @@
+{
+ "name": "fold_smoke_q35_venv_1gpu_h100",
+ "namespace": "/user/xiaoxuan.lei",
+ "job_type": "train",
+ "attachments": [
+  {
+   "kind": "hdfs_volume",
+   "hdfs_volume_attachment": {
+    "hdfs_volumes": [
+     {
+      "path": "hdfs://harunava/home/byte_arnold_va_ssd/mlsys",
+      "mnt": "/mnt/hdfs/mlsys",
+      "access_mode": "RW",
+      "extra": "",
+      "roles": [
+       "worker"
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "job_config": {
+  "job_template_config": {
+   "entrypoint_full_script": "cp /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_smoke_q35_entrypoint.sh /tmp/fold_smoke.sh && bash /tmp/fold_smoke.sh",
+   "image_meta": {
+    "image_source": "url",
+    "image_url": "aliyun-va-hub.byted.org/arnold/modelchef-gpu:1.0.0.54"
+   },
+   "env_map": {
+    "FOLD_VENV": "fold_train_q35",
+    "FOLD_MODEL_PATH": "/mnt/hdfs/mlsys/models/Qwen3.5-9B",
+    "MERLIN_JOB_INSTANCE_TYPE": "XPerf",
+    "HAS_TT_DATA": "False",
+    "ML_FRAMEWORK": "pytorch",
+    "STORAGE_TYPE": "HDFS"
+   },
+   "git_repo": {
+    "repo_name": ""
+   }
+  }
+ },
+ "resource_config": {
+  "resource_backend": "arnold",
+  "arnold_resource_config": {
+   "cluster_ids": [
+    4
+   ],
+   "cluster_select_mode": "single",
+   "group_id": 765,
+   "roles": [
+    {
+     "name": "worker",
+     "num": 1,
+     "gpu": 1,
+     "gpu_type": "H100_SXM_80GB",
+     "queue_name": "compute-89-aliyun.va-cloudnative-aigcp-ark.eng.algorithm-guarantee",
+     "cpu": 24,
+     "memory_mb": 204800
+    }
+   ]
+  }
+ }
+}
