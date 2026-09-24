@@ -16,7 +16,9 @@ restore_venv() {
   log "restoring venv $1 ..."; local t=/tmp/$1.tar.gz
   cp "$ASSETS/$1.tar.gz" "$t" || return 1
   [ "$(md5sum "$t" | cut -d' ' -f1)" = "$(cut -d' ' -f1 "$ASSETS/$1.tar.gz.md5")" ] || { log "md5 mismatch $1"; return 1; }
-  tar xzf "$t" -C "$XD/envs" && rm -f "$t"
+  # tarballs rooted at / (first member home/...) also carry the uv-managed interpreter the venv's bin/python links to -> extract at /
+  case "$(tar tzf "$t" 2>/dev/null | head -1)" in home/*) tar xzf "$t" -C / ;; *) tar xzf "$t" -C "$XD/envs" ;; esac && rm -f "$t"
+  [ -x "$XD/envs/$1/bin/python" ] || { log "venv $1: bin/python missing after restore (dangling interpreter link?)"; return 1; }
 }
 restore_repo() {
   log "restoring repo ..."; rm -rf "$SRC"; tar xzf "$ASSETS/foldagent-repo.tar.gz" -C "$XD" || return 1
