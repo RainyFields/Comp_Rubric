@@ -107,43 +107,48 @@ export LOCAL_SEARCH_URL=http://127.0.0.1:8000
 export WANDB_MODE=offline PYTHONPATH=$CHECKOUT
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 
+# plugin knob prefix: vendored verl 0.7 (fold_train) reads rollout.plugin.*; verl 0.9.1 (fold_train_q35, agents/verl_plugin) reads rollout.custom.plugin.*
+if [ "${TRAIN_VENV:-fold_train}" = fold_train ]; then PL="++actor_rollout_ref.rollout.plugin"; LEGACY_LAUNCH=1; else PL="++actor_rollout_ref.rollout.custom.plugin"; LEGACY_LAUNCH=0; fi
 VAL_FLAGS="actor_rollout_ref.rollout.val_kwargs.do_sample=False actor_rollout_ref.rollout.val_kwargs.n=1"
 [ "$MODE" = t1n4 ] && VAL_FLAGS="actor_rollout_ref.rollout.val_kwargs.do_sample=True actor_rollout_ref.rollout.val_kwargs.temperature=1.0 actor_rollout_ref.rollout.val_kwargs.top_p=1.0 actor_rollout_ref.rollout.val_kwargs.n=4"
 ARMFLAGS=""
-[ "$ARM" = grpo ] && ARMFLAGS="algorithm.adv_estimator=grpo ++actor_rollout_ref.rollout.plugin.process_reward=none"
+[ "$ARM" = grpo ] && ARMFLAGS="algorithm.adv_estimator=grpo ${PL}.process_reward=none"
 # CompactionRL arms: same rollout at eval (compaction enabled, VAL_MAX_COMPACTIONS=3 = paper's x4 setting; 0 = single window);
 # the critic-free estimator is selected so val-only jobs never instantiate a critic.
 case "$ARM" in compactionrl|compactiongrpo)
   ARMFLAGS="algorithm.adv_estimator=compaction_grpo actor_rollout_ref.rollout.agent.default_agent_loop=compaction_agent \
-++actor_rollout_ref.rollout.plugin.workflow=search ++actor_rollout_ref.rollout.plugin.process_reward=none \
-++actor_rollout_ref.rollout.plugin.val_max_compactions=${VAL_MAX_COMPACTIONS:-3}" ;;
+${PL}.workflow=search ${PL}.process_reward=none \
+${PL}.val_max_compactions=${VAL_MAX_COMPACTIONS:-3}" ;;
 esac
 
 # Shakeout/audit knobs (2026-09-23): FOLD_AGENT=compaction runs the compaction agent (q_sum/summary/resume, raw-id tail) on ANY
 # checkpoint (arm B of the compaction OFF/ON comparison); FOLD_VAL_FILE = a subset parquet under data/ (relative to the checkout).
 if [ "${FOLD_AGENT:-}" = compaction ]; then
   ARMFLAGS="algorithm.adv_estimator=compaction_grpo actor_rollout_ref.rollout.agent.default_agent_loop=compaction_agent \
-++actor_rollout_ref.rollout.plugin.workflow=${FOLD_WORKFLOW:-search} ++actor_rollout_ref.rollout.plugin.process_reward=none \
-++actor_rollout_ref.rollout.plugin.val_max_compactions=${VAL_MAX_COMPACTIONS:-3} ++actor_rollout_ref.rollout.plugin.compaction_threshold=${COMPACTION_THRESHOLD:-8192} \
-++actor_rollout_ref.rollout.plugin.compaction_tail_steps=${TAIL_STEPS:-2} ++actor_rollout_ref.rollout.plugin.summary_max_tokens=${SUMMARY_MAX_TOKENS:-2048} \
-++actor_rollout_ref.rollout.plugin.mask_unfinished=False ++actor_rollout_ref.rollout.plugin.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT:-True}"
+${PL}.workflow=${FOLD_WORKFLOW:-search} ${PL}.process_reward=none \
+${PL}.val_max_compactions=${VAL_MAX_COMPACTIONS:-3} ${PL}.compaction_threshold=${COMPACTION_THRESHOLD:-8192} \
+${PL}.compaction_tail_steps=${TAIL_STEPS:-2} ${PL}.summary_max_tokens=${SUMMARY_MAX_TOKENS:-2048} \
+${PL}.mask_unfinished=False ${PL}.resume_keep_task_prompt=${RESUME_KEEP_TASK_PROMPT:-True}"
 fi
 # Protocol (agents/protocol.py): v2 = corrected rollout format (default, new training runs); legacy = pre-3f697bf training-time
 # format for the Qwen3-8B checkpoints of Aug–Sep 2026. Set FOLD_PROTOCOL in the job env_map.
-[ -n "${FOLD_PROTOCOL:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.protocol=${FOLD_PROTOCOL}"
+[ -n "${FOLD_PROTOCOL:-}" ] && ARMFLAGS="$ARMFLAGS ${PL}.protocol=${FOLD_PROTOCOL}"
 VALFILE_SED=""
 [ -n "${FOLD_VAL_FILE:-}" ] && VALFILE_SED="-e s#TEST_DATA_PATH=data/bc_test.parquet#TEST_DATA_PATH=${FOLD_VAL_FILE}#"
 
 # E2E token-usage study (2026-09-17): optional inference-side workflow override (search = no branch tool /
 # no folding; search_branch = training-time prompt with the branch tool) and the per-rollout token ledger
 # (agents/e2e_ledger.py; written by the agent-loop workers into $OUTDIR/ledger, mirrored with the results).
-[ -n "${FOLD_WORKFLOW:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.workflow=${FOLD_WORKFLOW}"
-[ -n "${FOLD_SESSION_TIMEOUT:-}" ] && ARMFLAGS="$ARMFLAGS ++actor_rollout_ref.rollout.plugin.session_timeout=${FOLD_SESSION_TIMEOUT}"   # e2e t1n4 re-runs: 600 concurrent rollouts on one search+judge pod hit the 1 h default
+[ -n "${FOLD_WORKFLOW:-}" ] && ARMFLAGS="$ARMFLAGS ${PL}.workflow=${FOLD_WORKFLOW}"
+[ -n "${FOLD_SESSION_TIMEOUT:-}" ] && ARMFLAGS="$ARMFLAGS ${PL}.session_timeout=${FOLD_SESSION_TIMEOUT}"   # e2e t1n4 re-runs: 600 concurrent rollouts on one search+judge pod hit the 1 h default
 if [ "${FOLD_E2E_LEDGER:-0}" = 1 ]; then export FOLD_E2E_LEDGER_DIR=$OUTDIR/ledger; mkdir -p "$FOLD_E2E_LEDGER_DIR"; fi
 # Prompt capture for trace audits (agents/utils._capture_step): exact policy inputs per step, main + branches, mirrored with the results
 if [ "${FOLD_PROMPT_CAPTURE:-0}" = 1 ]; then export FOLD_PROMPT_CAPTURE_DIR=$OUTDIR/capture; mkdir -p "$FOLD_PROMPT_CAPTURE_DIR"; fi
 
 cd "$CHECKOUT"
+if [ "$LEGACY_LAUNCH" = 1 ]; then LAUNCH_SRC=scripts/train_bc_qwen3_8b.sh; else LAUNCH_SRC=scripts/train_bc.sh; export ARM MODEL_PATH=$MODEL SRC EXPERIMENT_NAME=valsc_${TAG}; fi
+# arm names of the unified launcher: norl evaluates the base model with the plain search scaffold (= grpo_no_compaction rollout)
+[ "$LEGACY_LAUNCH" = 0 ] && [ "$ARM" = norl ] && export ARM=grpo_no_compaction
 sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" $VALFILE_SED \
     -e "s#actor_rollout_ref.rollout.tensor_model_parallel_size=8#actor_rollout_ref.rollout.tensor_model_parallel_size=4#" \
     -e "s#trainer.n_gpus_per_node=8#trainer.n_gpus_per_node=4#" \
@@ -151,12 +156,12 @@ sed -e "s#MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=$MODEL#" $VALFILE_SED \
     -e "s#trainer.val_before_train=False#trainer.val_before_train=True#" \
     -e "s#trainer.val_only=False#trainer.val_only=True#" \
     -e "s#trainer.project_name=context_folding#trainer.project_name=context_folding trainer.resume_mode=disable trainer.validation_data_dir=${OUTDIR}/dump ${VAL_FLAGS} ${ARMFLAGS} actor_rollout_ref.rollout.agent.agent_loop_config_path=${SRC}/infra/agent_loop_config.yaml#" \
-    scripts/train_bc_qwen3_8b.sh > logs/launch_valsc.sh
+    "$LAUNCH_SRC" > logs/launch_valsc.sh
 log "launching self-contained val_only: $TAG (model=$MODEL)"
 bash logs/launch_valsc.sh 2>&1 | tee "$OUTDIR/valonly.log"
 kill $SHIM_PID 2>/dev/null
-grep -q "val/avg_score" "$OUTDIR/valonly.log" || fail "no val metrics"
-grep -oE "'val[^']*': [0-9.]+" "$OUTDIR/valonly.log" | tail -20 > "$OUTDIR/val_metrics.txt"
+grep -qE "val/avg_score|val-core/" "$OUTDIR/valonly.log" || fail "no val metrics"
+grep -oE "'val[^']*': [0-9.e-]+" "$OUTDIR/valonly.log" | tail -40 > "$OUTDIR/val_metrics.txt"
 cat "$OUTDIR/val_metrics.txt"
 touch "$MARK/VALONLY_${TAG}_DONE"
 kill $SEARCH_PID $JUDGE_PID 2>/dev/null

@@ -30,7 +30,7 @@ UVPIP="uv pip install --python $PY"
 log "core stack: torch 2.11.0+cu130, vllm 0.24.0, transformers 5.9.0, verl 0.9.1, fla 0.5.2 ..."
 $UVPIP --extra-index-url "$TORCH_INDEX" --index-strategy unsafe-best-match \
   "torch==2.11.0" "torchvision==0.26.0" "torchaudio==2.11.0" \
-  "vllm==0.24.0" "transformers==5.9.0" "verl==0.9.1" \
+  "vllm==0.24.0" "transformers==5.9.0" "verl[verl-core]==0.9.1" \
   "flash-linear-attention==0.5.2" "tensordict==0.10.0" "cupy-cuda13x==14.0.1" \
   "ray[default]>=2.41.0" wandb httpx openai pyzmq msgspec fastapi uvicorn \
   huggingface_hub hf_transfer pytest pandas "pyarrow>=19" datasets codetiming hydra-core \

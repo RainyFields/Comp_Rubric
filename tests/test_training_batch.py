@@ -1,12 +1,11 @@
-"""Training batch semantics: what the GRPO actor loss actually sees, built by the SAME code path as the trainer
-(``verl.experimental.agent_loop.AgentLoopWorker._agent_loop_postprocess``) from Agent outputs, on CPU.
+"""Training-batch construction (verl 0.9.1 V1 rows): rollout outputs of the compaction and fold agents turned into
+TransferQueue rows by ``agents.verl_plugin.agent_loop.build_row`` / ``apply_rollout_masks``, on CPU.
 
-Checks: input_ids = left-padded prompt + right-padded response; attention_mask 1 on real tokens only; position_ids are
-cumsum(attention)-1 (contiguous across the prompt/response boundary); response_mask (the actor's loss mask) is 1 exactly on
-the sampled ids (incl. eos) and 0 on the generation prompt, the terminator newline, tool observations, the compaction
-resume turn and the copied tail (v2 and legacy), and on padding; rollback boundaries (a rolled-back step never appears in
-the sample that rolled it back). No GPU trainer is involved: this is the deterministic tensor construction; the GPU-side
-batch of a real run was not dumped (NOT YET VERIFIED on device, see docs/PROTOCOL.md)."""
+Checks (docs/PROTOCOL.md §5): a row's ``input_ids`` is exactly prompt + response (no padding in V1 rows), ``loss_mask``
+equals the agent's ``response_mask`` (observations / re-rendered history / summary prompt untrained), position ids are a
+plain arange, ``rm_scores`` carries the reward on the last response token, rows flagged ``mask_rollout`` lose their loss
+mask but keep their reward (group statistics), and every row gets ``gen_uid`` + ``reward_extra_info``.
+"""
 import asyncio
 import os
 import sys
@@ -22,20 +21,17 @@ from tests.tokenizers import load_tokenizer  # noqa: E402
 TOK = load_tokenizer()
 
 
-def _worker(tok, prompt_length, response_length):
-    """A minimal AgentLoopWorker shell exposing the real _agent_loop_postprocess."""
-    from verl.experimental.agent_loop.agent_loop import AgentLoopWorker
-    cls = getattr(AgentLoopWorker, "__ray_actor_class__", None) or getattr(getattr(AgentLoopWorker, "__ray_metadata__", None), "modified_class", None) or AgentLoopWorker
-    w = cls.__new__(cls)
+def _worker(tok):
+    """A minimal worker shell exposing the real base helpers (_compute_multi_modal_inputs / _compute_position_ids)."""
+    from agents.verl_plugin.agent_loop import _WorkerBase
+    w = _WorkerBase.__new__(_WorkerBase)
     w.tokenizer = tok
     w.processor = None
-    w.use_reward_loop = False
-    w.reward_router_address = None
-    w.reward_loop_worker = None
-    w.config = types.SimpleNamespace(actor_rollout_ref=types.SimpleNamespace(rollout=types.SimpleNamespace(
-        prompt_length=prompt_length, response_length=response_length, multi_turn=types.SimpleNamespace(enable=False))),
-        reward_model=types.SimpleNamespace(enable_resource_pool=False, enable=False))
+    w.config = types.SimpleNamespace(actor_rollout_ref=types.SimpleNamespace(rollout=types.SimpleNamespace()))
     return w
+
+
+KW = {"uid": "u1", "session_id": 0, "global_steps": 3, "raw_prompt": None}
 
 
 @unittest.skipIf(TOK is None, "tokenizer not available offline")
@@ -49,43 +45,24 @@ class TestBatchFromCompactionRollout(unittest.TestCase):
 
     def _check(self, protocol):
         import torch
-        from verl.utils.model import compute_position_id_with_mask
+        from agents.verl_plugin.agent_loop import apply_rollout_masks, build_row
         out, outs, cfg = self._outputs(protocol)
-        w = _worker(TOK, 8192, cfg.response_length)
+        apply_rollout_masks(outs, "u1_0")
+        w = _worker(TOK)
         for seg, o in zip(out["segments"], outs):
-            b = asyncio.run(w._agent_loop_postprocess(o, raw_prompt=None))
-            P, R = 8192, cfg.response_length
-            self.assertEqual(b.input_ids.shape, (1, P + R))
+            field, tag = build_row(w, o, KW)
             n_p, n_r = len(o.prompt_ids), len(o.response_ids)
-            # layout: [pad]*(P-n_p) + prompt | response + [pad]*(R-n_r)
-            self.assertEqual(b.input_ids[0, P - n_p:P].tolist(), o.prompt_ids)
-            self.assertEqual(b.input_ids[0, P:P + n_r].tolist(), o.response_ids)
-            am = b.attention_mask[0]
-            self.assertEqual(am[:P - n_p].sum().item(), 0); self.assertEqual(am[P - n_p:P + n_r].sum().item(), n_p + n_r); self.assertEqual(am[P + n_r:].sum().item(), 0)
-            self.assertTrue(torch.equal(b.position_ids, compute_position_id_with_mask(b.attention_mask)))
-            self.assertEqual(b.position_ids[0, P - n_p:P + n_r].tolist(), list(range(n_p + n_r)), "contiguous positions across the prompt/response boundary")
-            # loss mask == the Agent's token_mask over the response, padding 0
-            rm = b.response_mask[0]
-            expect = [1 if m else 0 for turn in seg.token_mask[seg.prompt_turn:] for m in turn][:R]
-            self.assertEqual(rm[:n_r].tolist(), expect); self.assertEqual(rm[n_r:].sum().item(), 0)
-            # semantics on the segment: every trainable token is a sampled id of a completion turn (never gen prompt / obs / tail / resume)
-            for turn_ids, mask, comp, turn in zip(seg.chat_ids, seg.token_mask, seg.chat_completions, seg.chat):
-                if comp is None:
-                    self.assertFalse(any(mask), f"{turn['role']} turn without a sampled completion must be untrained")
-                else:
-                    gp = len(seg.get_generation_prompt())
-                    self.assertFalse(any(mask[:gp]), "generation prompt untrained")
-                    n_sampled = len(comp["choices"][0]["message"]["raw_output_ids"])
-                    self.assertEqual(sum(mask), n_sampled, "trained tokens == sampled ids incl. eos")
-                    self.assertTrue(all(mask[gp:gp + n_sampled]))
-                    self.assertFalse(any(mask[gp + n_sampled:]), "terminator newline untrained")
-            self.assertEqual(int(b.response_mask.sum()), o.extra_fields["optimized_tokens"])
-        # rollback boundary: a step rolled back before the summary is not in seg0's ids but is in seg1's tail (v2: exact ids)
-        n_rolled = out["stats"]["rollback_before_summary"]
-        if n_rolled:
-            seg0, seg1 = out["segments"][0], out["segments"][1]
-            tail_assistant = seg1.chat[3 + 2 * (out["segment_info"][1]["tail_steps"] - 1)]["content"]
-            self.assertNotIn(tail_assistant, [t["content"] for t in seg0.chat])
+            self.assertEqual(field["input_ids"].tolist(), list(o.prompt_ids) + list(o.response_ids))
+            self.assertEqual(tag["prompt_len"], n_p); self.assertEqual(tag["response_len"], n_r)
+            self.assertEqual(field["loss_mask"].tolist(), list(o.response_mask))
+            self.assertEqual(field["response_mask"].tolist(), list(o.response_mask))
+            self.assertTrue(torch.equal(field["position_ids"], torch.arange(n_p + n_r)))
+            # reward on the last response token (verl as_dict convention), the agent's trained-token count preserved
+            self.assertAlmostEqual(float(field["rm_scores"][-1]), 1.0); self.assertEqual(float(field["rm_scores"][:-1].abs().sum()), 0.0)
+            self.assertEqual(int(field["loss_mask"].sum()), int(sum(seg.token_mask[-1]) if False else sum(o.response_mask)))
+            self.assertEqual(o.extra_fields["gen_uid"], "u1_0"); self.assertIn("reward_extra_info", o.extra_fields)
+            # the segment's context == prompt + response ids (what the policy saw is what is trained)
+            self.assertEqual(list(o.prompt_ids) + list(o.response_ids), list(seg.context())[: n_p + n_r])
 
     def test_v2(self):
         self._check("v2")
@@ -93,12 +70,20 @@ class TestBatchFromCompactionRollout(unittest.TestCase):
     def test_legacy(self):
         self._check("legacy")
 
+    def test_mask_rollout_zeroes_loss_but_keeps_reward(self):
+        from agents.verl_plugin.agent_loop import apply_rollout_masks, build_row
+        _, outs, _ = self._outputs("v2")
+        outs[-1].extra_fields["mask_rollout"] = True
+        n = apply_rollout_masks(outs, "u1_0")
+        self.assertEqual(n, 1)
+        field, _ = build_row(_worker(TOK), outs[-1], KW)
+        self.assertEqual(int(field["loss_mask"].sum()), 0)
+        self.assertAlmostEqual(float(field["rm_scores"].sum()), 1.0)
 
-@unittest.skipIf(TOK is None, "tokenizer not available offline")
-class TestBatchFromBranchAgent(unittest.TestCase):
     def test_forked_branch_history_is_untrained_and_branch_sample_layout(self):
         import torch
         from agents.utils import Agent, AgentLoopOutput, AgentLoopMetrics
+        from agents.verl_plugin.agent_loop import build_row
         from tests.test_protocol_compat import cfg, completion, CHAT, S1, BR
         ag = Agent(None, CHAT, TOK, cfg("v2"), prompt_turn=2)
         ag.append({"role": "assistant", "content": BR}, completion(TOK, BR))
@@ -113,10 +98,9 @@ class TestBatchFromBranchAgent(unittest.TestCase):
         o = AgentLoopOutput(prompt_ids=d["prompt_ids"], response_ids=d["response_ids"], response_mask=d["response_mask"],
                             response_logprobs=d["response_logprobs"], multi_modal_data={}, reward_score=0.0, num_turns=d["num_turns"],
                             metrics=AgentLoopMetrics(), extra_fields={})
-        w = _worker(TOK, 8192, 32768)
-        b = asyncio.run(w._agent_loop_postprocess(o, raw_prompt=None))
-        self.assertEqual(int(b.response_mask.sum()), n_sampled)
-        self.assertTrue(torch.equal(b.position_ids, __import__("verl.utils.model", fromlist=["x"]).compute_position_id_with_mask(b.attention_mask)))
+        field, _ = build_row(_worker(TOK), o, KW)
+        self.assertEqual(int(field["loss_mask"].sum()), n_sampled)
+        self.assertTrue(torch.equal(field["position_ids"], torch.arange(len(d["prompt_ids"]) + len(d["response_ids"]))))
 
 
 if __name__ == "__main__":

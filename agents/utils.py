@@ -132,6 +132,9 @@ class CallLLM(LLMClass):  # Call LLM in Verl RL env
         self.config = config
         self.loop = loop
         self.call_openai = getattr(config.plugin, "call_openai", None)
+        # verl 0.9.1: the worker hands the rollout's sampling params (temperature/top_p/top_k; val_kwargs / greedy for
+        # validation) to AgentLoopBase.run(); they are the defaults of every call of this client (per-call overrides win).
+        self.sampling_params = dict(kwargs.get("sampling_params") or {})
 
     async def _create_completion(self, input_ids, **kwargs):
         from uuid import uuid4
@@ -155,13 +158,18 @@ class CallLLM(LLMClass):  # Call LLM in Verl RL env
 
         uid = kwargs.pop('uid', None) or uuid4().hex
 
-        sampling_params = kwargs.pop('sampling_params', None) or {}
+        sp = dict(self.sampling_params)
+        sp.update(kwargs.pop('sampling_params', None) or {})
         sampling_params = {
-            'temperature': sampling_params.get('temperature', 1.0),
-            'top_p': sampling_params.get('top_p', 1.0),
+            'temperature': sp.get('temperature', 1.0),
+            'top_p': sp.get('top_p', 1.0),
             'max_tokens': max_new_tokens,
             'logprobs': True,
         }
+        if sp.get('top_k') is not None:
+            sampling_params['top_k'] = sp['top_k']
+        if sp.get('repetition_penalty') not in (None, 1.0):
+            sampling_params['repetition_penalty'] = sp['repetition_penalty']
 
         output = await self.server_manager.generate(
             request_id=uid,

@@ -15,8 +15,8 @@ Tick in order. Commands assume the paths in `QWEN35_HANDOFF.md` §3.
        regenerate per README); copy `~/xiaoxuan/tokenizers/Qwen3.5-9B` from HDFS `fold-job-assets/tokenizers/`; make sure
        `/mnt/hdfs/mlsys` is mounted RW; merlin-cli authenticated (`--control-plane i18n-tt`).
 2. [~] **Tests on the old stack** — SKIPPED locally (23 GB free on `/`; pods restore `fold_train` from HDFS anyway). Clone integrity
-       was checked in the q35 venv instead (step 3/4 notes). One module is missing from the GitHub clone: `scripts/e2e_metrics.py`
-       (`tests/test_e2e_ledger.py` → `ModuleNotFoundError`); it was never committed — recover it from the old box and commit.
+       was checked in the q35 venv instead (step 3/4 notes). (`scripts/e2e_metrics.py` looked missing at first: a third-party `scripts` package in the q35 venv shadowed the
+       repo's namespace package; fixed by `scripts/__init__.py`, the file was always in git.)
        Original text: restore `~/xiaoxuan/envs/fold_train` from
        `fold-job-assets/fold_train.tar.gz`; run the 91 tests with both tokenizers (`QWEN35_HANDOFF.md` §5 step 0). Expect
        `OK` (Qwen3-8B) and `OK (skipped=3)` (Qwen3.5: recorded-id replays are Qwen3-8B ids).
@@ -46,7 +46,7 @@ Tick in order. Commands assume the paths in `QWEN35_HANDOFF.md` §3.
        * with the vendored `verl/` removed (pip verl 0.9.1) **62/73 pass on both tokenizers**; the 11 errors are exactly:
          7× fork estimators missing upstream (`compute_compaction_gae_advantage_return`, `compute_compaction_grpo_advantage`,
          `global_token_mean_scale` → re-add as the plugin), 3× `AgentLoopWorker._agent_loop_postprocess()` now takes `validate`
-         (`tests/test_training_batch.py` worker shell), 1× `scripts.e2e_metrics` missing from the clone (step 2).
+         (`tests/test_training_batch.py` worker shell), 1× `scripts.e2e_metrics` shadowed by a site-packages `scripts` package (fixed: `scripts/__init__.py`).
        * **Code fix already applied (commit after 7578352)**: transformers 5 returns a `BatchEncoding` from
          `apply_chat_template(..., tokenize=True)` (`return_dict` default flipped); every such call in `agents/utils.py`,
          `scripts/audit_rollout_trace.py` and the tests now passes `return_dict=False` (byte-identical ids; harmless on 4.57).

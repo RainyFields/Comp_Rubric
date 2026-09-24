@@ -1,4 +1,4 @@
-"""CompactionRL advantage estimators (verl/trainer/ppo/core_algos.py): cross-trajectory GAE (Eqs. 13-15 of
+"""CompactionRL advantage estimators (agents/verl_plugin/estimators.py, verl 0.9.1 plugin): cross-trajectory GAE (Eqs. 13-15 of
 arXiv:2607.05378) and the protocol-matched group-relative variant. CPU only:
 ``~/xiaoxuan/envs/fold_train/bin/python -m unittest tests.test_compaction_advantage -v``
 """
@@ -13,7 +13,7 @@ if REPO not in sys.path:
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
-from verl.trainer.ppo import core_algos  # noqa: E402
+from agents.verl_plugin import estimators as core_algos  # noqa: E402  (verl 0.9.1 plugin; bodies = the former fork code)
 
 
 def _terminal_reward_batch(lengths, rewards, L=12):
@@ -69,19 +69,21 @@ class TestCompactionGAE(unittest.TestCase):
 
 
 class TestGlobalTokenMean(unittest.TestCase):
-    def test_micro_batch_scales_sum_to_global_token_mean(self):
-        # mini-batch of 3 segments with very different lengths on 2 DP ranks; per-token losses all ones except one segment
+    def test_verl_token_mean_is_global(self):
+        """verl 0.9.1 agg_loss(token-mean) normalises every micro-batch by the global mini-batch token count (the
+        paper's token-level loss, formerly our global_token_mean patch): summing the DP-averaged micro-batch losses
+        equals the plain mean over all tokens, whatever the segment lengths."""
+        from verl.trainer.ppo.core_algos import agg_loss
         torch.manual_seed(0)
         lengths = [5, 50, 500]
-        losses = [torch.rand(n) for n in lengths]
+        losses = [torch.rand(1, n) for n in lengths]
         global_tokens = sum(lengths)
-        expected = torch.cat(losses).sum() / global_tokens                       # paper: every token weighs the same
-        # verl computes micro-batch token-mean, then multiplies by the scale; DP averaging divides by dp_size
+        expected = torch.cat(losses, dim=1).sum() / global_tokens
         for dp_size in (1, 4):
-            total = sum(l.mean() * core_algos.global_token_mean_scale(len(l), global_tokens, dp_size) for l in losses) / dp_size
-            self.assertAlmostEqual(total.item(), expected.item(), places=6)
-        # the old scheme (1/grad_accum) weighs every segment equally -> differs whenever lengths differ
-        old = sum(l.mean() for l in losses) / len(losses)
+            total = sum(agg_loss(l, torch.ones_like(l), "token-mean", dp_size=dp_size, batch_num_tokens=global_tokens)
+                        for l in losses) / dp_size
+            self.assertAlmostEqual(total.item(), expected.item(), places=5)
+        old = sum(l.mean() for l in losses) / len(losses)     # per-segment weighting differs whenever lengths differ
         self.assertNotAlmostEqual(old.item(), expected.item(), places=3)
 
 

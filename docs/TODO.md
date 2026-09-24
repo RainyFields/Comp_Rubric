@@ -119,7 +119,7 @@ Facts, decisions D1–D5 and work packages: `docs/plans/2026-09-23_qwen3.5_migra
 - [ ] Dump one live GPU training batch (response_mask stats) during the next training shakeout to close the "NOT YET VERIFIED on device" row.
 
 ## D4. Found while bootstrapping the new box (2026-09-23)
-- [ ] `scripts/e2e_metrics.py` is not in git (fresh clone → `tests/test_e2e_ledger.py` fails to import it): recover from the old box, commit.
+- [x] `scripts/e2e_metrics.py` was in git all along; the import failure was a site-packages `scripts` package shadowing ours → `scripts/__init__.py` (2026-09-24).
 - [ ] Remotes on the new clone: `origin` = RainyFields (docs say `github`); add the authors' upstream by hand if needed.
 
 ## E. Housekeeping

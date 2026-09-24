@@ -127,12 +127,18 @@ UPLOADER_PID=$!
 
 # --- arm-specific flags ---
 EXTRA=""
-TRAIN_SCRIPT=scripts/train_bc_qwen3_8b.sh
-case "$ARM" in
-  grpo)           EXTRA="algorithm.adv_estimator=grpo ++actor_rollout_ref.rollout.plugin.process_reward=none" ;;
-  compactionrl)   TRAIN_SCRIPT=scripts/train_bc_compactionrl.sh ;;      # flags live in the script
-  compactiongrpo) TRAIN_SCRIPT=scripts/train_bc_compactiongrpo.sh ;;
-esac
+if [ "${TRAIN_VENV:-fold_train}" = fold_train ]; then   # Qwen3-8B legacy stack (vendored verl 0.7, branch qwen3-8b-vendored-verl)
+  TRAIN_SCRIPT=scripts/train_bc_qwen3_8b.sh
+  case "$ARM" in
+    grpo)           EXTRA="algorithm.adv_estimator=grpo ++actor_rollout_ref.rollout.plugin.process_reward=none" ;;
+    compactionrl)   TRAIN_SCRIPT=scripts/train_bc_compactionrl.sh ;;      # flags live in the script
+    compactiongrpo) TRAIN_SCRIPT=scripts/train_bc_compactiongrpo.sh ;;
+  esac
+  LEGACY_LAUNCH=1
+else                                                      # Qwen3.5 stack: pip verl 0.9.1 + agents/verl_plugin, unified launcher (all arms)
+  TRAIN_SCRIPT=scripts/train_bc.sh
+  LEGACY_LAUNCH=0
+fi
 
 cd "$CHECKOUT"
 mkdir -p logs
@@ -145,7 +151,12 @@ sed -e "s#trainer.total_training_steps=100#trainer.total_training_steps=${STEPS}
 # append overrides: ckpt dir + custom agent loop registration (workers load it) + arm flags
 [ -n "${VAL_DUMP_DIR:-}" ] && EXTRA="$EXTRA trainer.validation_data_dir=${VAL_DUMP_DIR}"   # optional: per-val trajectory dumps
 [ -n "${ROLLOUT_DUMP_DIR:-}" ] && EXTRA="$EXTRA trainer.rollout_data_dir=${ROLLOUT_DUMP_DIR}"   # optional: per-step training-rollout dumps (shakeouts)
-sed -i "s#trainer.project_name=context_folding#trainer.project_name=context_folding trainer.default_local_dir=${LOCAL_CKPT} actor_rollout_ref.rollout.agent.agent_loop_config_path=${SRC}/infra/agent_loop_config.yaml ${EXTRA}#" logs/launch_${ARM}.sh
+if [ "$LEGACY_LAUNCH" = 1 ]; then
+  sed -i "s#trainer.project_name=context_folding#trainer.project_name=context_folding trainer.default_local_dir=${LOCAL_CKPT} actor_rollout_ref.rollout.agent.agent_loop_config_path=${SRC}/infra/agent_loop_config.yaml ${EXTRA}#" logs/launch_${ARM}.sh
+else   # train_bc.sh already registers the agent loops (agent_loop_config_path) and takes SRC/ARM/MODEL_PATH from the environment
+  export SRC
+  sed -i "s#trainer.project_name=context_folding#trainer.project_name=context_folding trainer.default_local_dir=${LOCAL_CKPT} ${EXTRA}#" logs/launch_${ARM}.sh
+fi
 log "launching: STEPS=$STEPS EXTRA='$EXTRA'"
 bash logs/launch_${ARM}.sh 2>&1 | tee "logs/train_${ARM}.log"
 rc=${PIPESTATUS[0]}
