@@ -72,6 +72,11 @@ else
 fi
 python -c "import torch,vllm,flash_attn,ray; print('torch',torch.__version__,'vllm',vllm.__version__)" || fail "import gate"
 if [ ! -d "$MODEL_PATH" ]; then hf download "$MODEL_PATH" >/dev/null 2>&1 || huggingface-cli download "$MODEL_PATH" >/dev/null || fail "dl $MODEL_PATH"; fi
+case "$MODEL_PATH" in /mnt/hdfs/*)   # shared HDFS weights (Qwen3.5-*): stage to pod-local disk once (vLLM + FSDP read them many times)
+  LOCAL_MODEL=/tmp/models/$(basename "$MODEL_PATH"); mkdir -p /tmp/models
+  if [ ! -f "$LOCAL_MODEL/config.json" ]; then t0=$(date +%s); cp -r "$MODEL_PATH" /tmp/models/ || fail "model staging"; log "staged $MODEL_PATH -> $LOCAL_MODEL in $(( $(date +%s) - t0 )) s"; fi
+  export MODEL_PATH=$LOCAL_MODEL ;;
+esac
 
 # --- local judge shim (scope judge via OPENAI_URL custom dialect; grader via OPENAI_BASE_URL) ---
 mkdir -p "$CHECKOUT/logs"

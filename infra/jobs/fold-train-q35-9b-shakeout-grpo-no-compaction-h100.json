@@ -1,0 +1,77 @@
+{
+ "name": "fold-train-q35-9b-shakeout-grpo-no-compaction-h100",
+ "namespace": "/user/xiaoxuan.lei",
+ "job_type": "train",
+ "attachments": [
+  {
+   "kind": "hdfs_volume",
+   "hdfs_volume_attachment": {
+    "hdfs_volumes": [
+     {
+      "path": "hdfs://harunava/home/byte_arnold_va_ssd/mlsys",
+      "mnt": "/mnt/hdfs/mlsys",
+      "access_mode": "RW",
+      "extra": "",
+      "roles": [
+       "worker"
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "job_config": {
+  "job_template_config": {
+   "entrypoint_full_script": "cp /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_train_entrypoint.sh /tmp/fold_entry.sh && bash /tmp/fold_entry.sh",
+   "image_meta": {
+    "image_source": "url",
+    "image_url": "aliyun-va-hub.byted.org/arnold/modelchef-gpu:1.0.0.54"
+   },
+   "env_map": {
+    "FOLD_ARM": "grpo_no_compaction",
+    "FOLD_STEPS": "3",
+    "FOLD_VENV": "fold_train_q35",
+    "FOLD_MODEL_PATH": "/mnt/hdfs/mlsys/models/Qwen3.5-9B",
+    "FOLD_PROTOCOL": "v2",
+    "FOLD_ROLLOUT_DUMP": "1",
+    "FOLD_RUN_SUFFIX": "_q35_shakeout",
+    "FOLD_TRAIN_FILE": "data/bc_train_580.parquet",
+    "FOLD_VAL_FILE": "data/bc_val.parquet",
+    "FOLD_PROMPT_LENGTH": "8192",
+    "FOLD_RESPONSE_LENGTH": "57344",
+    "FOLD_TURN_MAX_NEW_TOKENS": "8192",
+    "FOLD_MAX_CALLS_PER_TURN": "1",
+    "MERLIN_JOB_INSTANCE_TYPE": "Train",
+    "HAS_TT_DATA": "False",
+    "ML_FRAMEWORK": "pytorch",
+    "STORAGE_TYPE": "HDFS",
+    "FOLD_OUT_TAG": "q35_9b_shakeout_grpo_no_compaction",
+    "FOLD_WANDB_RUN_ID": "fold_q35_9b_shakeout_grpo_no_compaction_2026-09-24"
+   },
+   "git_repo": {
+    "repo_name": ""
+   }
+  }
+ },
+ "resource_config": {
+  "resource_backend": "arnold",
+  "arnold_resource_config": {
+   "cluster_ids": [
+    4
+   ],
+   "cluster_select_mode": "single",
+   "group_id": 765,
+   "roles": [
+    {
+     "name": "worker",
+     "num": 1,
+     "gpu": 8,
+     "gpu_type": "H100_SXM_80GB",
+     "queue_name": "compute-89-aliyun.va-cloudnative-aigcp-ark.eng.algorithm-guarantee",
+     "cpu": 188,
+     "memory_mb": 1638400
+    }
+   ]
+  }
+ }
+}
