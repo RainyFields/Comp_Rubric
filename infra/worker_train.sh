@@ -47,7 +47,7 @@ if [ ! -d "$CHECKOUT/.git" ]; then
   git clone "$SRC" "$CHECKOUT" || fail "clone"
 fi
 mkdir -p "$CHECKOUT/data"
-cp -n "$SRC/data/bc_train.parquet" "$SRC/data/bc_test.parquet" "$CHECKOUT/data/" 2>/dev/null || true
+cp -n "$SRC/data/"*.parquet "$CHECKOUT/data/" 2>/dev/null || true   # incl. bc_train_580 / bc_val (Experiment I split)
 
 # --- training venv (vllm 0.10.2 + prebuilt flash-attn; NEVER source-build) ---
 export HF_HOME=/tmp/fold_train_hf
@@ -143,7 +143,7 @@ fi
 cd "$CHECKOUT"
 mkdir -p logs
 export PYTHONPATH=$CHECKOUT${PYTHONPATH:+:$PYTHONPATH}   # ray AgentLoopWorkers must import scripts.train_fold
-export ARM MODEL_PATH MODEL_TAG STEPS EXPERIMENT_NAME=$RUN_NAME   # picked up by the unified launcher when TRAIN_SCRIPT=scripts/train_bc.sh
+export ARM MODEL_PATH MODEL_TAG STEPS EXPERIMENT_NAME=$RUN_NAME PROTOCOL=${PROTOCOL:-v2}   # picked up by the unified launcher when TRAIN_SCRIPT=scripts/train_bc.sh (+ the FOLD_* knobs exported by the entrypoint)
 sed -e "s#trainer.total_training_steps=100#trainer.total_training_steps=${STEPS}#" \
     -e "s#trainer.experiment_name=test_run#trainer.experiment_name=${RUN_NAME}#" \
     -e "s#^MODEL_PATH=Qwen/Qwen3-8B#MODEL_PATH=${MODEL_PATH}#" \

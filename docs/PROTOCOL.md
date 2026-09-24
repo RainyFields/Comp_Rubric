@@ -87,3 +87,27 @@ The GPU-side batch of a live training step has not been dumped (see verification
 - Legacy mode reproduces the training-time *format*; it cannot reproduce the old harness's accidental behaviours that depended on
   nondeterministic sampling.
 - The Qwen3.5 checks are tokenizer/template-level on this devbox (no Qwen3.5 checkpoint here): see `tests/test_qwen35_template.py`.
+
+
+## Addendum 2026-09-24 — verl 0.9.1 port (agents/verl_plugin) and SUPO protocol
+
+* **Sampling parameters are now honoured.** `CallLLM` takes the rollout worker's `sampling_params` (temperature / top_p /
+  top_k; `val_kwargs`, or greedy when `val_kwargs.do_sample=False`). Under the vendored verl every call, validation
+  included, sampled at temperature 1.0 / top_p 1.0 regardless of the config ("greedy" evals of the Qwen3-8B campaign were
+  T=1 samples). Training rollouts are unchanged (T=1.0, top_p 1.0, no penalties).
+* **Rows and masks (verl 0.9.1 V1).** Every agent-loop output is one TransferQueue row `{uid}_{session_id}_{index}`
+  with unpadded `input_ids = prompt + response`, `loss_mask = response_mask`, `rm_scores` = reward on the last response
+  token. `gen_uid = {uid}_{session_id}` identifies the rollout for the group statistics. Rows flagged `mask_rollout`
+  (unfinished zero-reward rollouts under `mask_unfinished`, SUPO overlong rollouts) get `response_mask = 0` and keep
+  their reward in the group statistics (`agents/verl_plugin/agent_loop.apply_rollout_masks`). Token-mean loss is
+  normalised by the global mini-batch token count (verl 0.9.1 `agg_loss`).
+* **SUPO summary protocol** (`plugin.summary_protocol=supo`, arm `supo`): trigger when the segment's occupied context
+  (prompt + generated + observed tokens) reaches `summary_ratio` × (`prompt_length` + `response_length`) after an
+  (action, observation) pair; that pair is discarded; the summary is written by the policy after the SUPO `v_sum` prompt
+  (user turn, `<summary>` tags, trainable); the next trajectory = original prompt + `We are in the following stage of
+  solving the problem:\n<summary>`; no verbatim tail; summaries count towards the turn limit H; at most `max_summaries`
+  (native 2, unified 3); rollouts that do not finish are overlong → masked. Advantage `supo` = rollout-level GRPO
+  broadcast to every trajectory (= `compaction_grpo` at γ = λ = 1).
+* **Caps (D5).** `plugin.turn_max_new_tokens` (8 192), `plugin.max_turn` (100 assistant turns), `plugin.max_tool_calls`
+  (100 executed tool invocations per rollout, main + branches, counted in `agents.utils.run_action`),
+  `plugin.max_calls_per_turn` (1). The per-call occupied-context ceiling is `prompt_length + response_length` (65 536).

@@ -113,3 +113,31 @@ Implementation notes for D5 in this harness: the per-call ceiling maps to `max_m
 `response_length` no longer a fixed split — the agent must cap each call at `min(8 192, 65 536 − occupied)` new tokens and
 treat "occupied ≥ ceiling − margin" as window exhaustion (CM trigger for compaction/SUPO; forced finish for the baseline).
 Turn accounting: `max_session`/turn counters become "assistant turns ≤ 100" and "tool invocations ≤ 100", `max_calls_per_turn=1`.
+
+## 7. Compute table (D4; before any launch) — draft 2026-09-24, to be refined with the pilot step times
+
+Assumptions: Qwen3-8B/32k step ≈ 26–36 min on 8×H100 (incl. in-training val on 150 tasks); 64k windows ≈ 2× tokens per
+rollout; Qwen3.5-9B ≈ 1.15× Qwen3-8B FLOPs (+ 248k-vocab log-probs); 27B ≈ 3× 9B per token; PPO + critic ≈ 1.6× GRPO;
+100 steps per run; 4 h queue-reclamation grid ⇒ +15 % wall for resume/restore. Validation every 10 steps on the 100-task
+val set. User guidance: run as many pods concurrently as the queue provides; >2 nodes for 27B when it shortens wall time.
+
+| # | method | model | track | seeds (round 1 / final) | nodes × GPUs | est. GPU-h / run | est. wall / run |
+|---|---|---|---|---|---|---|---|
+| 1 | grpo_no_compaction (baseline) | 9B | unified 64k (= native) | 1 / 3 | 1×8 H100 | ≈ 650 | ≈ 3.4 d |
+| 2 | foldgrpo | 9B | unified 64k/256k | 1 / 3 | 1×8 | ≈ 750 | ≈ 3.9 d |
+| 3 | foldgrpo | 9B | native 32k, 10 branches | 1 / 1 | 1×8 | ≈ 400 | ≈ 2.1 d |
+| 4 | supo | 9B | unified 64k, 3 summaries (eval also ×2 native) | 1 / 3 | 1×8 | ≈ 700 | ≈ 3.6 d |
+| 5 | compactionrl (PPO + critic) | 9B | unified 64k, 3 compactions (eval also T_comp native) | 1 / 3 | 1×8 | ≈ 1 100 | ≈ 5.7 d |
+| 6 | grpo (branch tool exposed, ablation) | 9B | unified | 0 / 1 | 1×8 | ≈ 700 | ≈ 3.6 d |
+| 7 | grpo_no_compaction | 27B | unified | 1 / 3 | 2×8 (TP 8 rollout) or 4×8 | ≈ 2 000 | ≈ 5.2 d on 16 GPUs / ≈ 3 d on 32 |
+| 8 | foldgrpo | 27B | unified | 1 / 3 | 2×8 or 4×8 | ≈ 2 300 | ≈ 6 d / 3.5 d |
+| 9 | foldgrpo | 27B | native 32k | 1 / 1 | 2×8 | ≈ 1 200 | ≈ 3.1 d |
+| 10 | supo | 27B | unified | 1 / 3 | 2×8 or 4×8 | ≈ 2 100 | ≈ 5.5 d / 3.2 d |
+| 11 | compactionrl | 27B | unified | 1 / 3 | 3×8 (critic) or 4×8 | ≈ 3 300 | ≈ 5.7 d on 24 / 4.3 d on 32 |
+| — | infra pod (search + judge), one per concurrent training pod set | – | – | – | 1×8 | shared | continuous |
+| — | evals: 150 test × (greedy + T1×5) × settings, per checkpoint | 9B / 27B | native + unified + 128k | – | 1×8 | ≈ 40 / 120 per checkpoint-setting | 5 h / 15 h |
+
+Round 1 (one seed each, rows 1–5 and 7–11): ≈ 15 000 GPU-h; with 4 concurrent 9B pods the 9B block takes ≈ 6 days wall,
+the 27B block ≈ 6–7 days on 2×(4×8) pods. Final replication (3 seeds on rows 1, 2, 4, 5, 7, 8, 10, 11): ≈ +25 000 GPU-h,
+staged. 128k no-compaction references are eval-only (rows "evals"). Numbers to be replaced by measured step times from the
+3-step shakeouts before the launch decision.

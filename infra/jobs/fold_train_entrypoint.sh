@@ -7,6 +7,14 @@ source /mnt/hdfs/mlsys/users/xiaoxuan/fold-job-assets/fold_common_bootstrap.sh
 ARM=${FOLD_ARM:?}; STEPS=${FOLD_STEPS:-100}
 [ -n "${FOLD_MODEL_PATH:-}" ] && export MODEL_PATH=$FOLD_MODEL_PATH   # policy family (default Qwen/Qwen3-8B in worker_train.sh)
 [ -n "${FOLD_PROTOCOL:-}" ] && export PROTOCOL=$FOLD_PROTOCOL           # rollout protocol (agents/protocol.py): v2 default | legacy
+# Qwen3.5 / Experiment I knobs (scripts/train_bc.sh reads them from the environment; unset = launcher defaults)
+for kv in TRAIN_FILE:TRAIN_DATA_PATH VAL_FILE:TEST_DATA_PATH PROMPT_LENGTH:PROMPT_LENGTH RESPONSE_LENGTH:RESPONSE_LENGTH \
+          TURN_MAX_NEW_TOKENS:TURN_MAX_NEW_TOKENS MAX_TURN:MAX_TURN MAX_TOOL_CALLS:MAX_TOOL_CALLS MAX_CALLS_PER_TURN:MAX_CALLS_PER_TURN \
+          SESSION_TIMEOUT:SESSION_TIMEOUT USE_FUSED_KERNELS:USE_FUSED_KERNELS USE_REMOVE_PADDING:USE_REMOVE_PADDING \
+          MAX_SUMMARIES:MAX_SUMMARIES SUMMARY_RATIO:SUMMARY_RATIO MAX_COMPACTIONS:MAX_COMPACTIONS COMPACTION_THRESHOLD:COMPACTION_THRESHOLD \
+          TAIL_STEPS:TAIL_STEPS SUMMARY_MAX_TOKENS:SUMMARY_MAX_TOKENS ROLLOUT_N:ROLLOUT_N TRAIN_BATCH:TRAIN_BATCH LR:LR TP:TP; do
+  src=FOLD_${kv%%:*}; dst=${kv##*:}; [ -n "${!src:-}" ] && export "$dst=${!src}"
+done
 OUT=${FOLD_OUT_TAG:-$ARM}   # HDFS output subdir (ckpt/val dumps/logs); shakeouts set e.g. <arm>_shakeout to keep the arm dir clean
 export MARK=${FOLD_MARK:-/mnt/hdfs/mlsys/xiaoxuan/fold_replication/markers_fix}
 export HDFS_CKPT=/mnt/hdfs/mlsys/xiaoxuan/fold_replication/ckpt_fix/$OUT

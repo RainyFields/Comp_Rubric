@@ -40,7 +40,14 @@ Tick in order. Commands assume the paths in `QWEN35_HANDOFF.md` §3.
        flash-linear-attention 0.5.2, causal-conv1d 1.7.0, flash-attn wheel. Smoke: load `Qwen3_5ForCausalLM` 9B bf16; `vllm serve` 9B
        TP=1 and TP=8; one chat completion with `enable_thinking=true`; confirm the completion has no `<think>` opener. Tarball it to
        `fold-job-assets/fold_train_q35.tar.gz` (+ `.md5`) and add a `restore_venv fold_train_q35` line to the job entrypoints.
-4. [ ] **Port to verl 0.9.1** (migration plan WP3) — measured 2026-09-23 in the q35 venv (73 tests collected here):
+4. [x] **Port to verl 0.9.1** — DONE 2026-09-24 (commits 6c29a7b, 35c4c88, 8104b35): design `docs/plans/2026-09-24_verl091_port_design.md`;
+       plugin `agents/verl_plugin/` (estimators foldgrpo/compaction_gae/compaction_grpo/supo, `FoldSyncTrainer` = `trainer.v1.trainer_mode=fold_sync`,
+       `FoldAgentLoopWorkerTQ`/`ManagerTQ`, `FoldTaskRunner`); loops on the 0.9.1 API; `rollout.custom.plugin.*`; CallLLM honours sampling
+       params (greedy is greedy now — PROTOCOL.md addendum); launcher + workers rewritten; vendored `verl/` removed from main (branch
+       `qwen3-8b-vendored-verl`); **97/97 tests pass on both tokenizers** in `fold_train_q35`. SUPO arm (`summary_protocol=supo`) and the
+       D5 caps (`max_tool_calls`, 8k turn cap, 1 call/turn) implemented + tested (tests/test_supo_semantics.py). New arm `grpo_no_compaction`.
+       NOT YET: GPU shakeout (step 6), `use_fused_kernels` (off until measured), hydra dry-run of every arm (slow import; running).
+       History (2026-09-23 measurement before the port):
        * with the vendored `verl/` on `sys.path` (running from the repo root) 33/73 error: `verl/utils/model.py` imports
          `AutoModelForVision2Seq`, removed in transformers 5 → the vendored copy is unusable in this venv, as predicted;
        * with the vendored `verl/` removed (pip verl 0.9.1) **62/73 pass on both tokenizers**; the 11 errors are exactly:
