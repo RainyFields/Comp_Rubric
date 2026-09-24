@@ -30,7 +30,7 @@
    "env_map": {
     "FOLD_VENV": "fold_train_q35",
     "FOLD_MODEL_PATH": "/mnt/hdfs/mlsys/models/Qwen3.5-9B",
-    "MERLIN_JOB_INSTANCE_TYPE": "XPerf",
+    "MERLIN_JOB_INSTANCE_TYPE": "Evaluation",
     "HAS_TT_DATA": "False",
     "ML_FRAMEWORK": "pytorch",
     "STORAGE_TYPE": "HDFS"
@@ -55,8 +55,8 @@
      "gpu": 1,
      "gpu_type": "H100_SXM_80GB",
      "queue_name": "compute-89-aliyun.va-cloudnative-aigcp-ark.eng.algorithm-guarantee",
-     "cpu": 24,
-     "memory_mb": 204800
+     "cpu": 12,
+     "memory_mb": 193024
     }
    ]
   }
