@@ -38,7 +38,7 @@ from verl import DataProto
 
 from .fold_agent import print_chat
 from .parsing import extract_summary, strip_think
-from .prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT, create_chat
+from .prompts import COMPACTION_RESUME_TEMPLATE, COMPACTION_SUMMARY_PROMPT, SUPO_CONTINUATION_TEMPLATE, SUPO_SUMMARY_PROMPT, create_chat
 from .parsing import parse_actions
 from .utils import CAPTURE_TAG, Agent, AgentLoopMetrics, AgentLoopOutput, TaskContext, capture_action, capture_event, run_action, select_env, wrap_tool_response
 
@@ -57,14 +57,39 @@ class CompactionConfig:
     max_consecutive_no_call: int = 3  # loop protection: stop after N consecutive turns without a valid call (0 = off)
     resume_keep_task_prompt: bool = True   # True: resumed segment = (system + task) + u_resume + tail (FoldAgent runs so far);
                                            # False: paper Eq. 9, (system) + u_resume + tail — the task survives only via the summary
+    # --- SUPO semantics (arXiv:2510.06727, decision D1 2026-09-24) on the same rollout ---
+    summary_protocol: str = "compactionrl"  # "compactionrl": trigger on remaining generated budget < threshold, tail kept;
+                                            # "supo": trigger when the occupied context >= summary_ratio * (prompt_length + response_length)
+                                            #         after an (action, observation) pair, that pair is DROPPED, no tail, SUPO prompts,
+                                            #         summaries count as steps (H), unfinished rollouts are overlong (mask_unfinished)
+    summary_ratio: float = 0.95
+    max_tool_calls: int = 0                 # D5: tool invocations per rollout (0 = off); counted in agents.utils.run_action
+
+    @property
+    def supo(self) -> bool:
+        return self.summary_protocol == "supo"
+
+    @property
+    def summary_prompt(self) -> str:
+        return SUPO_SUMMARY_PROMPT if self.supo else COMPACTION_SUMMARY_PROMPT
+
+    @property
+    def resume_template(self) -> str:
+        return SUPO_CONTINUATION_TEMPLATE if self.supo else COMPACTION_RESUME_TEMPLATE
 
     @classmethod
     def from_plugin(cls, plugin: Any, is_train: bool) -> "CompactionConfig":
         g = lambda k, d: getattr(plugin, k, d) if plugin is not None else d  # noqa: E731
+        protocol = str(g("summary_protocol", cls.summary_protocol))
         max_comp = g("max_compactions", cls.max_compactions)
+        if protocol == "supo":
+            max_comp = g("max_summaries", max_comp)
         if not is_train:
-            max_comp = g("val_max_compactions", max_comp)
+            max_comp = g("val_max_summaries", g("val_max_compactions", max_comp)) if protocol == "supo" else g("val_max_compactions", max_comp)
         return cls(
+            summary_protocol=protocol,
+            summary_ratio=float(g("summary_ratio", cls.summary_ratio)),
+            max_tool_calls=int(g("max_tool_calls", cls.max_tool_calls) or 0),
             max_compactions=int(max_comp),
             threshold=int(g("compaction_threshold", cls.threshold)),
             tail_steps=int(g("compaction_tail_steps", cls.tail_steps)),
@@ -89,7 +114,8 @@ def _generated_tokens(seg: Agent) -> int:
     return len(seg.context()) - seg.prompt_ids_len - len(seg.get_generation_prompt())
 
 
-async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary, tail, keep_task_prompt=True):
+async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary, tail, keep_task_prompt=True,
+                         resume_template=COMPACTION_RESUME_TEMPLATE):
     """Resumed context: (prompt) + u_resume(S) + tail steps, all as non-trainable turns.
 
     ``keep_task_prompt=False`` follows the paper's Eq. 9 literally — only the system prompt precedes
@@ -102,7 +128,7 @@ async def _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn
         seg_prompt_turn = sum(1 for t in user_prompt[:prompt_turn] if t.get("role") == "system")
     seg = Agent(llm_client, seg_prompt, tokenizer, config, prompt_turn=seg_prompt_turn)
     seg.capture_name = "segment"      # renumbered below by the caller
-    seg.append({"role": "user", "content": COMPACTION_RESUME_TEMPLATE.format(summary=summary)})
+    seg.append({"role": "user", "content": resume_template.format(summary=summary)})
     for assistant_text, observation_wrapped, assistant_ids, observation_ids in tail:
         if seg.protocol.tail_inherit == "ids":
             # verbatim tail: the previous segment's exact token ids (raw sampled assistant turn incl. its think block, and
@@ -146,26 +172,42 @@ async def run_compaction_rollout(
 
     used = _generated_tokens                 # per segment: its own prompt length is subtracted (prompts may differ)
 
+    ceiling = int(getattr(config, "prompt_length", 0) or 0) + int(config.response_length)   # per-call occupied-context ceiling
+    q_sum, resume_tpl = cc.summary_prompt, cc.resume_template
+
     while iteration < cc.max_turn:
         if time.time() - t0 > cc.session_timeout:
             stop_reason = "timeout"
             break
+        if cc.max_tool_calls and env is not None and getattr(env, "stats", {}).get("tool_calls", 0) >= cc.max_tool_calls:
+            stop_reason = "max_tool_calls"
+            break
         remaining = budget - used(seg)
-        if remaining < cc.threshold:
+        if cc.supo:   # SUPO: trigger on the occupied context of the segment (prompt + everything generated/observed so far)
+            trigger = len(seg.context()) >= cc.summary_ratio * ceiling
+        else:         # CompactionRL: trigger on the remaining generated-token budget of the segment
+            trigger = remaining < cc.threshold
+        if trigger:
             if stats["compactions"] >= cc.max_compactions:
                 stop_reason = "budget_exhausted"
                 break
             tail = list(steps[-cc.tail_steps:]) if cc.tail_steps > 0 else []
+            if cc.supo and len(steps) >= 1:   # SUPO Alg. 2: the (action, observation) pair that crossed L is discarded
+                seg.rollback(k=2)
+                steps.pop()
+                stats["dropped_pairs"] += 1
             # The summary must fit in this segment's budget: q_sum + up to summary_max_tokens of summary.
             # Roll the most recent steps back out of the segment until it does; they stay in the tail,
             # so the model still sees them verbatim after compaction (only the loss on them is forgone).
-            q_len = len(seg.render_single_turn({"role": "user", "content": COMPACTION_SUMMARY_PROMPT}))
+            q_len = len(seg.render_single_turn({"role": "user", "content": q_sum}))
             room = q_len + cc.summary_max_tokens
             while budget - used(seg) < room and len(steps) >= 1:
                 seg.rollback(k=2)
                 steps.pop()
                 stats["rollback_before_summary"] += 1
-            seg.append({"role": "user", "content": COMPACTION_SUMMARY_PROMPT})   # plain user turn: new query boundary
+            seg.append({"role": "user", "content": q_sum})   # plain user turn: new query boundary
+            if cc.supo:
+                iteration += 1                                # SUPO counts the summary call towards H
             summary_resp = await seg.step(max_new_tokens=max(1, min(cc.summary_max_tokens, budget - used(seg))))
             if summary_resp is None:
                 stop_reason = "llm_none"
@@ -174,7 +216,7 @@ async def run_compaction_rollout(
             if not cc.train_summary:                      # "w/o summary training": generated but no loss
                 seg.token_mask[-1] = [False] * len(seg.token_mask[-1])
             summary = _summary_from_response(summary_resp)
-            session_message.append({"role": "user", "content": COMPACTION_SUMMARY_PROMPT})
+            session_message.append({"role": "user", "content": q_sum})
             session_message.append({"role": "assistant", "content": summary_resp})
             seg_info[-1]["summary_tokens"] = n_sum if cc.train_summary else 0   # trained summary tokens
             stats["compactions"] += 1
@@ -185,8 +227,9 @@ async def run_compaction_rollout(
             k = len(tail)
             while True:
                 new_seg = await _build_segment(llm_client, user_prompt, tokenizer, config, prompt_turn, summary,
-                                               tail[len(tail) - k:], keep_task_prompt=cc.resume_keep_task_prompt)
-                if budget - used(new_seg) >= cc.threshold or k == 0:
+                                               tail[len(tail) - k:], keep_task_prompt=cc.resume_keep_task_prompt,
+                                               resume_template=resume_tpl)
+                if cc.supo or budget - used(new_seg) >= cc.threshold or k == 0:
                     break
                 k -= 1
             stats["tail_steps"] += k
@@ -195,7 +238,7 @@ async def run_compaction_rollout(
             segments.append(seg)
             seg_info.append({"summary_tokens": 0, "tail_steps": k})
             steps = list(tail[len(tail) - k:])
-            session_message.append({"role": "user", "content": COMPACTION_RESUME_TEMPLATE.format(summary=summary)})
+            session_message.append({"role": "user", "content": resume_tpl.format(summary=summary)})
             continue
 
         iteration += 1
@@ -347,5 +390,12 @@ async def process_item(item: DataProto, context: TaskContext) -> Union[AgentLoop
         "num_branches": 0, "branch_names": [], "is_finish": is_finish,
         "message_str": print_chat(rollout["session_message"]),
         "stop_reason": rollout["stop_reason"], "uid": uid, "gen_uid": gen_uid,
+        # numeric per-rollout stats -> verl 0.9.1 validation metrics (val-aux/<data_source>/<key>/...) and val dumps
+        "reward_extra_info": {
+            "finished": int(is_finish), "compactions": int(st["compactions"]), "turns": int(st["turns"]),
+            "segments": int(st["segments"]), "budget_exhausted": int(rollout["stop_reason"] == "budget_exhausted"),
+            "tool_calls": int(env.stats.get("tool_calls", 0)), "dropped_pairs": int(st["dropped_pairs"]),
+            "mask_rollout": int(mask_rollout), "summary_tokens": int(st["summary_tokens_generated"]),
+        },
     }
     return await _segment_outputs(rollout, score[1], mask_rollout, extra, is_train)

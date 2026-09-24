@@ -959,3 +959,18 @@ COMPACTION_RESUME_TEMPLATE = '''Your context window was compacted. The summary b
 <summary>
 {summary}
 </summary>'''
+
+
+# ---- SUPO (arXiv:2510.06727) summarisation prompt v_sum (App. B.2, generic tool-calling variant) and the continuation
+# template (App. C.1.1): the next trajectory starts from the ORIGINAL prompt followed by this user turn. Used by
+# agents/compaction_agent.py when plugin.summary_protocol=supo (decision D1, 2026-09-24). Sent as a user turn: the Qwen
+# templates forbid mid-conversation system messages (the paper shows it as "System:").
+SUPO_SUMMARY_PROMPT = (
+    "You are a helpful agent interacting with a function calling environment to solve user's problem. "
+    "The interaction history is now too long. Please summarize the interaction history.\n"
+    "- Remember to keep the important information in the history to ensure that you can continue "
+    "solving the problem.\n"
+    "- Do not call any function in this turn.\n"
+    "Now generate the summary, and put your summary inside tag <summary></summary>."
+)
+SUPO_CONTINUATION_TEMPLATE = "We are in the following stage of solving the problem:\n{summary}"

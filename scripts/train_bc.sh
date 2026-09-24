@@ -75,7 +75,10 @@ case "$ARM" in
       +actor_rollout_ref.rollout.custom.plugin.enable_summary=False +actor_rollout_ref.rollout.custom.plugin.branch_len=${RESPONSE_LENGTH}
       +actor_rollout_ref.rollout.custom.plugin.process_reward=none +actor_rollout_ref.rollout.custom.plugin.max_traj=11" ;;
   compactiongrpo|compactionrl|supo)
-    EST=compaction_grpo; [ "$ARM" = compactionrl ] && EST=compaction_gae; [ "$ARM" = supo ] && EST=supo
+    EST=compaction_grpo; [ "$ARM" = compactionrl ] && EST=compaction_gae
+    if [ "$ARM" = supo ]; then   # SUPO presets (decision D1): summaries = max_summaries, no verbatim tail, overlong rollouts masked
+      EST=supo; MAX_COMPACTIONS=$MAX_SUMMARIES; VAL_MAX_COMPACTIONS=${VAL_MAX_SUMMARIES:-$MAX_SUMMARIES}; TAIL_STEPS=0; MASK_UNFINISHED=True; RESUME_KEEP_TASK_PROMPT=True
+    fi
     ARM_FLAGS="algorithm.adv_estimator=${EST} actor_rollout_ref.rollout.agent.default_agent_loop=compaction_agent
       +actor_rollout_ref.rollout.custom.plugin.workflow=search +actor_rollout_ref.rollout.custom.plugin.process_reward=none
       +actor_rollout_ref.rollout.custom.plugin.max_compactions=${MAX_COMPACTIONS}

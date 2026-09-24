@@ -78,6 +78,7 @@ async def process_item(
     summary_prompt = SUMMARY_PROMPT_SEARCH if 'search' in workflow else SUMMARY_PROMPT_CODE
 
     max_turn = getattr(config.plugin, 'max_turn', 64) if config.plugin else 64
+    max_tool_calls = int(getattr(config.plugin, 'max_tool_calls', 0) or 0)   # D5: tool invocations per rollout (0 = off), counted in agents.utils.run_action
     max_session = getattr(config.plugin, "max_session", 5)
     if not is_train:
         max_session = getattr(config.plugin, "val_max_session", max_session)
@@ -110,6 +111,10 @@ async def process_item(
     session_message = []
     stop_reason = 'max_turn'
     while iteration < max_turn:
+        if max_tool_calls and env.stats.get('tool_calls', 0) >= max_tool_calls:
+            print(f'[SESSION] stop: tool-invocation cap {max_tool_calls} reached')
+            stop_reason = 'max_tool_calls'
+            break
         if time.time() - session_start_time > session_timeout:
             print('[SESSION] Session Timeout')
             stop_reason = 'timeout'

@@ -773,6 +773,13 @@ async def run_action(env, response):
             env_return = {'observation': 'Action timed out after 120 seconds'}
         if 'action' in env_return:
             action, arguments = env_return['action'], env_return.get('arguments', {})
+            # tool-invocation ledger for the per-rollout cap (decision D5: plugin.max_tool_calls); one env per rollout,
+            # shared by the main thread and its branches; multi-call turns count each executed call
+            try:
+                n_exec = len(getattr(env, 'last_action_results', None) or []) or 1
+                env.stats['tool_calls'] = env.stats.get('tool_calls', 0) + n_exec
+            except Exception:
+                pass
             if action == 'finish':
                 return None
         elif env_return.get('observation', None) == 'finish':
