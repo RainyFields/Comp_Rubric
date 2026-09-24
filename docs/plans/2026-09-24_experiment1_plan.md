@@ -91,3 +91,25 @@ the ark H100 queue has pended 8-GPU jobs for hours/days; A100 schedules in minut
 - **Q8 Judge / retriever** stay gpt-oss-120b / Qwen3-Embedding-8B (unchanged from the Qwen3-8B campaign)?
 
 Work that proceeds regardless of the answers: 0.1 (smoke), 0.2 (WP3 port), 0.4 window knobs, 0.5 ledger/archive.
+
+## 6. Decisions (user, 2026-09-24) — supersede §5 where they differ
+
+| # | Decision |
+|---|---|
+| D1 SUPO | Reuse the search/compaction rollout; reproduce SUPO semantics faithfully on BC-Plus: policy-generated summaries, trigger at 95 % of the working context, native max 2 summaries, SUPO overlong masking and advantage treatment. Port the CodeGym `SupoAgentLoop` only if the current rollout cannot express these exactly. |
+| D2 Baseline | New `grpo_no_compaction` arm: no branch/summary/compaction tool exposed in training. Existing branch-tool-exposed `grpo` = additional ablation only. Evaluate the no-compaction checkpoint under (a) no CM tool, (b) CM tool exposed zero-shot, (c) harness-forced compaction. |
+| D3 27B | 9B first for smoke/debugging; prepare the 27B path in parallel; 27B is NOT contingent on 9B gains (capacity is a variable of interest). |
+| D4 Matrix | §2 reduction accepted for the initial phase. Before launching, deliver a complete table: method × model × native/unified × seeds × nodes/GPUs × estimated GPU-hours. Do not launch the full matrix yet. |
+| D5 Caps | No fixed 8k/56k split. **64k per-call occupied-context ceiling** (prompt + generation of one call), initial **8k assistant-generation cap per call**, 100 assistant turns, 100 tool invocations, one parallel tool invocation. Calibrate the total generated-token cap from pilot trajectories. |
+| D6 Validation | Hold out 100 of the 680 training tasks as fixed `data/bc_val.parquet` (`scripts/make_val_split.py`, seed 20260924, record `docs/splits/bc_val_split.json`; training file `data/bc_train_580.parquet`). The 150 test tasks stay untouched until the protocol and checkpoint-selection rules are frozen. |
+| D7 Seeds | 1 seed for smoke/pilot runs only; ≥ 3 independent training seeds for the final key comparisons, staged. |
+| D8 Judge/retriever | gpt-oss-120b + Qwen3-Embedding-8B fixed; also freeze corpus/index revision, retriever top-k, snippet/page truncation, judge prompt/version, answer normalisation (to be written into `docs/PROTOCOL.md` as the frozen eval contract). |
+| D9 Gate | Before every training method: generate and save raw full trajectories with the exact finalised harness; 9B: ≥ 20 manually inspected. Archive = raw messages, prompt/generated token ids, thinking/action spans, loss masks, tool calls/responses, CM events, per-call active/occupied context lengths, token ledger, terminal reward, termination reason. |
+| D10 verl 0.9.1 preflight | Before formal RL: compare the actual rollout token stream against the `apply_chat_template` reconstruction; test `use_inference_chat_template`; never suppress tokenisation sanity-check failures; confirm tool parser, turn accounting, branch/summary reconstruction, loss masks, multi-tool-call handling. |
+| D11 Budget tracks | (A) native-reference per paper; (B) unified controlled budget. Do not hard-code 256k yet: collect native pilot distributions first, then pick the primary unified cap (192k or 256k), keep the other as sensitivity analysis. |
+| D12 Order | Start with the verl 0.9.1 port, Phase-0 preflight and raw-trajectory collection; no training matrix until those pass. |
+
+Implementation notes for D5 in this harness: the per-call ceiling maps to `max_model_len` = 65 536 with `prompt_length` +
+`response_length` no longer a fixed split — the agent must cap each call at `min(8 192, 65 536 − occupied)` new tokens and
+treat "occupied ≥ ceiling − margin" as window exhaustion (CM trigger for compaction/SUPO; forced finish for the baseline).
+Turn accounting: `max_session`/turn counters become "assistant turns ≤ 100" and "tool invocations ≤ 100", `max_calls_per_turn=1`.
